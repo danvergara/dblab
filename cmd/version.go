@@ -1,3 +1,5 @@
+package cmd
+
 /*
 Copyright © 2021 NAME HERE <EMAIL ADDRESS>
 
@@ -13,7 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
 
 import (
 	"fmt"
@@ -21,20 +22,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// versionCmd represents the version command
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "The version of the project",
-	Long: `The current version of the project.
+// NewVersionCmd return a versionCmd instance
+func NewVersionCmd() *cobra.Command {
 
-	This projects follows the semantic versioning standard.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("v0.1.0")
-	},
+	// versionCmd represents the version command
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "The version of the project",
+		Long: `The current version of the project.
+		This projects follows the semantic versioning standard.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Fprintln(cmd.OutOrStdout(), "v0.1.0")
+			return nil
+		},
+	}
+
+	return versionCmd
 }
 
 func init() {
-	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(NewVersionCmd())
 
 	// Here you will define your flags and configuration settings.
 
