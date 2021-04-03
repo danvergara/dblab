@@ -26,22 +26,39 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	driver  string
+	url     string
+	host    string
+	port    string
+	user    string
+	pass    string
+	db      string
+	ssl     string
+)
+
+// NewRootCmd returns the root command
+func NewRootCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "dblab",
+		Short: "Interactive databse client",
+		Long:  `dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf("driver: %s\n", driver)
+			fmt.Printf("host: %s\n", host)
+			fmt.Printf("db: %s\n", db)
+			fmt.Printf("port: %s\n", port)
+			fmt.Printf("user: %s\n", user)
+			fmt.Printf("pass: %s\n", pass)
+			fmt.Printf("ssl: %s\n", ssl)
+			return nil
+		},
+	}
+}
 
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "dblab",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
-}
+var rootCmd = NewRootCmd()
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -58,9 +75,15 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dblab.yaml)")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// global flags used to open a database connection
+	rootCmd.Flags().StringVarP(&driver, "driver", "", "postgres", "Database driver")
+	rootCmd.Flags().StringVarP(&url, "url", "u", "", "Database connection string")
+	rootCmd.Flags().StringVarP(&host, "host", "", "localhost", "Server host name or IP")
+	rootCmd.Flags().StringVarP(&port, "port", "", "5432", "Server port")
+	rootCmd.Flags().StringVarP(&user, "user", "", "", "Database user")
+	rootCmd.Flags().StringVarP(&pass, "pass", "", "", "Password for user")
+	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name")
+	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
 }
 
 // initConfig reads in config file and ENV variables if set.
