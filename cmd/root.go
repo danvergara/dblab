@@ -38,21 +38,27 @@ var (
 	ssl     string
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "dblab",
-	Short: "Interactive databse client",
-	Long:  `dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("driver: %s\n", driver)
-		fmt.Printf("host: %s\n", host)
-		fmt.Printf("db: %s\n", db)
-		fmt.Printf("port: %s\n", port)
-		fmt.Printf("user: %s\n", user)
-		fmt.Printf("pass: %s\n", pass)
-		fmt.Printf("ssl: %s\n", ssl)
-	},
+// NewRootCmd returns the root command
+func NewRootCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "dblab",
+		Short: "Interactive databse client",
+		Long:  `dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf("driver: %s\n", driver)
+			fmt.Printf("host: %s\n", host)
+			fmt.Printf("db: %s\n", db)
+			fmt.Printf("port: %s\n", port)
+			fmt.Printf("user: %s\n", user)
+			fmt.Printf("pass: %s\n", pass)
+			fmt.Printf("ssl: %s\n", ssl)
+			return nil
+		},
+	}
 }
+
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = NewRootCmd()
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
