@@ -11,7 +11,11 @@ func TestVersionCmd(t *testing.T) {
 	cmd := NewVersionCmd()
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.Execute()
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	out, err := ioutil.ReadAll(b)
 	if err != nil {
 		t.Fatal(err)

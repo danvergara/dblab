@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Define all the global flags.
 var (
 	cfgFile string
 	driver  string
@@ -38,7 +39,7 @@ var (
 	ssl     string
 )
 
-// NewRootCmd returns the root command
+// NewRootCmd returns the root command.
 func NewRootCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "dblab",
@@ -57,7 +58,7 @@ func NewRootCmd() *cobra.Command {
 	}
 }
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = NewRootCmd()
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -75,7 +76,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dblab.yaml)")
 
-	// global flags used to open a database connection
+	// global flags used to open a database connection.
 	rootCmd.Flags().StringVarP(&driver, "driver", "", "postgres", "Database driver")
 	rootCmd.Flags().StringVarP(&url, "url", "u", "", "Database connection string")
 	rootCmd.Flags().StringVarP(&host, "host", "", "localhost", "Server host name or IP")
