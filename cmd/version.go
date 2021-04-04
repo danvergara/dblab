@@ -22,10 +22,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewVersionCmd return a versionCmd instance
+// NewVersionCmd return a versionCmd instance.
 func NewVersionCmd() *cobra.Command {
 
-	// versionCmd represents the version command
+	// versionCmd represents the version command.
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "The version of the project",
