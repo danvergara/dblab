@@ -48,7 +48,7 @@ jobs:
       ## Runs the test coverage command.
       - name: Calc coverage
         run: |
-          go test -v  -coverprofile=coverage.txt -covermode=atomic ./...
+          go test -v -short -coverprofile=coverage.txt -covermode=atomic ./...
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
