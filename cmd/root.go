@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/danvergara/dblab/pkg/command"
 	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -46,13 +47,22 @@ func NewRootCmd() *cobra.Command {
 		Short: "Interactive databse client",
 		Long:  `dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("driver: %s\n", driver)
-			fmt.Printf("host: %s\n", host)
-			fmt.Printf("db: %s\n", db)
-			fmt.Printf("port: %s\n", port)
-			fmt.Printf("user: %s\n", user)
-			fmt.Printf("pass: %s\n", pass)
-			fmt.Printf("ssl: %s\n", ssl)
+
+			opts := command.Options{
+				Driver: driver,
+				URL:    url,
+				Host:   host,
+				Port:   port,
+				User:   user,
+				Pass:   pass,
+				DBName: db,
+				SSL:    ssl,
+			}
+
+			opts = command.SetDefault(opts)
+
+			fmt.Printf("otps : %v\n", opts)
+
 			return nil
 		},
 	}
