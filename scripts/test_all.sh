@@ -6,12 +6,8 @@
 set -e
 
 # database credentials
-export DBHOST=${DBHOST:-localhost}
-export PGUSER="postgres"
-export DBPASSWORD="password"
-export DATABASE="users"
-export PGPORT="15432"
-export MYSQL_PORT="13306"
+
+export MYSQL_PORT="3306"
 
 # Test different versions of postgres available on Docker Hub.
 pgversions="9.6 10.16 11.11 12.6 13.2"
@@ -21,10 +17,17 @@ do
 	PGVERSION="$i"
 	echo "--------------BEGIN POSTGRES TESTS-------------"
 	echo "Running test against PostgreSQL v$PGVERSION"
-	  docker rm -f postgres || true
-	  docker run -p $PGPORT:5432 --name postgres -e POSTGRES_PASSWORD=$DBPASSWORD -d postgres:$PGVERSION
-		sleep 5
-		make test
+
+	export DB_HOST=${DBHOST:-localhost}
+	export DB_USER="postgres"
+	export DB_PASSWORD="password"
+	export DB_NAME="users"
+	export DB_PORT="5432"
+	export DB_DRIVER="postgres"
+	docker rm -f postgres || true
+	docker run -p $DB_PORT:5432 --name postgres -e POSTGRES_PASSWORD=$DB_PASSWORD -d postgres:$PGVERSION
+	sleep 5
+	make test
 	echo "--------------END POSTGRES TESTS-------------"
 done
 
@@ -37,9 +40,16 @@ do
 	MYSQL_VERSION="$i"
 	echo "--------------BEGIN MYSQL TESTS-------------"
 	echo "Running test against MySQL v$MYSQL_VERSION"
-	  docker rm -f mysql || true
-	  docker run -p $MYSQL_PORT:3306 --name mysql -e MYSQL_PASSWORD=$DBPASSWORD -d mysql:$MYSQL_VERSION
-		sleep 5
-		make test
+
+	export DB_HOST=${DBHOST:-localhost}
+	export DB_USER="root"
+	export DB_PASSWORD="password"
+	export DB_NAME="users"
+	export DB_PORT="3306"
+	export DB_DRIVER="mysql"
+	docker rm -f mysql || true
+	docker run -p $DB_PORT:3306 --name mysql -e MYSQL_PASSWORD=$DB_PASSWORD -d mysql:$MYSQL_VERSION
+	sleep 5
+	make test
 	echo "--------------END MYSQL TESTS-------------"
 done
