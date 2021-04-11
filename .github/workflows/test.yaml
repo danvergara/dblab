@@ -31,29 +31,6 @@ jobs:
       - name: Test
         run: go test -v -short ./...
 
-  coverage:
-    name: Coverage
-    runs-on: ubuntu-latest
-    steps:
-      # Installs go.
-      # Using a sigle version.
-      - name: Install Go
-        if: success()
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16.x
-      # Checks out our code locally so we can work with the files.
-      - name: Checkout code
-        uses: actions/checkout@v2
-      ## Runs the test coverage command.
-      - name: Calc coverage
-        run: |
-          go test -v -short -coverprofile=coverage.txt -covermode=atomic ./...
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   lint:
     runs-on: ubuntu-latest
     steps:
