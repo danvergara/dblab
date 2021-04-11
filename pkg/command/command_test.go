@@ -12,6 +12,10 @@ func TestSetEnvValues(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err := os.Setenv("DB_DRIVER", "postgres"); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := os.Setenv("DB_HOST", "localhost"); err != nil {
 		t.Fatal(err)
 	}
@@ -20,7 +24,7 @@ func TestSetEnvValues(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := os.Setenv("DB_PASS", "password"); err != nil {
+	if err := os.Setenv("DB_PASSWORD", "password"); err != nil {
 		t.Fatal(err)
 	}
 

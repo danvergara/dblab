@@ -2,7 +2,7 @@ package command
 
 import "os"
 
-// Options is a struct that stores the provided commands by the user
+// Options is a struct that stores the provided commands by the user.
 type Options struct {
 	Driver string
 	URL    string
@@ -21,6 +21,10 @@ func SetDefault(opts Options) Options {
 		opts.URL = os.Getenv("DATABASE_URL")
 	}
 
+	if opts.Driver == "" {
+		opts.Driver = os.Getenv("DB_DRIVER")
+	}
+
 	if opts.Host == "" {
 		opts.Host = os.Getenv("DB_HOST")
 	}
@@ -30,7 +34,7 @@ func SetDefault(opts Options) Options {
 	}
 
 	if opts.Pass == "" {
-		opts.Pass = os.Getenv("DB_PASS")
+		opts.Pass = os.Getenv("DB_PASSWORD")
 	}
 
 	if opts.DBName == "" {
