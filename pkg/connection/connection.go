@@ -72,12 +72,16 @@ func formatPostgresURL(opts command.Options) (string, error) {
 // formatMySQLURL returns valid uri for mysql connection.
 func formatMySQLURL(opts command.Options) (string, error) {
 	if !hasValidMySQLPrefix(opts.URL) {
-		return "", ErrInvalidUMySQLRLFormat
+		return "", fmt.Errorf("%s, %w", opts.URL, ErrInvalidUMySQLRLFormat)
+	}
+
+	if strings.Contains(opts.URL, "3306") {
+		return opts.URL, nil
 	}
 
 	uri, err := url.Parse(opts.URL)
 	if err != nil {
-		return "", ErrInvalidUMySQLRLFormat
+		return "", fmt.Errorf("%v %w", err, ErrInvalidUMySQLRLFormat)
 	}
 
 	result := map[string]string{}
