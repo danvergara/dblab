@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildConnectionFromOpts(t *testing.T) {
+func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 	type given struct {
 		opts command.Options
 	}
@@ -169,6 +169,126 @@ func TestBuildConnectionFromOpts(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.uri, uri)
+		})
+	}
+}
+
+func TestBuildConnectionFromOptsUserData(t *testing.T) {
+	type given struct {
+		opts command.Options
+	}
+	type want struct {
+		uri string
+	}
+	var cases = []struct {
+		name  string
+		given given
+		want  want
+	}{
+		// postgres
+		{
+			name: "success - localhost with no explicit ssl mode - postgres",
+			given: given{
+				opts: command.Options{
+					Driver: "postgres",
+					User:   "user",
+					Pass:   "password",
+					Host:   "localhost",
+					Port:   "5432",
+					DBName: "db",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?sslmode=disable",
+			},
+		},
+		{
+			name: "success - 127.0.0.1 with no explicit ssl mode - postgres",
+			given: given{
+				opts: command.Options{
+					Driver: "postgres",
+					User:   "user",
+					Pass:   "password",
+					Host:   "127.0.0.1",
+					Port:   "5432",
+					DBName: "db",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@127.0.0.1:5432/db?sslmode=disable",
+			},
+		},
+		{
+			name: "success - remote host - postgres",
+			given: given{
+				opts: command.Options{
+					Driver: "postgres",
+					User:   "user",
+					Pass:   "password",
+					Host:   "your-amazonaws-uri.com",
+					Port:   "5432",
+					DBName: "db",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@your-amazonaws-uri.com:5432/db",
+			},
+		},
+		// mysql
+		{
+			name: "success - localhost - mysql",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					User:   "user",
+					Pass:   "password",
+					Host:   "localhost",
+					Port:   "3306",
+					DBName: "db",
+				},
+			},
+			want: want{
+				uri: "mysql://user:password@tcp(localhost:3306)/db",
+			},
+		},
+		{
+			name: "success - 127.0.0.1 - mysql",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					User:   "user",
+					Pass:   "password",
+					Host:   "127.0.0.1",
+					Port:   "3306",
+					DBName: "db",
+				},
+			},
+			want: want{
+				uri: "mysql://user:password@tcp(127.0.0.1:3306)/db",
+			},
+		},
+		{
+			name: "success - remote host -mysql",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					User:   "user",
+					Pass:   "password",
+					Host:   "your-amazonaws-uri.com",
+					Port:   "3306",
+					DBName: "db",
+				},
+			},
+			want: want{
+				uri: "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/db",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 		})
 	}
 }
