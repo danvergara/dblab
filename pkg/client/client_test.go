@@ -5,6 +5,11 @@ import (
 	"os"
 	"testing"
 
+	// mysql driver.
+	_ "github.com/go-sql-driver/mysql"
+	// postgres driver.
+	_ "github.com/lib/pq"
+
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +39,7 @@ func generateURL(driver string) string {
 	case "postgres":
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=mode", driver, user, password, host, port, name)
 	case "mysql":
-		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s?sslmode=mode", driver, user, password, host, port, name)
+		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", driver, user, password, host, port, name)
 	default:
 		return ""
 	}
@@ -53,10 +58,57 @@ func TestNewClientByURL(t *testing.T) {
 	}
 
 	c, err := New(opts)
-
 	if err != nil {
 		t.Error(err)
 	}
 
 	assert.NotNil(t, c)
+}
+
+func TestNewClientByUserData(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+	}
+
+	c, err := New(opts)
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.NotNil(t, c)
+}
+
+func TestNewClientPing(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+	}
+
+	c, err := New(opts)
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.NotNil(t, c)
+
+	if err := c.DB().Ping(); err != nil {
+		t.Error(err)
+	}
 }
