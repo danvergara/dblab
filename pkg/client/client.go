@@ -35,7 +35,7 @@ func New(opts command.Options) (*Client, error) {
 	return &c, nil
 }
 
-// DB Return the db attribute
+// DB Return the db attribute.
 func (c *Client) DB() *sqlx.DB {
 	return c.db
 }
