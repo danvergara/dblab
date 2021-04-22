@@ -25,7 +25,7 @@ do
 	export DB_PORT="5432"
 	export DB_DRIVER="postgres"
 	docker rm -f postgres || true
-	docker run -p $DB_PORT:5432 --name postgres -e POSTGRES_PASSWORD=$DB_PASSWORD -d postgres:$PGVERSION
+	docker run -p $DB_PORT:5432 --name postgres -e POSTGRES_PASSWORD=$DB_PASSWORD -e POSTGRES_DB=$DB_NAME -d postgres:$PGVERSION
 	sleep 5
 	make test
 	echo "--------------END POSTGRES TESTS-------------"
@@ -48,7 +48,7 @@ do
 	export DB_PORT="3306"
 	export DB_DRIVER="mysql"
 	docker rm -f mysql || true
-	docker run -p $DB_PORT:3306 --name mysql -e MYSQL_PASSWORD=$DB_PASSWORD -d mysql:$MYSQL_VERSION
+	docker run -p $DB_PORT:3306 --name mysql -e MYSQL_PASSWORD=$DB_PASSWORD -e MYSQL_DATABASE=$DB_NAME -d mysql:$MYSQL_VERSION
 	sleep 5
 	make test
 	echo "--------------END MYSQL TESTS-------------"
