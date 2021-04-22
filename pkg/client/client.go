@@ -7,6 +7,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,7 +18,12 @@ type Client struct {
 
 // New return an instance of the client.
 func New(opts command.Options) (*Client, error) {
-	db, err := sqlx.Open(opts.Driver, opts.URL)
+	conn, err := connection.BuildConnectionFromOpts(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := sqlx.Open(opts.Driver, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -27,4 +33,9 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	return &c, nil
+}
+
+// DB Return the db attribute
+func (c *Client) DB() *sqlx.DB {
+	return c.db
 }
