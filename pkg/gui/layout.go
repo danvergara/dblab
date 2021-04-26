@@ -5,7 +5,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-// Layout is called for every screen re-render e.g. when the screen is resized
+// Layout is called for every screen re-render e.g. when the screen is resized.
 func Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
@@ -49,7 +49,7 @@ func Layout(g *gocui.Gui) error {
 	return nil
 }
 
-// Quit is called to end the gui app
+// Quit is called to end the gui app.
 func Quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
