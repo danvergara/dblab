@@ -18,9 +18,12 @@ limitations under the License.
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/gui"
+	"github.com/jroimartin/gocui"
 	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -59,9 +62,25 @@ func NewRootCmd() *cobra.Command {
 				SSL:    ssl,
 			}
 
-			opts = command.SetDefault(opts)
+			if opts.Host == "" && opts.Port == "" && opts.User == "" && opts.Pass == "" && opts.DBName == "" && opts.Driver == "" && opts.URL == "" {
+				return fmt.Errorf("empty values required to open a session in database")
+			}
 
-			fmt.Printf("otps : %v\n", opts)
+			g, err := gocui.NewGui(gocui.OutputNormal)
+			if err != nil {
+				log.Panicln(err)
+			}
+			defer g.Close()
+
+			g.SetManagerFunc(gui.Layout)
+
+			if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, gui.Quit); err != nil {
+				log.Panicln(err)
+			}
+
+			if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+				log.Panicln(err)
+			}
 
 			return nil
 		},
@@ -87,10 +106,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dblab.yaml)")
 
 	// global flags used to open a database connection.
-	rootCmd.Flags().StringVarP(&driver, "driver", "", "postgres", "Database driver")
+	rootCmd.Flags().StringVarP(&driver, "driver", "", "", "Database driver")
 	rootCmd.Flags().StringVarP(&url, "url", "u", "", "Database connection string")
-	rootCmd.Flags().StringVarP(&host, "host", "", "localhost", "Server host name or IP")
-	rootCmd.Flags().StringVarP(&port, "port", "", "5432", "Server port")
+	rootCmd.Flags().StringVarP(&host, "host", "", "", "Server host name or IP")
+	rootCmd.Flags().StringVarP(&port, "port", "", "", "Server port")
 	rootCmd.Flags().StringVarP(&user, "user", "", "", "Database user")
 	rootCmd.Flags().StringVarP(&pass, "pass", "", "", "Password for user")
 	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name")
