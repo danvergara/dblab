@@ -6,10 +6,10 @@ import (
 )
 
 // Layout is called for every screen re-render e.g. when the screen is resized.
-func Layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
+func (gui *Gui) layout(g *gocui.Gui) error {
+	maxX, maxY := gui.g.Size()
 
-	if v, err := g.SetView("tables", 0, 0, int(0.2*float32(maxX)), maxY-5); err != nil {
+	if v, err := gui.g.SetView("tables", 0, 0, int(0.2*float32(maxX)), maxY-5); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -17,7 +17,7 @@ func Layout(g *gocui.Gui) error {
 		v.Title = "Tables"
 	}
 
-	if v, err := g.SetView("query", int(0.2*float32(maxX)), 0, maxX, maxY-40); err != nil {
+	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX, maxY-40); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -27,12 +27,12 @@ func Layout(g *gocui.Gui) error {
 		v.Editable = true
 		v.Wrap = true
 
-		if _, err := g.SetCurrentView("query"); err != nil {
+		if _, err := gui.g.SetCurrentView("query"); err != nil {
 			return err
 		}
 	}
 
-	if v, err := g.SetView("rows", int(0.2*float32(maxX)), maxY-40, maxX, maxY-5); err != nil {
+	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), maxY-40, maxX, maxY-5); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
