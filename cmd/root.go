@@ -18,10 +18,12 @@ limitations under the License.
 
 import (
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/danvergara/dblab/pkg/app"
+	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/danvergara/dblab/pkg/gui"
 	"github.com/jroimartin/gocui"
 	"github.com/spf13/cobra"
@@ -50,7 +52,6 @@ func NewRootCmd() *cobra.Command {
 		Short: "Interactive databse client",
 		Long:  `dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			opts := command.Options{
 				Driver: driver,
 				URL:    url,
@@ -62,24 +63,26 @@ func NewRootCmd() *cobra.Command {
 				SSL:    ssl,
 			}
 
-			if opts.Host == "" && opts.Port == "" && opts.User == "" && opts.Pass == "" && opts.DBName == "" && opts.Driver == "" && opts.URL == "" {
-				return fmt.Errorf("empty values required to open a session in database")
+			if err := connection.ValidateOpts(opts); err != nil {
+				return err
 			}
 
-			g, err := gocui.NewGui(gocui.OutputNormal)
+			c, err := client.New(opts)
 			if err != nil {
-				log.Panicln(err)
-			}
-			defer g.Close()
-
-			g.SetManagerFunc(gui.Layout)
-
-			if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, gui.Quit); err != nil {
-				log.Panicln(err)
+				return err
 			}
 
-			if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-				log.Panicln(err)
+			gcui, err := gocui.NewGui(gocui.OutputNormal)
+			if err != nil {
+				return err
+			}
+
+			g := gui.New(gcui)
+
+			app := app.New(c, g)
+
+			if err := app.Run(); err != nil {
+				return err
 			}
 
 			return nil
