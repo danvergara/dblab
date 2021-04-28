@@ -5,13 +5,13 @@ import (
 	"github.com/danvergara/dblab/pkg/gui"
 )
 
-// App Struct
+// App Struct.
 type App struct {
 	c *client.Client
 	g *gui.Gui
 }
 
-// New bootstrap a new application
+// New bootstrap a new application.
 func New(c *client.Client, g *gui.Gui) *App {
 	return &App{
 		c: c,
@@ -19,7 +19,7 @@ func New(c *client.Client, g *gui.Gui) *App {
 	}
 }
 
-// Run runs the application
+// Run runs the application.
 func (a *App) Run() error {
 	if err := a.g.Run(); err != nil {
 		return err
