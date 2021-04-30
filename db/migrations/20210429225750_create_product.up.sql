@@ -1,0 +1,5 @@
+CREATE TABLE products (
+    id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(36),
+    price FLOAT
+);
