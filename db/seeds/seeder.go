@@ -4,7 +4,12 @@ import (
 	"log"
 	"reflect"
 
+	// mysql driver.
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+
+	// postgres driver.
+	_ "github.com/lib/pq"
 )
 
 // Seed type.
