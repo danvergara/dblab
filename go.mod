@@ -3,6 +3,7 @@ module github.com/danvergara/dblab
 go 1.16
 
 require (
+	github.com/bxcodec/faker/v3 v3.6.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/hashicorp/errwrap v1.1.0 // indirect
