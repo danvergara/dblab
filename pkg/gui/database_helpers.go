@@ -97,8 +97,7 @@ func (gui *Gui) runQuery() func(g *gocui.Gui, v *gocui.View) error {
 
 		// Setup the table.
 		table := tablewriter.NewWriter(ov)
-		table.SetCenterSeparator("|")
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: true})
 		table.SetHeader(columnNames)
 		// Add Bulk Data.
 		table.AppendBulk(resultSet)

@@ -75,6 +75,35 @@ func setTablesView(g *gocui.Gui, v *gocui.View) error {
 	return err
 }
 
+func setRowsView(g *gocui.Gui, v *gocui.View) error {
+	if v == nil || v.Name() == "query" {
+		_, err := g.SetCurrentView("rows")
+
+		g.Highlight = true
+		g.Cursor = true
+		g.SelFgColor = gocui.ColorGreen
+
+		return err
+	}
+
+	_, err := g.SetCurrentView("query")
+	return err
+}
+
+func setQueryViewFromRows(g *gocui.Gui, v *gocui.View) error {
+	if v == nil || v.Name() == "rows" {
+		_, err := g.SetCurrentView("query")
+		return err
+	}
+
+	g.Highlight = true
+	g.Cursor = true
+	g.SelFgColor = gocui.ColorGreen
+
+	_, err := g.SetCurrentView("rows")
+	return err
+}
+
 // quit is called to end the gui app.
 func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
