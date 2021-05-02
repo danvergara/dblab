@@ -1,20 +1,17 @@
 package app
 
 import (
-	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/gui"
 )
 
 // App Struct.
 type App struct {
-	c *client.Client
 	g *gui.Gui
 }
 
 // New bootstrap a new application.
-func New(c *client.Client, g *gui.Gui) *App {
+func New(g *gui.Gui) *App {
 	return &App{
-		c: c,
 		g: g,
 	}
 }

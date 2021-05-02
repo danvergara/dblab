@@ -77,9 +77,9 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			g := gui.New(gcui)
+			g := gui.New(gcui, c)
 
-			app := app.New(c, g)
+			app := app.New(g)
 
 			if err := app.Run(); err != nil {
 				return err
