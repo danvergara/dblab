@@ -1,16 +1,21 @@
 package gui
 
-import "github.com/jroimartin/gocui"
+import (
+	"github.com/danvergara/dblab/pkg/client"
+	"github.com/jroimartin/gocui"
+)
 
 // Gui wraps the gocui Gui object which handles rendering and events.
 type Gui struct {
 	g *gocui.Gui
+	c *client.Client
 }
 
 // New builds a new gui handler.
-func New(g *gocui.Gui) *Gui {
+func New(g *gocui.Gui, c *client.Client) *Gui {
 	return &Gui{
 		g: g,
+		c: c,
 	}
 }
 
