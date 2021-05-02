@@ -14,6 +14,10 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 			return err
 		}
 
+		if err := gui.showTables(); err != nil {
+			return err
+		}
+
 		v.Title = "Tables"
 	}
 
