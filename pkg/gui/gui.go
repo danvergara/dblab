@@ -23,9 +23,13 @@ func New(g *gocui.Gui, c *client.Client) *Gui {
 func (gui *Gui) Run() error {
 	defer gui.g.Close()
 
+	gui.g.Highlight = true
+	gui.g.Cursor = true
+	gui.g.SelFgColor = gocui.ColorGreen
+
 	gui.g.SetManagerFunc(gui.layout)
 
-	if err := gui.g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, Quit); err != nil {
+	if err := gui.keybindings(); err != nil {
 		return err
 	}
 
