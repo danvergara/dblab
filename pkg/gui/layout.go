@@ -46,62 +46,56 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 	return nil
 }
 
-func setQueryView(g *gocui.Gui, v *gocui.View) error {
-	if v == nil || v.Name() == "tables" {
-		_, err := g.SetCurrentView("query")
+func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		if v == nil || v.Name() == from {
+			_, err := g.SetCurrentView(to)
+
+			g.Highlight = true
+			g.Cursor = true
+			g.SelFgColor = gocui.ColorGreen
+
+			return err
+		}
+
+		_, err := g.SetCurrentView(from)
+
 		return err
 	}
-
-	g.Highlight = true
-	g.Cursor = true
-	g.SelFgColor = gocui.ColorGreen
-
-	_, err := g.SetCurrentView("tables")
-	return err
 }
 
-func setTablesView(g *gocui.Gui, v *gocui.View) error {
-	if v == nil || v.Name() == "query" {
-		_, err := g.SetCurrentView("tables")
+func cursorUp(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		ox, oy := v.Origin()
+		cx, cy := v.Cursor()
 
-		g.Highlight = true
-		g.Cursor = true
-		g.SelFgColor = gocui.ColorGreen
-
-		return err
+		if err := v.SetCursor(cx, cy-1); err != nil && oy > 0 {
+			if err := v.SetOrigin(ox, oy-1); err != nil {
+				return err
+			}
+		}
 	}
-
-	_, err := g.SetCurrentView("query")
-	return err
+	return nil
 }
 
-func setRowsView(g *gocui.Gui, v *gocui.View) error {
-	if v == nil || v.Name() == "query" {
-		_, err := g.SetCurrentView("rows")
+func cursorDown(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		cx, cy := v.Cursor()
 
-		g.Highlight = true
-		g.Cursor = true
-		g.SelFgColor = gocui.ColorGreen
-
-		return err
+		l, err := v.Line(cy + 1)
+		if err != nil {
+			return err
+		}
+		if l != "" {
+			if err := v.SetCursor(cx, cy+1); err != nil {
+				ox, oy := v.Origin()
+				if err := v.SetOrigin(ox, oy+1); err != nil {
+					return err
+				}
+			}
+		}
 	}
-
-	_, err := g.SetCurrentView("query")
-	return err
-}
-
-func setQueryViewFromRows(g *gocui.Gui, v *gocui.View) error {
-	if v == nil || v.Name() == "rows" {
-		_, err := g.SetCurrentView("query")
-		return err
-	}
-
-	g.Highlight = true
-	g.Cursor = true
-	g.SelFgColor = gocui.ColorGreen
-
-	_, err := g.SetCurrentView("rows")
-	return err
+	return nil
 }
 
 // quit is called to end the gui app.
