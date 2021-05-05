@@ -1,6 +1,9 @@
 package gui
 
 import (
+	"fmt"
+
+	"github.com/common-nighthawk/go-figure"
 	"github.com/jroimartin/gocui"
 )
 
@@ -8,7 +11,12 @@ import (
 func (gui *Gui) layout(g *gocui.Gui) error {
 	maxX, maxY := gui.g.Size()
 
-	if v, err := gui.g.SetView("tables", 0, 0, int(0.2*float32(maxX)), maxY-5); err != nil {
+	if v, err := g.SetView("banner", 0, 0, int(0.2*float32(maxX)), maxY-7); err != nil {
+		myFigure := figure.NewFigure("dblab", "", true)
+		figure.Write(v, myFigure)
+	}
+
+	if v, err := gui.g.SetView("tables", 0, 7, int(0.2*float32(maxX)), maxY-5); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -39,6 +47,8 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+
+		fmt.Fprintln(v, "Type the sql query above. Press Ctrl-c to quit.")
 
 		v.Title = "Rows"
 	}
