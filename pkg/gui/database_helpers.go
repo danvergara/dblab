@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 
+	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/olekukonko/tablewriter"
 )
@@ -99,24 +100,27 @@ func (gui *Gui) query(q string) ([][]string, []string, error) {
 func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 
-		// Cleans the view.
+		// Cleans up the view.
 		v.Rewind()
-
-		resultSet, columnNames, err := gui.query(v.Buffer())
-		if err != nil {
-			return err
-		}
 
 		ov, err := gui.g.View("rows")
 		if err != nil {
 			return err
 		}
 
-		// Cleans the view.
+		// Cleansi up the rows view.
 		ov.Rewind()
 		ov.Clear()
 
-		renderTable(ov, columnNames, resultSet)
+		resultSet, columnNames, err := gui.query(v.Buffer())
+		if err != nil {
+			// Prints the error in red on the rows view.
+			red := color.New(color.FgRed)
+			boldRed := red.Add(color.Bold)
+			boldRed.Fprintf(ov, "%s\n", err)
+		} else {
+			renderTable(ov, columnNames, resultSet)
+		}
 
 		return nil
 	}
