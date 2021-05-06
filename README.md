@@ -39,6 +39,8 @@ db --url postgres://user:password@host:port/database?sslmode=[mode]
 db --url mysql://user:password@tcp(host:port)/db
 ```
 
+<img src="screenshots/dblab-screen-shot.png" />
+
 ## Contribute
 
 - Fork this repository
