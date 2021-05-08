@@ -61,41 +61,6 @@ func renderTable(v *gocui.View, columns []string, resultSet [][]string) {
 	table.Render()
 }
 
-// query returns performs the query and returns the result set and the colum names.
-func (gui *Gui) query(q string) ([][]string, []string, error) {
-	resultSet := [][]string{}
-
-	// Runs the query extracting the content of the view calling the Buffer method.
-	rows, err := gui.c.DB().Queryx(q)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Gets the names of the columns of the result set.
-	columnNames, err := rows.Columns()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for rows.Next() {
-		// cols is an []interface{} of all of the column results.
-		cols, err := rows.SliceScan()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// Convert []interface{} into []string.
-		s := make([]string, len(cols))
-		for i, v := range cols {
-			s[i] = fmt.Sprint(v)
-		}
-
-		resultSet = append(resultSet, s)
-	}
-
-	return resultSet, columnNames, nil
-}
-
 // runQuery run the introduced query in the query panel.
 func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
@@ -112,7 +77,7 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 		ov.Rewind()
 		ov.Clear()
 
-		resultSet, columnNames, err := gui.query(v.Buffer())
+		resultSet, columnNames, err := gui.c.Query(v.Buffer())
 		if err != nil {
 			// Prints the error in red on the rows view.
 			red := color.New(color.FgRed)
@@ -135,8 +100,7 @@ func (gui *Gui) selectTable(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s;", t)
-	resultSet, columnNames, err := gui.query(query)
+	resultSet, columnNames, err := gui.c.TableContent(t)
 	if err != nil {
 		return err
 	}
