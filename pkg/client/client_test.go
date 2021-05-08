@@ -133,9 +133,55 @@ func TestQuery(t *testing.T) {
 	c, _ := New(opts)
 
 	r, co, err := c.Query("SELECT * FROM products;")
-	t.Logf("len of result %d\n", len(r))
 
 	assert.Equal(t, 100, len(r))
 	assert.Equal(t, 3, len(co))
+	assert.NoError(t, err)
+}
+
+func TestTableContent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+	}
+
+	c, _ := New(opts)
+
+	r, co, err := c.TableContent("products;")
+
+	assert.Equal(t, 100, len(r))
+	assert.Equal(t, 3, len(co))
+	assert.NoError(t, err)
+}
+
+func TestShowTables(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+	}
+
+	c, _ := New(opts)
+
+	tables, err := c.ShowTables()
+
+	assert.Equal(t, 4, len(tables))
 	assert.NoError(t, err)
 }
