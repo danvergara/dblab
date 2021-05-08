@@ -14,13 +14,15 @@ import (
 
 // Seed type.
 type Seed struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	driver string
 }
 
 // Execute will executes the given seeder method.
-func Execute(db *sqlx.DB, seedMethodNames ...string) {
+func Execute(db *sqlx.DB, driver string, seedMethodNames ...string) {
 	s := Seed{
-		db: db,
+		db:     db,
+		driver: driver,
 	}
 
 	seedType := reflect.TypeOf(s)
