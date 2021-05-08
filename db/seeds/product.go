@@ -1,6 +1,7 @@
 package seeds
 
 import (
+	"log"
 	"math/rand"
 
 	"github.com/bxcodec/faker/v3"
@@ -9,12 +10,10 @@ import (
 // ProductSeed seeds product data.
 func (s Seed) ProductSeed() {
 	for i := 0; i < 100; i++ {
-		// prepare the statement.
-		stmt, _ := s.db.Prepare(`INSERT INTO products(name, price) VALUES ($1, $2)`)
 		// execute query.
-		_, err := stmt.Exec(faker.Word(), rand.Float32())
+		_, err := s.db.Exec(`INSERT INTO products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32())
 		if err != nil {
-			panic(err)
+			log.Fatalf("error seeding products: %v", err)
 		}
 	}
 }

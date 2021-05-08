@@ -1,13 +1,13 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"log"
 	"os"
 
 	// mysql driver.
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 
 	// postgres driver.
 	_ "github.com/lib/pq"
@@ -29,7 +29,7 @@ func handleArgs() {
 		switch args[0] {
 		case "seed":
 			connString := cfg.GetDBConnStr()
-			db, err := sql.Open(cfg.Driver(), connString)
+			db, err := sqlx.Open(cfg.Driver(), connString)
 			if err != nil {
 				log.Fatalf("Error opening DB: %v", err)
 			}
