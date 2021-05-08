@@ -33,7 +33,7 @@ func handleArgs() {
 			if err != nil {
 				log.Fatalf("Error opening DB: %v", err)
 			}
-			seeds.Execute(db, args[1:]...)
+			seeds.Execute(db, cfg.Driver(), args[1:]...)
 			os.Exit(0)
 		}
 	}

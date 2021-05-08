@@ -9,8 +9,18 @@ import (
 // CustomerSeed seeds the database with customers.
 func (s Seed) CustomerSeed() {
 	for i := 0; i < 100; i++ {
+		var err error
+
 		// execute query.
-		_, err := s.db.Exec(`INSERT INTO customers(name, email) VALUES ($1, $2)`, faker.Name(), faker.Email())
+		switch s.driver {
+		case "postgres":
+			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES ($1, $2)`, faker.Name(), faker.Email())
+		case "mysql":
+			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES (?, ?)`, faker.Name(), faker.Email())
+		default:
+			log.Println("unsupported driver")
+		}
+
 		if err != nil {
 			log.Fatalf("error seeding customers: %v", err)
 		}
