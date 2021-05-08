@@ -104,12 +104,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Migrate db
+        run: go run cmd/dbmigrate/main.go
+        env:
+          DB_USER: dblab_user
+          DB_PASSWORD: dblab_pass
+          DB_HOST: localhost
+          DB_PORT: 3306
+          DB_NAME: dblab_db
+          DB_DRIVER: mysql
+
       # Runs go test ./... against mysql container
       - name: Test MySQL
         run: |
-          go run cmd/dbmigrate/main.go
-        # go run cmd/seeder/main.go seed
-        # go test -v ./...
+          go run cmd/seeder/main.go seed
+          go test -v ./...
         env:
           DB_USER: dblab_user
           DB_PASSWORD: dblab_pass

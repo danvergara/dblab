@@ -45,6 +45,11 @@ func (c *Config) GetDBConnStr() string {
 	return c.getDBConnStr(c.dbHost, c.dbName)
 }
 
+// GetSQLXDBConnStr returns the connection string.
+func (c *Config) GetSQLXDBConnStr() string {
+	return c.getSQLXConnStr(c.dbHost, c.dbName)
+}
+
 // GetTestDBConnStr returns the test connection string.
 func (c *Config) GetTestDBConnStr() string {
 	return c.getDBConnStr(c.testDBHost, c.testDBName)
@@ -57,6 +62,18 @@ func (c *Config) getDBConnStr(dbhost, dbname string) string {
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.dbDriver, c.dbUser, c.dbPswd, dbhost, c.dbPort, dbname)
 	case "mysql":
 		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", c.dbDriver, c.dbUser, c.dbPswd, dbhost, c.dbPort, dbname)
+	default:
+		return ""
+	}
+}
+
+// getSQLXConnStr returns the connection string based on the provied host and db name.
+func (c *Config) getSQLXConnStr(dbhost, dbname string) string {
+	switch c.dbDriver {
+	case "postgres":
+		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.dbDriver, c.dbUser, c.dbPswd, dbhost, c.dbPort, dbname)
+	case "mysql":
+		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", c.dbUser, c.dbPswd, dbhost, c.dbPort, dbname)
 	default:
 		return ""
 	}
