@@ -1,12 +1,12 @@
 package seeds
 
 import (
+	"database/sql"
 	"log"
 	"reflect"
 
 	// mysql driver.
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 
 	// postgres driver.
 	_ "github.com/lib/pq"
@@ -14,11 +14,11 @@ import (
 
 // Seed type.
 type Seed struct {
-	db *sqlx.DB
+	db *sql.DB
 }
 
 // Execute will executes the given seeder method.
-func Execute(db *sqlx.DB, seedMethodNames ...string) {
+func Execute(db *sql.DB, seedMethodNames ...string) {
 	s := Seed{
 		db: db,
 	}

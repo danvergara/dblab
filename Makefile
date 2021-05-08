@@ -10,6 +10,11 @@ test:
 unit-test:
 	go test -v -short -race ./...
 
+.PHONY: int-test
+## int-test: Runs the integration tests
+int-test:
+	docker-compose run --entrypoint=make dblab test
+
 .PHONY: linter
 ## linter: Runs the colangci-lint command
 linter:
