@@ -25,8 +25,35 @@ application to work with local or remote PostgreSQL/MySQL databases.
 - [Precompiled binaries](https://github.com/danvergara/dblab/releases) for supported
 operating systems are available.
 
-## Usage
+## Help
 
+```
+dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.
+
+Usage:
+  dblab [flags]
+  dblab [command]
+
+Available Commands:
+  help        Help about any command
+  version     The version of the project
+
+Flags:
+      --config string   config file (default is $HOME/.dblab.yaml)
+      --db string       Database name
+      --driver string   Database driver
+  -h, --help            help for dblab
+      --host string     Server host name or IP
+      --pass string     Password for user
+      --port string     Server port
+      --ssl string      SSL mode
+  -u, --url string      Database connection string
+      --user string     Database user
+
+Use "dblab [command] --help" for more information about a command.
+```
+
+## Usage
 
 ```
 dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres
@@ -39,7 +66,24 @@ db --url postgres://user:password@host:port/database?sslmode=[mode]
 db --url mysql://user:password@tcp(host:port)/db
 ```
 
+If the query panel is active, type the desired query and press <kbd>Enter</kbd> to see the results on the rows panel below.
+Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd>. If you want to see the rows of a table, press <kbd>Enter</kbd>.
+
 <img src="screenshots/dblab-screen-shot.png" />
+
+
+### Key Bindings
+Key                                     | Description
+----------------------------------------|---------------------------------------
+<kbd>Enter</kbd>                        | If the query panel is active, execute the query
+<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel
+<kbd>Ctrl+h</kbd>                       | Toggle to the panel on the left
+<kbd>Ctrl+j</kbd>                       | Toggle to the panel below
+<kbd>Ctrl+k</kbd>                       | Toggle to the panel above
+<kbd>Ctrl+l</kbd>                       | Toggle to the panel on the right
+<kbd>Arrow Up</kbd>                     | Next row of the result set, on the rows panel. Next table on the tables panel
+<kbd>Arrow Down</kbd>                   | Previous row of the result set, on the rows panel. Previous table on the tables panel
+<kbd>Ctrl+c</kbd>                       | Quit
 
 ## Contribute
 
