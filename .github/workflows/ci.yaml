@@ -66,16 +66,27 @@ jobs:
     # Defines the platform for each test run.
     runs-on: ${{ matrix.os }}
     # define the container services used to run integration tests
-    #
-    steps:
-      - name: Set up MySQL
-        run: |
-          sudo /etc/init.d/mysql start
-          mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+    services:
+      mysql:
+        image: mysql:8
         env:
-          DB_DATABASE: users
-          DB_USER: root
-          DB_PASSWORD: root
+          MYSQL_USER: dblab_user
+          MYSQL_PASSWORD: dblab_pass
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: dblab_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      # - name: Set up MySQL
+        # run: |
+          # sudo /etc/init.d/mysql start
+          # mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+        # env:
+          # DB_DATABASE: users
+          # DB_USER: root
+          # DB_PASSWORD: root
 
       # The steps that will be run through for each version and platform combination.
       - name: Set up Go ${{ matrix.goVer }}
@@ -97,12 +108,12 @@ jobs:
       - name: Test MySQL
         run: |
           go run cmd/dbmigrate/main.go
-          go run cmd/seeder/main.go seed
-          go test -v ./...
+        # go run cmd/seeder/main.go seed
+        # go test -v ./...
         env:
-          DB_USER: root
-          DB_PASSWORD: root
+          DB_USER: dblab_user
+          DB_PASSWORD: dblab_pass
           DB_HOST: localhost
           DB_PORT: 3306
-          DB_NAME: users
+          DB_NAME: dblab_db
           DB_DRIVER: mysql

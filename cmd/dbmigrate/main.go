@@ -21,7 +21,7 @@ func main() {
 
 	m, err := migrate.New("file://db/migrations", cfg.GetDBConnStr())
 	if err != nil {
-		log.Printf("%s", err)
+		log.Printf("migration error %s", err)
 		return
 	}
 

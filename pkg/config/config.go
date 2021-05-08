@@ -56,7 +56,7 @@ func (c *Config) getDBConnStr(dbhost, dbname string) string {
 	case "postgres":
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.dbDriver, c.dbUser, c.dbPswd, dbhost, c.dbPort, dbname)
 	case "mysql":
-		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local&multiStatements=true", c.dbUser, c.dbPswd, dbhost, c.dbPort, dbname)
+		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", c.dbDriver, c.dbUser, c.dbPswd, dbhost, c.dbPort, dbname)
 	default:
 		return ""
 	}
