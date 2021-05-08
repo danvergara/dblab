@@ -10,26 +10,7 @@ import (
 
 // showTables list all the tables in the database on the tables panel.
 func (gui *Gui) showTables() error {
-	var query string
-
-	switch gui.c.Driver() {
-	case "postgres":
-		fallthrough
-	case "postgresql":
-		query = `
-		SELECT
-			table_name
-		FROM
-			information_schema.tables
-		WHERE
-			table_schema = 'public'
-		ORDER BY
-			table_name;`
-	case "mysql":
-		query = "SHOW TABLES;"
-	}
-
-	rows, err := gui.c.DB().Queryx(query)
+	tables, err := gui.c.ShowTables()
 	if err != nil {
 		return err
 	}
@@ -39,12 +20,7 @@ func (gui *Gui) showTables() error {
 		return err
 	}
 
-	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			return err
-		}
-
+	for _, table := range tables {
 		fmt.Fprintf(rv, "%s\n", table)
 	}
 

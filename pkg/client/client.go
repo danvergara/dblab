@@ -73,6 +73,45 @@ func (c *Client) Query(q string) ([][]string, []string, error) {
 	return resultSet, columnNames, nil
 }
 
+// ShowTables list all the tables in the database on the tables panel.
+func (c *Client) ShowTables() ([]string, error) {
+	var query string
+	tables := make([]string, 0)
+
+	switch c.driver {
+	case "postgres":
+		fallthrough
+	case "postgresql":
+		query = `
+		SELECT
+			table_name
+		FROM
+			information_schema.tables
+		WHERE
+			table_schema = 'public'
+		ORDER BY
+			table_name;`
+	case "mysql":
+		query = "SHOW TABLES;"
+	}
+
+	rows, err := c.db.Queryx(query)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var table string
+		if err := rows.Scan(&table); err != nil {
+			return nil, err
+		}
+
+		tables = append(tables, table)
+	}
+
+	return tables, nil
+}
+
 // TableContent returns all the rows of a table.
 func (c *Client) TableContent(tableName string) ([][]string, []string, error) {
 	query := fmt.Sprintf("SELECT * FROM %s;", tableName)
