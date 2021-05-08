@@ -28,7 +28,7 @@ func handleArgs() {
 	if len(args) >= 1 {
 		switch args[0] {
 		case "seed":
-			connString := cfg.GetDBConnStr()
+			connString := cfg.GetSQLXDBConnStr()
 			db, err := sqlx.Open(cfg.Driver(), connString)
 			if err != nil {
 				log.Fatalf("Error opening DB: %v", err)
