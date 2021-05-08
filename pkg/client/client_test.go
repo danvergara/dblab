@@ -77,6 +77,7 @@ func TestNewClientByUserData(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		SSL:    "disable",
 	}
 
 	c, err := New(opts)
@@ -99,6 +100,7 @@ func TestNewClientPing(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		SSL:    "disable",
 	}
 
 	c, err := New(opts)
@@ -111,4 +113,29 @@ func TestNewClientPing(t *testing.T) {
 	if err := c.DB().Ping(); err != nil {
 		t.Error(err)
 	}
+}
+
+func TestQuery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+	}
+
+	c, _ := New(opts)
+
+	r, co, err := c.Query("SELECT * FROM products;")
+	t.Logf("len of result %d\n", len(r))
+
+	assert.Equal(t, 100, len(r))
+	assert.Equal(t, 3, len(co))
+	assert.NoError(t, err)
 }
