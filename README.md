@@ -75,7 +75,7 @@ Otherwise, you might me located at the tables panel, then you can navigate by us
 ### Key Bindings
 Key                                     | Description
 ----------------------------------------|---------------------------------------
-<kbd>Enter</kbd>                        | If the query panel is active, execute the query
+<kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query
 <kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel
 <kbd>Ctrl+h</kbd>                       | Toggle to the panel on the left
 <kbd>Ctrl+j</kbd>                       | Toggle to the panel below
