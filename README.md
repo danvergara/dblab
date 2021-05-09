@@ -83,6 +83,8 @@ Key                                     | Description
 <kbd>Ctrl+l</kbd>                       | Toggle to the panel on the right
 <kbd>Arrow Up</kbd>                     | Next row of the result set, on the rows panel. Next table on the tables panel
 <kbd>Arrow Down</kbd>                   | Previous row of the result set, on the rows panel. Previous table on the tables panel
+<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the rows panel
+<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the rows panel
 <kbd>Ctrl+c</kbd>                       | Quit
 
 ## Contribute
