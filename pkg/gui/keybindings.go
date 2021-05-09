@@ -23,7 +23,7 @@ func (gui *Gui) keybindings() error {
 	}
 
 	// SQL helpers
-	if err := gui.g.SetKeybinding("query", gocui.KeyEnter, gocui.ModNone, gui.inputQuery()); err != nil {
+	if err := gui.g.SetKeybinding("query", gocui.KeyCtrlSpace, gocui.ModNone, gui.inputQuery()); err != nil {
 		return err
 	}
 
