@@ -64,7 +64,14 @@ func (c *Client) Query(q string) ([][]string, []string, error) {
 		// Convert []interface{} into []string.
 		s := make([]string, len(cols))
 		for i, v := range cols {
-			s[i] = fmt.Sprint(v)
+			switch v.(type) {
+			case string, rune, []byte:
+				s[i] = fmt.Sprintf("%s", v)
+			case nil:
+				s[i] = fmt.Sprint(v)
+			default:
+				s[i] = fmt.Sprintf("%v", v)
+			}
 		}
 
 		resultSet = append(resultSet, s)
