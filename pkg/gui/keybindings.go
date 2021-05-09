@@ -57,6 +57,14 @@ func (gui *Gui) keybindings() error {
 		return err
 	}
 
+	if err := gui.g.SetKeybinding("rows", gocui.KeyArrowRight, gocui.ModNone, cursorRight); err != nil {
+		return err
+	}
+
+	if err := gui.g.SetKeybinding("rows", gocui.KeyArrowLeft, gocui.ModNone, cursorLeft); err != nil {
+		return err
+	}
+
 	// quit function event.
 	if err := gui.g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		return err

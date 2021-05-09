@@ -108,6 +108,36 @@ func cursorDown(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func cursorRight(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		ox, oy := v.Origin()
+		cx, cy := v.Cursor()
+
+		if err := v.SetCursor(cx+1, cy); err != nil {
+			if err := v.SetOrigin(ox+1, oy); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func cursorLeft(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		ox, oy := v.Origin()
+		cx, cy := v.Cursor()
+
+		if err := v.SetCursor(cx-1, cy); err != nil && ox > 0 {
+			if err := v.SetOrigin(ox-1, oy); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // quit is called to end the gui app.
 func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
