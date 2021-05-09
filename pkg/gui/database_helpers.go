@@ -40,8 +40,6 @@ func renderTable(v *gocui.View, columns []string, resultSet [][]string) {
 // runQuery run the introduced query in the query panel.
 func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
-
-		// Cleans up the view.
 		v.Rewind()
 
 		ov, err := gui.g.View("rows")
@@ -49,8 +47,7 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 			return err
 		}
 
-		// Cleansi up the rows view.
-		ov.Rewind()
+		// Cleans up the rows view.
 		ov.Clear()
 
 		resultSet, columnNames, err := gui.c.Query(v.Buffer())
@@ -69,6 +66,8 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 
 // selectTable perfoms a select statement based on the selected table.
 func (gui *Gui) selectTable(g *gocui.Gui, v *gocui.View) error {
+	v.Rewind()
+
 	_, cy := v.Cursor()
 
 	t, err := v.Line(cy)
@@ -87,8 +86,11 @@ func (gui *Gui) selectTable(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	// Cleans the view.
-	ov.Rewind()
 	ov.Clear()
+
+	if err := ov.SetCursor(0, 0); err != nil {
+		return err
+	}
 
 	renderTable(ov, columnNames, resultSet)
 

@@ -48,9 +48,9 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 			return err
 		}
 
-		fmt.Fprintln(v, "Type the sql query above. Press Ctrl-c to quit.")
-
 		v.Title = "Rows"
+
+		fmt.Fprintln(v, "Type the sql query above. Press Ctrl-c to quit.")
 	}
 
 	return nil
