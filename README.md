@@ -66,7 +66,7 @@ db --url postgres://user:password@host:port/database?sslmode=[mode]
 db --url mysql://user:password@tcp(host:port)/db
 ```
 
-If the query panel is active, type the desired query and press <kbd>Enter</kbd> to see the results on the rows panel below.
+If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
 Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd>. If you want to see the rows of a table, press <kbd>Enter</kbd>.
 
 <img src="screenshots/dblab-screen-shot.png" />
