@@ -55,15 +55,15 @@ Use "dblab [command] --help" for more information about a command.
 
 ## Usage
 
-```
-dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres
+```sh
+$ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres
 ```
 
 Connection URL scheme is also supported:
 
-```
-db --url postgres://user:password@host:port/database?sslmode=[mode]
-db --url mysql://user:password@tcp(host:port)/db
+```sh
+$ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
+$ dblab --url mysql://user:password@tcp(host:port)/db
 ```
 
 If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
