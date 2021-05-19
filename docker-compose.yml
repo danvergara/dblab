@@ -11,7 +11,19 @@ services:
       - '5432:5432'
     networks:
       - dblab
-  
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: 5@klkbN#ABC
+      MYSQL_ROOT_PASSWORD: myuser
+      MYSQL_DATABASE: mydb
+    ports:
+      - '3306:3306'
+    networks:
+      - dblab
+
   dblab:
     build:
       context: .
@@ -26,6 +38,23 @@ services:
       - DB_PORT=5432
       - DB_DRIVER=postgres
     entrypoint: ["/bin/bash", "./scripts/entrypoint.dev.sh"]
+    networks:
+      - dblab
+
+  dblab-mysql:
+    build:
+      context: .
+      target: builder
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=myuser
+      - DB_PASSWORD=5@klkbN#ABC
+      - DB_NAME=mydb
+      - DB_PORT=3306
+      - DB_DRIVER=mysql
+    entrypoint: ["/bin/bash", "./scripts/entrypoint-mysql.dev.sh"]
     networks:
       - dblab
 
