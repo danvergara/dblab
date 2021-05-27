@@ -56,6 +56,11 @@ up:
 down:
 	docker-compose down
 
+.PHONY: form
+## form: Runs the application with no arguments
+form: build
+	./dblab
+
 .PHONY: help
 ## help: Prints this help message
 help:
