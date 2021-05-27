@@ -24,6 +24,7 @@ import (
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/connection"
+	"github.com/danvergara/dblab/pkg/form"
 	"github.com/danvergara/dblab/pkg/gui"
 	"github.com/jroimartin/gocui"
 	"github.com/spf13/cobra"
@@ -52,7 +53,10 @@ func NewRootCmd() *cobra.Command {
 		Short: "Interactive databse client",
 		Long:  `dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts := command.Options{
+			var opts command.Options
+			var err error
+
+			opts = command.Options{
 				Driver: driver,
 				URL:    url,
 				Host:   host,
@@ -61,6 +65,13 @@ func NewRootCmd() *cobra.Command {
 				Pass:   pass,
 				DBName: db,
 				SSL:    ssl,
+			}
+
+			if form.IsEmpty(opts) {
+				opts, err = form.Run()
+				if err != nil {
+					return err
+				}
 			}
 
 			if err := connection.ValidateOpts(opts); err != nil {
