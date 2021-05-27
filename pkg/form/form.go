@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	focusedStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurredButtonStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	noStyle            = lipgloss.NewStyle()
-	term               = termenv.ColorProfile()
+	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	noStyle      = lipgloss.NewStyle()
+	term         = termenv.ColorProfile()
 )
 
 // Model is a meta-model.
@@ -81,7 +80,7 @@ func (m *Model) View() string {
 		s = sslView(m)
 	}
 
-	return fmt.Sprintf("%s", s)
+	return fmt.Sprint(s)
 }
 
 // Host returns the host value.
