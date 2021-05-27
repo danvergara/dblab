@@ -30,6 +30,7 @@ git checkout -b your-branch-name origin/main
 - Using your favorite editor, make your changes.
 - Include tests that cover any code changes you make. Make sure the
   test fails without your patch. Run the tests as described below.
+- Commit your changes following the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) ([commitizen](https://github.com/commitizen-tools/commitizen) is a great tool for this purpose). The reasoning behind it is that it is easier to read, and enforces writing descriptive commits.
 - Push your commits to your fork on GitHub and
   [create a pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request). Link to the issue being addressed with
   ``fixes #123`` in the pull request in the case that you are working on an issue.
