@@ -55,6 +55,12 @@ Use "dblab [command] --help" for more information about a command.
 
 ## Usage
 
+You can start the app passing no flags or parameters, you'll be asked for connection data instead.
+
+<video controls="controls" autoplay loop style="width:70%">
+  <source type="video/webm" src="screenshots/dblab-default-form.webm"></source>
+</video>
+
 ```sh
 $ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres
 ```
