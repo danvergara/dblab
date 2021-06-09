@@ -12,11 +12,15 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 	maxX, maxY := gui.g.Size()
 
 	if v, err := gui.g.SetView("banner", 0, 0, int(0.19*float32(maxX)), int(0.14*float32(maxY))); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
 		myFigure := figure.NewFigure("dblab", "", true)
 		figure.Write(v, myFigure)
 	}
 
-	if v, err := gui.g.SetView("tables", 0, int(0.15*float32(maxY)), int(0.19*float32(maxX)), int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("tables", 0, int(0.16*float32(maxY)), int(0.19*float32(maxX)), int(0.95*float32(maxY))); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
