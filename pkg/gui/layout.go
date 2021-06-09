@@ -11,12 +11,12 @@ import (
 func (gui *Gui) layout(g *gocui.Gui) error {
 	maxX, maxY := gui.g.Size()
 
-	if v, err := g.SetView("banner", 0, 0, int(0.2*float32(maxX)), int(0.15*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("banner", 0, 0, int(0.19*float32(maxX)), int(0.14*float32(maxY))); err != nil {
 		myFigure := figure.NewFigure("dblab", "", true)
 		figure.Write(v, myFigure)
 	}
 
-	if v, err := gui.g.SetView("tables", 0, int(0.15*float32(maxY)), int(0.2*float32(maxX)), int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("tables", 0, int(0.15*float32(maxY)), int(0.19*float32(maxX)), int(0.95*float32(maxY))); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -28,7 +28,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		v.Title = "Tables"
 	}
 
-	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX, int(0.25*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX-1, int(0.24*float32(maxY))); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -43,7 +43,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		}
 	}
 
-	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
