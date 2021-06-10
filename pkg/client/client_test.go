@@ -156,7 +156,7 @@ func TestTableContent(t *testing.T) {
 
 	c, _ := New(opts)
 
-	r, co, err := c.TableContent("products;")
+	r, co, err := c.TableContent("products")
 
 	assert.Equal(t, 100, len(r))
 	assert.Equal(t, 3, len(co))
@@ -183,5 +183,29 @@ func TestShowTables(t *testing.T) {
 	tables, err := c.ShowTables()
 
 	assert.Equal(t, 4, len(tables))
+	assert.NoError(t, err)
+}
+
+func TestTableStructure(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+	}
+
+	c, _ := New(opts)
+
+	r, co, err := c.TableStructure("products")
+
+	assert.Equal(t, 3, len(r))
+	assert.Equal(t, 8, len(co))
 	assert.NoError(t, err)
 }

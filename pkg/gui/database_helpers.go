@@ -96,3 +96,35 @@ func (gui *Gui) selectTable(g *gocui.Gui, v *gocui.View) error {
 
 	return nil
 }
+
+func (gui *Gui) renderStructure(g *gocui.Gui, v *gocui.View) error {
+	v.Rewind()
+
+	_, cy := v.Cursor()
+
+	t, err := v.Line(cy)
+	if err != nil {
+		return err
+	}
+
+	resultSet, columnNames, err := gui.c.TableStructure(t)
+	if err != nil {
+		return err
+	}
+
+	ov, err := gui.g.View("structure")
+	if err != nil {
+		return err
+	}
+
+	// Cleans the view.
+	ov.Clear()
+
+	if err := ov.SetCursor(0, 0); err != nil {
+		return err
+	}
+
+	renderTable(ov, columnNames, resultSet)
+
+	return nil
+}
