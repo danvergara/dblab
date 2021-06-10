@@ -79,15 +79,20 @@ Otherwise, you might me located at the tables panel, then you can navigate by us
 Key                                     | Description
 ----------------------------------------|---------------------------------------
 <kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query
-<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel
+<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel
+<kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel
 <kbd>Ctrl+h</kbd>                       | Toggle to the panel on the left
 <kbd>Ctrl+j</kbd>                       | Toggle to the panel below
 <kbd>Ctrl+k</kbd>                       | Toggle to the panel above
 <kbd>Ctrl+l</kbd>                       | Toggle to the panel on the right
 <kbd>Arrow Up</kbd>                     | Next row of the result set, on the rows panel. Next table on the tables panel
+<kbd>k</kbd>                            | Next row of the result set, on the rows panel. Next table on the tables panel
 <kbd>Arrow Down</kbd>                   | Previous row of the result set, on the rows panel. Previous table on the tables panel
+<kbd>j</kbd>                            | Previous row of the result set, on the rows panel. Previous table on the tables panel
 <kbd>Arrow Right</kbd>                  | Horizontal scrolling on the rows panel
+<kbd>l</kbd>                            | Horizontal scrolling on the rows panel
 <kbd>Arrow Left</kbd>                   | Horizontal scrolling on the rows panel
+<kbd>h</kbd>                            | Horizontal scrolling on the rows panel
 <kbd>Ctrl+c</kbd>                       | Quit
 
 ## Contribute
