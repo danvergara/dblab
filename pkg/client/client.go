@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 
 	// mysql driver.
@@ -39,11 +40,11 @@ func New(opts command.Options) (*Client, error) {
 }
 
 // Query returns performs the query and returns the result set and the colum names.
-func (c *Client) Query(q string) ([][]string, []string, error) {
+func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, error) {
 	resultSet := [][]string{}
 
 	// Runs the query extracting the content of the view calling the Buffer method.
-	rows, err := c.db.Queryx(q)
+	rows, err := c.db.Queryx(q, args...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -124,6 +125,49 @@ func (c *Client) TableContent(tableName string) ([][]string, []string, error) {
 	query := fmt.Sprintf("SELECT * FROM %s;", tableName)
 
 	return c.Query(query)
+}
+
+// TableStructure returns the structure of the table columns.
+func (c *Client) TableStructure(tableName string) ([][]string, []string, error) {
+	var query string
+
+	switch c.driver {
+	case "postgres":
+		fallthrough
+	case "postgresql":
+		query = `
+        SELECT
+			c.column_name,
+			c.is_nullable,
+			c.data_type,
+			c.character_maximum_length,
+			c.numeric_precision,
+			c.numeric_scale,
+			c.ordinal_position,
+			tc.constraint_type pkey
+		FROM
+			information_schema.columns c
+		LEFT JOIN
+			information_schema.constraint_column_usage AS ccu
+		ON
+			c.table_schema = ccu.table_schema
+			AND c.table_name = ccu.table_name
+			AND c.column_name = ccu.column_name
+		LEFT JOIN
+			information_schema.table_constraints AS tc
+		ON
+			ccu.constraint_schema = tc.constraint_schema
+			and ccu.constraint_name = tc.constraint_name
+		WHERE
+			c.table_schema = 'public'
+			AND c.table_name = $1;`
+		return c.Query(query, tableName)
+	case "mysql":
+		query = fmt.Sprintf("DESCRIBE %s;", tableName)
+		return c.Query(query)
+	default:
+		return nil, nil, errors.New("not supported driver")
+	}
 }
 
 // DB Return the db attribute.
