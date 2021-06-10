@@ -47,6 +47,16 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		}
 	}
 
+	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Title = "Structure"
+
+		fmt.Fprintln(v, "Please select a table!")
+	}
+
 	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -58,6 +68,29 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 	}
 
 	return nil
+}
+
+func moveDown(g *gocui.Gui, v *gocui.View) error {
+	if v == nil || v.Name() == "query" {
+		_, err := g.SetCurrentView("rows")
+		if err != nil {
+			return err
+		}
+		_, err = g.SetViewOnTop("rows")
+		if err != nil {
+			return err
+		}
+
+		g.Highlight = true
+		g.Cursor = true
+		g.SelFgColor = gocui.ColorGreen
+
+		return err
+	}
+
+	_, err := g.SetCurrentView("view")
+
+	return err
 }
 
 func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
@@ -76,6 +109,34 @@ func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
 
 		return err
 	}
+}
+
+func setViewOnTop(g *gocui.Gui, v *gocui.View) error {
+	if v == nil || v.Name() == "rows" {
+		return switchView(g, "structure")
+	}
+
+	if v == nil || v.Name() == "structure" {
+		return switchView(g, "rows")
+	}
+
+	return nil
+}
+
+func switchView(g *gocui.Gui, v string) error {
+	if _, err := g.SetViewOnTop(v); err != nil {
+		return err
+	}
+
+	if _, err := g.SetCurrentView(v); err != nil {
+		return err
+	}
+
+	g.Highlight = true
+	g.Cursor = true
+	g.SelFgColor = gocui.ColorGreen
+
+	return nil
 }
 
 func cursorUp(g *gocui.Gui, v *gocui.View) error {
