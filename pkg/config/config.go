@@ -26,7 +26,6 @@ type Config struct {
 	dbPort     string
 	dbName     string
 	dbDriver   string
-	dbURL      string
 	testDBHost string
 	testDBName string
 	apiPort    string
