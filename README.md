@@ -39,7 +39,7 @@ Available Commands:
   version     The version of the project
 
 Flags:
-      --config string   config file (default is $HOME/.dblab.yaml)
+      --config          get the connection data from a config file (default is $HOME/.dblab.yaml or the current directory)
       --db string       Database name
       --driver string   Database driver
   -h, --help            help for dblab
@@ -69,8 +69,30 @@ $ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
 $ dblab --url mysql://user:password@tcp(host:port)/db
 ```
 
+Now, you can use a configuration file to make a connection to the database.
+
+```sh
+$ dbladb --config
+```
+
+`dblab` is going to look for a file called `.dblab.yaml`. For now, the only two places where you can drop a config file are $HOME ($HOME/.dblab.yaml) and the current directory where you run the command line tool.
+
+`.dblab.yaml` example:
+
+```yaml
+database:
+  host: "localhost"
+  port: 5432
+  db: "users"
+  password: "password"
+  user: "postgres"
+  driver: "postgres"
+```
+
+Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respectively.
+
 If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
-Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd>. If you want to see the rows of a table, press <kbd>Enter</kbd>.
+Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
 
 <img src="screenshots/dblab-screen-shot.png" />
 
