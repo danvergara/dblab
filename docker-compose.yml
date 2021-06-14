@@ -28,6 +28,8 @@ services:
     build:
       context: .
       target: builder
+    volumes:
+      - ./:/src/app:z
     depends_on:
       - postgres
     environment:
@@ -45,6 +47,8 @@ services:
     build:
       context: .
       target: builder
+    volumes:
+      - ./:/src/app:z
     depends_on:
       - mysql
     environment:
