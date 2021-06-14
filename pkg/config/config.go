@@ -4,16 +4,29 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/danvergara/dblab/pkg/command"
+	"github.com/kkyr/fig"
 )
 
 // Config struct is used to store the db connection data.
 type Config struct {
+	Database struct {
+		Host     string `default:"127.0.0.1"`
+		Port     string `validate:"required"`
+		DB       string `validate:"required"`
+		User     string `validate:"required"`
+		Password string `validate:"required"`
+		Driver   string `validate:"required"`
+		SSL      string `default:"disable"`
+	}
 	dbUser     string
 	dbPswd     string
 	dbHost     string
 	dbPort     string
 	dbName     string
 	dbDriver   string
+	dbURL      string
 	testDBHost string
 	testDBName string
 	apiPort    string
@@ -38,6 +51,33 @@ func Get() *Config {
 	flag.Parse()
 
 	return conf
+}
+
+// Init reads in config file and returns a commands/Options instance.
+func Init() (command.Options, error) {
+	var opts command.Options
+	var cfg Config
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return opts, err
+	}
+
+	if err := fig.Load(&cfg, fig.File(".dblab.yaml"), fig.Dirs(".", home)); err != nil {
+		return opts, err
+	}
+
+	opts = command.Options{
+		Driver: cfg.Database.Driver,
+		Host:   cfg.Database.Host,
+		Port:   cfg.Database.Port,
+		User:   cfg.Database.User,
+		Pass:   cfg.Database.Password,
+		DBName: cfg.Database.DB,
+		SSL:    cfg.Database.SSL,
+	}
+
+	return opts, nil
 }
 
 // GetDBConnStr returns the connection string.
