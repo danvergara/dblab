@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmoiron/sqlx v1.3.3
 	github.com/jroimartin/gocui v0.4.0
-	github.com/kkyr/fig v0.2.0 // indirect
+	github.com/kkyr/fig v0.2.0
 	github.com/lib/pq v1.10.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/muesli/termenv v0.8.1
