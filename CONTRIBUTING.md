@@ -41,10 +41,38 @@ git push --set-upstream fork your-branch-name
 
 ## Running the tests
 
-Run the test suite with make.
+### Setting up the environment
+
+First of all, the repository includes a docker-compose file and a makefile. The docker file declares 4 services: a postgres container, a mysql one, a dblab container that runs migrations and seeds on the postgres container and other one that does the same for the mysql container. The makefile is used to automate some task. To spin up all the containers type:
 
 ```bash
-make test
+make up
+```
+
+Then, you'll have 2 containers up and running in your system for every kind of database supported by dblab.
+
+Run dblab openning a connection with the postgres container.
+
+```bash
+make run
+```
+
+You can do the same with the mysql container by runnning:
+
+```bash
+make run-mysql
+```
+
+Run the unit test suite with make.
+
+```bash
+make unit-test
+```
+
+Run the integration test with make too, but make sure the database containers are up and running.
+
+```bash
+make int-test
 ```
 
 This runs the tests. You can check all the options with `help` command.
