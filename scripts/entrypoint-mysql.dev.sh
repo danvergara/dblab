@@ -2,7 +2,7 @@
 
 set -e
 
-echo "Waiting for postgres..."
+echo "Waiting for mysql..."
 
 while ! nc -z mysql 3306; do
   sleep 0.1
