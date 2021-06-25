@@ -122,7 +122,13 @@ func (c *Client) ShowTables() ([]string, error) {
 
 // TableContent returns all the rows of a table.
 func (c *Client) TableContent(tableName string) ([][]string, []string, error) {
-	query := fmt.Sprintf("SELECT * FROM %s;", tableName)
+	var query string
+
+	if c.driver == "postgres" || c.driver == "postgresql" {
+		query = fmt.Sprintf("SELECT * FROM public.%s;", tableName)
+	} else {
+		query = fmt.Sprintf("SELECT * FROM %s;", tableName)
+	}
 
 	return c.Query(query)
 }
