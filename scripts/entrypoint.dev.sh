@@ -10,7 +10,7 @@ done
 
 echo "PostgreSQL started"
 
-echo "Runinng the migrations against the DB"
+echo "Running the migrations against the DB"
 go run cmd/dbmigrate/main.go
 
 echo "Seeding the database"

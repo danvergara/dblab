@@ -69,7 +69,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUPostgresRLFormat,
+				err:      ErrInvalidPostgresURLFormat,
 			},
 		},
 		{
@@ -82,7 +82,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUPostgresRLFormat,
+				err:      ErrInvalidPostgresURLFormat,
 			},
 		},
 		// mysql
@@ -132,7 +132,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUMySQLRLFormat,
+				err:      ErrInvalidMySQLURLFormat,
 			},
 		},
 		{
@@ -145,7 +145,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUMySQLRLFormat,
+				err:      ErrInvalidMySQLURLFormat,
 			},
 		},
 	}
@@ -353,7 +353,7 @@ func TestFormatPostgresURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUPostgresRLFormat,
+				err:      ErrInvalidPostgresURLFormat,
 			},
 		},
 		{
@@ -366,7 +366,7 @@ func TestFormatPostgresURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUPostgresRLFormat,
+				err:      ErrInvalidPostgresURLFormat,
 			},
 		},
 	}
@@ -453,7 +453,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUMySQLRLFormat,
+				err:      ErrInvalidMySQLURLFormat,
 			},
 		},
 		{
@@ -466,7 +466,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidUMySQLRLFormat,
+				err:      ErrInvalidMySQLURLFormat,
 			},
 		},
 	}

@@ -48,7 +48,7 @@ func Execute(db *sqlx.DB, driver string, seedMethodNames ...string) {
 func seed(s Seed, seedMethodName string) {
 	// Get the reflect value of the method.
 	m := reflect.ValueOf(s).MethodByName(seedMethodName)
-	// Exit if the method diesn't exist.
+	// Exit if the method doesn't exist.
 	if !m.IsValid() {
 		log.Fatal("no method called", seedMethodName)
 	}
@@ -56,5 +56,5 @@ func seed(s Seed, seedMethodName string) {
 	// Execute the method.
 	log.Println("seeding", seedMethodName, "...")
 	m.Call(nil)
-	log.Println("seed", seedMethodName, "succeded")
+	log.Println("seed", seedMethodName, "succeed")
 }

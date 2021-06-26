@@ -64,7 +64,7 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 	}
 }
 
-// selectTable perfoms a select statement based on the selected table.
+// selectTable performs a select statement based on the selected table.
 func (gui *Gui) selectTable(g *gocui.Gui, v *gocui.View) error {
 	v.Rewind()
 
