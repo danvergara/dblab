@@ -16,7 +16,7 @@ int-test:
 	docker-compose run --entrypoint=make dblab test
 
 .PHONY: linter
-## linter: Runs the colangci-lint command
+## linter: Runs the golangci-lint command
 linter:
 	golangci-lint run --enable=golint --enable=godot ./...
 

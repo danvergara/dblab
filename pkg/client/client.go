@@ -39,7 +39,7 @@ func New(opts command.Options) (*Client, error) {
 	return &c, nil
 }
 
-// Query returns performs the query and returns the result set and the colum names.
+// Query returns performs the query and returns the result set and the column names.
 func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, error) {
 	resultSet := [][]string{}
 

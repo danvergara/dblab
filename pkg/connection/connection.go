@@ -15,10 +15,10 @@ var (
 	// ErrCantDetectUSer is the error used to notify that a default username is not found
 	// in the system to be used as database username.
 	ErrCantDetectUSer = errors.New("could not detect default username")
-	// ErrInvalidUPostgresRLFormat is the error used to notify that the postgres given url is not valid.
-	ErrInvalidUPostgresRLFormat = errors.New("invalid URL - Valid format: postgres://user:password@host:port/db?sslmode=mode")
-	// ErrInvalidUMySQLRLFormat is the error used to notify that the given mysql url is not valid.
-	ErrInvalidUMySQLRLFormat = errors.New("invalid URL - valid format: mysql://user:password@tcp(host:port)/db")
+	// ErrInvalidPostgresURLFormat is the error used to notify that the postgres given url is not valid.
+	ErrInvalidPostgresURLFormat = errors.New("invalid URL - Valid format: postgres://user:password@host:port/db?sslmode=mode")
+	// ErrInvalidMySQLURLFormat is the error used to notify that the given mysql url is not valid.
+	ErrInvalidMySQLURLFormat = errors.New("invalid URL - valid format: mysql://user:password@tcp(host:port)/db")
 	// ErrInvalidURLFormat is used to notify the url is invalid.
 	ErrInvalidURLFormat = errors.New("invalid url")
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
@@ -88,13 +88,13 @@ func currentUser() (string, error) {
 
 // formatPostgresURL returns valid uri for postgres connection.
 func formatPostgresURL(opts command.Options) (string, error) {
-	if !hasValidPosgresPrefix(opts.URL) {
-		return "", fmt.Errorf("invalid prefix %s : %w", opts.URL, ErrInvalidUPostgresRLFormat)
+	if !hasValidPostgresPrefix(opts.URL) {
+		return "", fmt.Errorf("invalid prefix %s : %w", opts.URL, ErrInvalidPostgresURLFormat)
 	}
 
 	uri, err := url.Parse(opts.URL)
 	if err != nil {
-		return "", fmt.Errorf("%v : %w", err, ErrInvalidUPostgresRLFormat)
+		return "", fmt.Errorf("%v : %w", err, ErrInvalidPostgresURLFormat)
 	}
 
 	result := map[string]string{}
@@ -124,7 +124,7 @@ func formatPostgresURL(opts command.Options) (string, error) {
 // formatMySQLURL returns valid uri for mysql connection.
 func formatMySQLURL(opts command.Options) (string, error) {
 	if !hasValidMySQLPrefix(opts.URL) {
-		return "", fmt.Errorf("%s, %w", opts.URL, ErrInvalidUMySQLRLFormat)
+		return "", fmt.Errorf("%s, %w", opts.URL, ErrInvalidMySQLURLFormat)
 	}
 
 	if strings.Contains(opts.URL, "3306") {
@@ -133,7 +133,7 @@ func formatMySQLURL(opts command.Options) (string, error) {
 
 	uri, err := url.Parse(opts.URL)
 	if err != nil {
-		return "", fmt.Errorf("%v %w", err, ErrInvalidUMySQLRLFormat)
+		return "", fmt.Errorf("%v %w", err, ErrInvalidMySQLURLFormat)
 	}
 
 	result := map[string]string{}
@@ -150,8 +150,8 @@ func formatMySQLURL(opts command.Options) (string, error) {
 	return uri.String(), nil
 }
 
-// hasValidPosgresPrefix checks if a given url has the driver name in it.
-func hasValidPosgresPrefix(rawurl string) bool {
+// hasValidPostgresPrefix checks if a given url has the driver name in it.
+func hasValidPostgresPrefix(rawurl string) bool {
 	return strings.HasPrefix(rawurl, "postgres://") || strings.HasPrefix(rawurl, "postgresql://")
 }
 

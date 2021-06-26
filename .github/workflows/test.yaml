@@ -34,7 +34,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      # Installs go using a sigle version.
+      # Installs go using a single version.
       - name: Install Go
         uses: actions/setup-go@v2
         with:

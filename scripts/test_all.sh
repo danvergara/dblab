@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integartion testing with dockerized database servers
+# Integration testing with dockerized database servers
 #
 
 set -e
