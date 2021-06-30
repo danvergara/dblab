@@ -6,12 +6,15 @@ import (
 	"net/url"
 	"os"
 	"os/user"
+	"regexp"
 	"strings"
 
 	"github.com/danvergara/dblab/pkg/command"
 )
 
 var (
+	// pattern used to parse an incoming dsn for mysql connection.
+	dsnPattern *regexp.Regexp
 	// ErrCantDetectUSer is the error used to notify that a default username is not found
 	// in the system to be used as database username.
 	ErrCantDetectUSer = errors.New("could not detect default username")
@@ -24,6 +27,14 @@ var (
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
 	ErrInvalidDriver = errors.New("invalid driver")
 )
+
+func init() {
+	dsnPattern = regexp.MustCompile(
+		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
+			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
+			`\/(?P<dbname>.*?)` + // /dbname
+			`(?:\?(?P<params>[^\?]*))?$`) // [?param1=value1&paramN=valueN]
+}
 
 // BuildConnectionFromOpts return the connection uri string given the options passed by the uses.
 func BuildConnectionFromOpts(opts command.Options) (string, error) {
@@ -127,12 +138,22 @@ func formatMySQLURL(opts command.Options) (string, error) {
 		return "", fmt.Errorf("%s, %w", opts.URL, ErrInvalidMySQLURLFormat)
 	}
 
-	if strings.Contains(opts.URL, "3306") {
-		return opts.URL, nil
-	}
+	var e *url.Error
 
 	uri, err := url.Parse(opts.URL)
 	if err != nil {
+		// checks if *url.Error is the type of the error.
+		// if the url is a dsn for mysql connection
+		// the most likely is this is gonna be true.
+		if errors.As(err, &e) {
+			url, err := parseDSN(opts.URL)
+			if err != nil {
+				return "", fmt.Errorf("%v %w", err, ErrInvalidMySQLURLFormat)
+			}
+
+			return url, nil
+		}
+
 		return "", fmt.Errorf("%v %w", err, ErrInvalidMySQLURLFormat)
 	}
 
@@ -148,6 +169,21 @@ func formatMySQLURL(opts command.Options) (string, error) {
 	uri.RawQuery = query.Encode()
 
 	return uri.String(), nil
+}
+
+// validates if dsn pattern match with the parameter.
+func parseDSN(dsn string) (string, error) {
+	matches := dsnPattern.FindStringSubmatch(dsn)
+	if matches == nil {
+		return "", errors.New("not match")
+	}
+
+	names := dsnPattern.SubexpNames()
+	if len(names) == 0 {
+		return "", errors.New("not names")
+	}
+
+	return dsn, nil
 }
 
 // hasValidPostgresPrefix checks if a given url has the driver name in it.
