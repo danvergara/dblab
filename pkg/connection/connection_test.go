@@ -444,6 +444,30 @@ func TestFormatMySQLURL(t *testing.T) {
 			},
 		},
 		{
+			name: "valid mysql traditional",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					URL:    "mysql://user:password@/dbname?sql_mode=TRADITIONAL",
+				},
+			},
+			want: want{
+				uri: "mysql://user:password@/dbname?sql_mode=TRADITIONAL",
+			},
+		},
+		{
+			name: "valid mysql google cloud sql on app engine",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					URL:    "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
+				},
+			},
+			want: want{
+				uri: "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
+			},
+		},
+		{
 			name: "error misspelled mysql",
 			given: given{
 				opts: command.Options{
@@ -490,6 +514,66 @@ func TestFormatMySQLURL(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.uri, uri)
+		})
+	}
+}
+
+func TestParseDSN(t *testing.T) {
+	type given struct {
+		dsn string
+	}
+	type want struct {
+		uri      string
+		hasError bool
+	}
+	var cases = []struct {
+		name  string
+		given given
+		want  want
+	}{
+		{
+			name: "valid mysql traditional",
+			given: given{
+				dsn: "mysql://user:password@/dbname?sql_mode=TRADITIONAL",
+			},
+			want: want{
+				uri: "mysql://user:password@/dbname?sql_mode=TRADITIONAL",
+			},
+		},
+		{
+			name: "valid mysql google cloud sql on app engine",
+			given: given{
+				dsn: "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
+			},
+			want: want{
+				uri: "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
+			},
+		},
+		{
+			name: "error invalid url",
+			given: given{
+				dsn: "not-a-url",
+			},
+			want: want{
+				hasError: true,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			url, err := parseDSN(tc.given.dsn)
+
+			if tc.want.hasError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want.uri, url)
 		})
 	}
 }
