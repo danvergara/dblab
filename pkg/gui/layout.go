@@ -16,6 +16,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
+		v.FrameColor = gocui.ColorMagenta
 
 		myFigure := figure.NewFigure("dblab", "", true)
 		figure.Write(v, myFigure)
@@ -31,17 +32,21 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		}
 
 		v.Title = "Tables"
+		v.Highlight = true
+		v.SelBgColor = gocui.ColorGreen
+		v.SelFgColor = gocui.ColorBlack
 	}
 
-	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX-1, int(0.24*float32(maxY)), 0); err != nil {
+	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX-1, int(0.23*float32(maxY)), 0); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 
 		v.Title = "SQL Query"
-
 		v.Editable = true
 		v.Wrap = true
+		v.Highlight = true
+		g.SelFrameColor = gocui.ColorGreen
 
 		if _, err := gui.g.SetCurrentView("query"); err != nil {
 			return err
@@ -84,7 +89,6 @@ func moveDown(g *gocui.Gui, v *gocui.View) error {
 
 		g.Highlight = true
 		g.Cursor = true
-		g.SelFgColor = gocui.ColorGreen
 
 		return err
 	}
@@ -101,7 +105,6 @@ func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
 
 			g.Highlight = true
 			g.Cursor = true
-			g.SelFgColor = gocui.ColorGreen
 
 			return err
 		}
@@ -115,6 +118,7 @@ func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
 func setViewOnTop(g *gocui.Gui, v *gocui.View) error {
 	if v == nil || v.Name() == "rows" {
 		return switchView(g, "structure")
+
 	}
 
 	if v == nil || v.Name() == "structure" {
@@ -135,7 +139,6 @@ func switchView(g *gocui.Gui, v string) error {
 
 	g.Highlight = true
 	g.Cursor = true
-	g.SelFgColor = gocui.ColorGreen
 
 	return nil
 }
