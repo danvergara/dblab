@@ -1,8 +1,10 @@
 package gui
 
 import (
+	"errors"
+
+	"github.com/awesome-gocui/gocui"
 	"github.com/danvergara/dblab/pkg/client"
-	"github.com/jroimartin/gocui"
 )
 
 // Gui wraps the gocui Gui object which handles rendering and events.
@@ -34,7 +36,7 @@ func (gui *Gui) Run() error {
 		return err
 	}
 
-	if err := gui.g.MainLoop(); err != nil && err != gocui.ErrQuit {
+	if err := gui.g.MainLoop(); err != nil && !errors.Is(err, gocui.ErrQuit) {
 		return err
 	}
 
