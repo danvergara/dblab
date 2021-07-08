@@ -128,3 +128,15 @@ func (gui *Gui) renderStructure(g *gocui.Gui, v *gocui.View) error {
 
 	return nil
 }
+
+// metadata get the metadata from a given table name.
+func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
+	if err := gui.selectTable(g, v); err != nil {
+		return err
+	}
+
+	if err := gui.renderStructure(g, v); err != nil {
+		return err
+	}
+	return nil
+}
