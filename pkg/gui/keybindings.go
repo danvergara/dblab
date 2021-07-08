@@ -39,11 +39,7 @@ func (gui *Gui) keybindings() error {
 		return err
 	}
 
-	if err := gui.g.SetKeybinding("tables", gocui.KeyEnter, gocui.ModNone, gui.renderStructure); err != nil {
-		return err
-	}
-
-	if err := gui.g.SetKeybinding("tables", gocui.KeyEnter, gocui.ModNone, gui.selectTable); err != nil {
+	if err := gui.g.SetKeybinding("tables", gocui.KeyEnter, gocui.ModNone, gui.metadata); err != nil {
 		return err
 	}
 
