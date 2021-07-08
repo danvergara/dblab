@@ -30,7 +30,7 @@ func NewRootCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "dblab",
 		Short: "Interactive database client",
-		Long:  `dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.`,
+		Long:  `dblab is a terminal UI based interactive database client for Postgres and MySQL.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var opts command.Options
 			var err error
