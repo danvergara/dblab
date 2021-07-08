@@ -3,8 +3,8 @@ package gui
 import (
 	"fmt"
 
+	"github.com/awesome-gocui/gocui"
 	"github.com/fatih/color"
-	"github.com/jroimartin/gocui"
 	"github.com/olekukonko/tablewriter"
 )
 
