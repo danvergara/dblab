@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/awesome-gocui/gocui"
 	"github.com/danvergara/dblab/pkg/app"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
@@ -9,6 +8,7 @@ import (
 	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/danvergara/dblab/pkg/form"
 	"github.com/danvergara/dblab/pkg/gui"
+	"github.com/danvergara/gocui"
 	"github.com/spf13/cobra"
 )
 
@@ -69,7 +69,7 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			gcui, err := gocui.NewGui(gocui.OutputNormal, true)
+			gcui, err := gocui.NewGui(gocui.OutputNormal)
 			if err != nil {
 				return err
 			}
