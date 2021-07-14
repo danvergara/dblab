@@ -4,25 +4,25 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/awesome-gocui/gocui"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/danvergara/gocui"
 )
 
 // Layout is called for every screen re-render e.g. when the screen is resized.
 func (gui *Gui) layout(g *gocui.Gui) error {
 	maxX, maxY := gui.g.Size()
 
-	if v, err := gui.g.SetView("banner", 0, 0, int(0.19*float32(maxX)), int(0.14*float32(maxY)), 0); err != nil {
+	if v, err := gui.g.SetView("banner", 0, 0, int(0.19*float32(maxX)), int(0.14*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
-		v.FrameColor = gocui.ColorMagenta
 
+		v.FgColor = gocui.ColorMagenta
 		myFigure := figure.NewFigure("dblab", "", true)
 		figure.Write(v, myFigure)
 	}
 
-	if v, err := gui.g.SetView("tables", 0, int(0.16*float32(maxY)), int(0.19*float32(maxX)), int(0.95*float32(maxY)), 0); err != nil {
+	if v, err := gui.g.SetView("tables", 0, int(0.16*float32(maxY)), int(0.19*float32(maxX)), int(0.95*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -37,7 +37,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		v.SelFgColor = gocui.ColorBlack
 	}
 
-	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX-1, int(0.23*float32(maxY)), 0); err != nil {
+	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX-1, int(0.24*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -46,14 +46,13 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		v.Editable = true
 		v.Wrap = true
 		v.Highlight = true
-		g.SelFrameColor = gocui.ColorGreen
 
 		if _, err := gui.g.SetCurrentView("query"); err != nil {
 			return err
 		}
 	}
 
-	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY)), 0); err != nil {
+	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -63,7 +62,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Please select a table!")
 	}
 
-	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY)), 0); err != nil {
+	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}

@@ -1,7 +1,7 @@
 package gui
 
 import (
-	"github.com/awesome-gocui/gocui"
+	"github.com/danvergara/gocui"
 )
 
 func (gui *Gui) keybindings() error {
