@@ -28,7 +28,7 @@ func (gui *Gui) Run() error {
 	gui.g.Highlight = true
 	gui.g.Cursor = true
 	gui.g.Mouse = true
-	gui.g.SelFgColor = gocui.ColorGreen
+	gui.g.SelFrameColor = gocui.ColorGreen
 
 	gui.g.SetManagerFunc(gui.layout)
 
