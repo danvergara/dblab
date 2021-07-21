@@ -17,7 +17,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 			return err
 		}
 
-		v.FgColor = gocui.ColorMagenta
+		v.FrameColor = gocui.ColorMagenta
 		myFigure := figure.NewFigure("dblab", "", true)
 		figure.Write(v, myFigure)
 	}
