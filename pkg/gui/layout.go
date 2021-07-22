@@ -52,6 +52,16 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		}
 	}
 
+	if v, err := gui.g.SetView("constraints", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		v.Title = "Constraints"
+
+		fmt.Fprintln(v, "Please select a table!")
+	}
+
 	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
@@ -114,17 +124,20 @@ func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
 	}
 }
 
-func setViewOnTop(g *gocui.Gui, v *gocui.View) error {
-	if v == nil || v.Name() == "rows" {
-		return switchView(g, "structure")
+func setViewOnTop(from, to string) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
 
+		if v == nil || v.Name() == from {
+			return switchView(g, to)
+
+		}
+
+		if v == nil || v.Name() == to {
+			return switchView(g, from)
+		}
+
+		return nil
 	}
-
-	if v == nil || v.Name() == "structure" {
-		return switchView(g, "rows")
-	}
-
-	return nil
 }
 
 func switchView(g *gocui.Gui, v string) error {
