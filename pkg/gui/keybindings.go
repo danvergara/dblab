@@ -34,6 +34,14 @@ func (gui *Gui) keybindings() error {
 		return err
 	}
 
+	if err := gui.g.SetKeybinding("constraints", gocui.KeyCtrlH, gocui.ModNone, nextView("constraints", "tables")); err != nil {
+		return err
+	}
+
+	if err := gui.g.SetKeybinding("constraints", gocui.KeyCtrlK, gocui.ModNone, nextView("constraints", "query")); err != nil {
+		return err
+	}
+
 	// SQL helpers
 	if err := gui.g.SetKeybinding("query", gocui.KeyCtrlSpace, gocui.ModNone, gui.inputQuery()); err != nil {
 		return err
@@ -93,11 +101,19 @@ func (gui *Gui) keybindings() error {
 		return err
 	}
 
-	if err := gui.g.SetKeybinding("structure", gocui.KeyCtrlS, gocui.ModNone, setViewOnTop); err != nil {
+	if err := gui.g.SetKeybinding("constraints", gocui.KeyCtrlF, gocui.ModNone, setViewOnTop("rows", "constraints")); err != nil {
 		return err
 	}
 
-	if err := gui.g.SetKeybinding("rows", gocui.KeyCtrlS, gocui.ModNone, setViewOnTop); err != nil {
+	if err := gui.g.SetKeybinding("rows", gocui.KeyCtrlF, gocui.ModNone, setViewOnTop("rows", "constraints")); err != nil {
+		return err
+	}
+
+	if err := gui.g.SetKeybinding("structure", gocui.KeyCtrlS, gocui.ModNone, setViewOnTop("rows", "structure")); err != nil {
+		return err
+	}
+
+	if err := gui.g.SetKeybinding("rows", gocui.KeyCtrlS, gocui.ModNone, setViewOnTop("rows", "structure")); err != nil {
 		return err
 	}
 
