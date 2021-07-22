@@ -93,6 +93,7 @@ Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respe
 
 If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
 Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
+The same can be achieved for the `constraints` view by pressing <kbd>Ctrl+F</kbd> to go back and forth between the `rows` and the `constraints` panels.
 
 <img src="screenshots/dblab-screen-shot.png" />
 
@@ -103,6 +104,7 @@ Key                                     | Description
 <kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query
 <kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel
 <kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel
+<kbd>Ctrl+F</kbd>                       | If the rows panel is active, switch to the constraints view
 <kbd>Ctrl+h</kbd>                       | Toggle to the panel on the left
 <kbd>Ctrl+j</kbd>                       | Toggle to the panel below
 <kbd>Ctrl+k</kbd>                       | Toggle to the panel above
