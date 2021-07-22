@@ -9,6 +9,7 @@ import (
 	// postgres driver.
 	_ "github.com/lib/pq"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/jmoiron/sqlx"
@@ -174,6 +175,35 @@ func (c *Client) TableStructure(tableName string) ([][]string, []string, error) 
 	default:
 		return nil, nil, errors.New("not supported driver")
 	}
+}
+
+// Constraints returns the resultet of from information_schema.table_constraints.
+func (c *Client) Constraints(tableName string) ([][]string, []string, error) {
+	var query sq.SelectBuilder
+
+	query = sq.Select(
+		`tc.constraint_name`,
+		`tc.table_name`,
+		`tc.constraint_type`,
+		`tc.enforced`,
+	).
+		From("information_schema.table_constraints AS tc").
+		Where("tc.table_name = ?")
+
+	switch c.driver {
+	case "postgres":
+		fallthrough
+	case "postgresql":
+		query = query.Where("tc.table_schema = 'public'")
+		query = query.PlaceholderFormat(sq.Dollar)
+	}
+
+	sql, _, err := query.ToSql()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return c.Query(sql, tableName)
 }
 
 // DB Return the db attribute.

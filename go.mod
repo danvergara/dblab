@@ -3,6 +3,7 @@ module github.com/danvergara/dblab
 go 1.16
 
 require (
+	github.com/Masterminds/squirrel v1.5.0
 	github.com/bxcodec/faker/v3 v3.6.0
 	github.com/charmbracelet/bubbles v0.7.9
 	github.com/charmbracelet/bubbletea v0.13.4
