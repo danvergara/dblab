@@ -209,3 +209,31 @@ func TestTableStructure(t *testing.T) {
 	assert.Equal(t, 8, len(co))
 	assert.NoError(t, err)
 }
+
+func TestConstraints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+	}
+
+	c, _ := New(opts)
+
+	r, co, err := c.Constraints("products")
+
+	t.Logf("constraints columns %v", co)
+	t.Logf("constraints content %v", r)
+
+	assert.NoError(t, err)
+	assert.Greater(t, len(r), 0)
+	assert.Greater(t, len(co), 0)
+
+}
