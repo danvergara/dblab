@@ -22,8 +22,31 @@ application to work with local or remote PostgreSQL/MySQL databases.
 
 ## Installation
 
-- [Precompiled binaries](https://github.com/danvergara/dblab/releases) for supported
-operating systems are available.
+### Homebrew
+
+It works with Linux, too.
+
+```
+$ brew install danvergara/tools/dblab
+```
+
+Or
+
+```
+$ brew tap danvergara/tools
+$ brew install dblab
+```
+
+### Binary Release (Linux/OSX/Windows)
+You can manually download a binary release from [the release page](https://github.com/danvergara/dblab/releases).
+
+Automated install/update, don't forget to always verify what you're piping into bash:
+
+```sh
+curl https://raw.githubusercontent.com/danvergara/seeder/master/scripts/install_update_linux.sh | bash
+```
+
+The script installs downloaded binary to `/usr/local/bin` directory by default, but it can be changed by setting `DIR` environment variable.
 
 ## Help
 
