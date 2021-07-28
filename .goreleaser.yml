@@ -1,0 +1,69 @@
+# This is an example .goreleaser.yml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+brews:
+  -
+    # Name template of the recipe
+    name: dblab
+
+    # GitHub/GitLab repository to push the formula to
+    tap:
+      owner: danvergara
+      name: homebrew-tools
+
+    # Git author used to commit to the repository.
+    # Defaults are shown.
+    commit_author:
+      name: danvergara
+      email: daniel.omar.vergara@gmail.com
+
+    # Folder inside the repository to put the formula.
+    # Default is the root folder.
+    folder: Formula
+
+    # Your app's homepage.
+    # Default is empty.
+    homepage: "https://github.com/danvergara/dblab"
+
+    # Your app's description.
+    # Default is empty.
+    description: "Interactive client for PostgreSQL and MySQL"
+
+    # Packages your package depends on.
+    dependencies:
+      - name: git
+      - name: go
+
+    # SPDX identifier of your app's license.
+    # Default is empty.
+    license: "MIT"
