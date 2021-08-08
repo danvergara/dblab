@@ -117,6 +117,10 @@ func (gui *Gui) keybindings() error {
 		return err
 	}
 
+	if err := gui.g.SetKeybinding("navigation", gocui.MouseLeft, gocui.ModNone, navigation); err != nil {
+		return err
+	}
+
 	// quit function event.
 	if err := gui.g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		return err

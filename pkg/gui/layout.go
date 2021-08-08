@@ -3,9 +3,16 @@ package gui
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/gocui"
+	"github.com/fatih/color"
+)
+
+var (
+	green   = color.New(color.FgGreen).Add(color.Bold)
+	options = []string{"Rows", "Structure", "Constraints"}
 )
 
 // Layout is called for every screen re-render e.g. when the screen is resized.
@@ -37,7 +44,21 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		v.SelFgColor = gocui.ColorBlack
 	}
 
-	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), 0, maxX-1, int(0.24*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("navigation", int(0.2*float32(maxX)), 0, maxX-1, int(0.07*float32(maxY))); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		v.Title = "Navigation"
+
+		tmpOptions := make([]string, len(options))
+		copy(tmpOptions, options)
+		tmpOptions[0] = green.Sprint("Rows")
+
+		fmt.Fprint(v, strings.Join(tmpOptions, "   "))
+	}
+
+	if v, err := gui.g.SetView("query", int(0.2*float32(maxX)), int(0.09*float32(maxY)), maxX-1, int(0.27*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -52,7 +73,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		}
 	}
 
-	if v, err := gui.g.SetView("constraints", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("constraints", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -62,7 +83,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Please select a table!")
 	}
 
-	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -72,7 +93,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Please select a table!")
 	}
 
-	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.25*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -128,11 +149,42 @@ func setViewOnTop(from, to string) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 
 		if v == nil || v.Name() == from {
+			tmpOptions := make([]string, len(options))
+			copy(tmpOptions, options)
+
+			for i, o := range tmpOptions {
+				if strings.ToLower(o) == to {
+					tmpOptions[i] = green.Sprint(o)
+				}
+			}
+
+			nv, err := g.View("navigation")
+			if err != nil {
+				return err
+			}
+			nv.Clear()
+			fmt.Fprint(nv, strings.Join(tmpOptions, "   "))
+
 			return switchView(g, to)
 
 		}
 
 		if v == nil || v.Name() == to {
+			tmpOptions := make([]string, len(options))
+			copy(tmpOptions, options)
+
+			for i, o := range tmpOptions {
+				if strings.ToLower(o) == from {
+					tmpOptions[i] = green.Sprint(o)
+				}
+			}
+
+			nv, err := g.View("navigation")
+			if err != nil {
+				return err
+			}
+			nv.Clear()
+			fmt.Fprint(nv, strings.Join(tmpOptions, "   "))
 			return switchView(g, from)
 		}
 
@@ -214,6 +266,35 @@ func cursorLeft(g *gocui.Gui, v *gocui.View) error {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func navigation(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		cx, cy := v.Cursor()
+		word, _ := v.Word(cx, cy)
+
+		tmpOptions := make([]string, len(options))
+		copy(tmpOptions, options)
+
+		if word != "" {
+			for i, o := range tmpOptions {
+				if o == word {
+					tmpOptions[i] = green.Sprint(word)
+				}
+			}
+
+			v.Clear()
+			fmt.Fprint(v, strings.Join(tmpOptions, "   "))
+
+			err := switchView(g, strings.ToLower(word))
+			if err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil
