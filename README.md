@@ -118,8 +118,11 @@ If the query panel is active, type the desired query and press <kbd>Ctrl+Space</
 Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
 The same can be achieved for the `constraints` view by pressing <kbd>Ctrl+F</kbd> to go back and forth between the `rows` and the `constraints` panels.
 
-<img src="screenshots/dblab-screen-shot.png" />
+Now, there's a menu to navigate between hidden views by just clicking on the desired options:
 
+<img src="screenshots/rows-view.png" />
+<img src="screenshots/structure-view.png" />
+<img src="screenshots/constraints-view.png" />
 
 ### Key Bindings
 Key                                     | Description
