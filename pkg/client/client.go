@@ -185,7 +185,6 @@ func (c *Client) Constraints(tableName string) ([][]string, []string, error) {
 		`tc.constraint_name`,
 		`tc.table_name`,
 		`tc.constraint_type`,
-		`tc.enforced`,
 	).
 		From("information_schema.table_constraints AS tc").
 		Where("tc.table_name = ?")
