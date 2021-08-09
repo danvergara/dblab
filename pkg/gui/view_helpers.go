@@ -10,10 +10,18 @@ import (
 // nextView the app to another view.
 // the function makes sure the initial view
 // is the same as the current view in the gui.
+// Also checks if the next view is part of the hidden views.
+// If so, the function will update the navigation view.
 func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		if v == nil || v.Name() == from {
 			if err := switchView(g, to); err != nil {
+				return err
+			}
+		}
+
+		if contains(options, strings.Title(to)) {
+			if err := handleNavigationOptions(g, to); err == nil {
 				return err
 			}
 		}
@@ -165,6 +173,17 @@ func navigation(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	return nil
+}
+
+// contains checks if a string is present in a slice.
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
 }
 
 // quit is called to end the gui app.
