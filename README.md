@@ -135,14 +135,14 @@ Key                                     | Description
 <kbd>Ctrl+j</kbd>                       | Toggle to the panel below
 <kbd>Ctrl+k</kbd>                       | Toggle to the panel above
 <kbd>Ctrl+l</kbd>                       | Toggle to the panel on the right
-<kbd>Arrow Up</kbd>                     | Next row of the result set, on the rows panel. Next table on the tables panel
-<kbd>k</kbd>                            | Next row of the result set, on the rows panel. Next table on the tables panel
-<kbd>Arrow Down</kbd>                   | Previous row of the result set, on the rows panel. Previous table on the tables panel
-<kbd>j</kbd>                            | Previous row of the result set, on the rows panel. Previous table on the tables panel
-<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the rows panel
-<kbd>l</kbd>                            | Horizontal scrolling on the rows panel
-<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the rows panel
-<kbd>h</kbd>                            | Horizontal scrolling on the rows panel
+<kbd>Arrow Up</kbd>                     | Next row of the result set on the panel. Views: rows, table, constraints and structure
+<kbd>k</kbd>                            | Next row of the result set on the panel. Views: rows, table, constraints and structure
+<kbd>Arrow Down</kbd>                   | Previous row of the result set on the panel. Views: rows, table, constraints and structure
+<kbd>j</kbd>                            | Previous row of the result set on the panel. Views: rows, table, constraints and structure
+<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the panel. Views: rows, constraints and structure
+<kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints and structure
+<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints and structure
+<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints and structure
 <kbd>Ctrl+c</kbd>                       | Quit
 
 ## Contribute
