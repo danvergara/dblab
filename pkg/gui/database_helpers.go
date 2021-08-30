@@ -161,6 +161,38 @@ func (gui *Gui) renderConstraints(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (gui *Gui) rendexIndexes(g *gocui.Gui, v *gocui.View) error {
+	v.Rewind()
+
+	_, cy := v.Cursor()
+
+	t, err := v.Line(cy)
+	if err != nil {
+		return err
+	}
+
+	resultSet, columnNames, err := gui.c.Indexes(t)
+	if err != nil {
+		return err
+	}
+
+	ov, err := gui.g.View("indexes")
+	if err != nil {
+		return err
+	}
+
+	// Cleans the view.
+	ov.Clear()
+
+	if err := ov.SetCursor(0, 0); err != nil {
+		return err
+	}
+
+	renderTable(ov, columnNames, resultSet)
+
+	return nil
+}
+
 // metadata get the metadata from a given table name.
 func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
 	if err := gui.selectTable(g, v); err != nil {
@@ -172,6 +204,10 @@ func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	if err := gui.renderConstraints(g, v); err != nil {
+		return err
+	}
+
+	if err := gui.rendexIndexes(g, v); err != nil {
 		return err
 	}
 
