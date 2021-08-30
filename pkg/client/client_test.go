@@ -235,5 +235,28 @@ func TestConstraints(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Greater(t, len(r), 0)
 	assert.Greater(t, len(co), 0)
+}
 
+func TestIndexes(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+	}
+
+	c, _ := New(opts)
+
+	r, co, err := c.Indexes("products")
+
+	assert.NoError(t, err)
+	assert.Greater(t, len(r), 0)
+	assert.Greater(t, len(co), 0)
 }
