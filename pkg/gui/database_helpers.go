@@ -64,8 +64,16 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 	}
 }
 
-// selectTable performs a select statement based on the selected table.
-func (gui *Gui) selectTable(g *gocui.Gui, v *gocui.View) error {
+// render renders a the resultset from a given function using a table name as input.
+// This method receives a function as parameter to call it in the body passing the
+// table name as its parameter. The output is a result set as a product of an
+// expected query.
+func (gui *Gui) render(
+	g *gocui.Gui,
+	v *gocui.View,
+	viewName string,
+	query func(string) ([][]string, []string, error),
+) error {
 	v.Rewind()
 
 	_, cy := v.Cursor()
@@ -75,108 +83,16 @@ func (gui *Gui) selectTable(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 
-	resultSet, columnNames, err := gui.c.TableContent(t)
+	// f is the function to be executed to get a result set.
+	// This gives flexibility to use whaterever query method
+	// from the client, without the need to know what query is
+	// being executed.
+	resultSet, columnNames, err := query(t)
 	if err != nil {
 		return err
 	}
 
-	ov, err := gui.g.View("rows")
-	if err != nil {
-		return err
-	}
-
-	// Cleans the view.
-	ov.Clear()
-
-	if err := ov.SetCursor(0, 0); err != nil {
-		return err
-	}
-
-	renderTable(ov, columnNames, resultSet)
-
-	return nil
-}
-
-func (gui *Gui) renderStructure(g *gocui.Gui, v *gocui.View) error {
-	v.Rewind()
-
-	_, cy := v.Cursor()
-
-	t, err := v.Line(cy)
-	if err != nil {
-		return err
-	}
-
-	resultSet, columnNames, err := gui.c.TableStructure(t)
-	if err != nil {
-		return err
-	}
-
-	ov, err := gui.g.View("structure")
-	if err != nil {
-		return err
-	}
-
-	// Cleans the view.
-	ov.Clear()
-
-	if err := ov.SetCursor(0, 0); err != nil {
-		return err
-	}
-
-	renderTable(ov, columnNames, resultSet)
-
-	return nil
-}
-
-func (gui *Gui) renderConstraints(g *gocui.Gui, v *gocui.View) error {
-	v.Rewind()
-
-	_, cy := v.Cursor()
-
-	t, err := v.Line(cy)
-	if err != nil {
-		return err
-	}
-
-	resultSet, columnNames, err := gui.c.Constraints(t)
-	if err != nil {
-		return err
-	}
-
-	ov, err := gui.g.View("constraints")
-	if err != nil {
-		return err
-	}
-
-	// Cleans the view.
-	ov.Clear()
-
-	if err := ov.SetCursor(0, 0); err != nil {
-		return err
-	}
-
-	renderTable(ov, columnNames, resultSet)
-
-	return nil
-}
-
-func (gui *Gui) rendexIndexes(g *gocui.Gui, v *gocui.View) error {
-	v.Rewind()
-
-	_, cy := v.Cursor()
-
-	t, err := v.Line(cy)
-	if err != nil {
-		return err
-	}
-
-	resultSet, columnNames, err := gui.c.Indexes(t)
-	if err != nil {
-		return err
-	}
-
-	ov, err := gui.g.View("indexes")
+	ov, err := gui.g.View(viewName)
 	if err != nil {
 		return err
 	}
@@ -195,20 +111,20 @@ func (gui *Gui) rendexIndexes(g *gocui.Gui, v *gocui.View) error {
 
 // metadata get the metadata from a given table name.
 func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
-	if err := gui.selectTable(g, v); err != nil {
-		return err
+	var viewQueries = []struct {
+		name  string
+		query func(string) ([][]string, []string, error)
+	}{
+		{"rows", gui.c.TableContent},
+		{"structure", gui.c.TableStructure},
+		{"constraints", gui.c.Constraints},
+		{"indexes", gui.c.Indexes},
 	}
 
-	if err := gui.renderStructure(g, v); err != nil {
-		return err
-	}
-
-	if err := gui.renderConstraints(g, v); err != nil {
-		return err
-	}
-
-	if err := gui.rendexIndexes(g, v); err != nil {
-		return err
+	for _, vq := range viewQueries {
+		if err := gui.render(g, v, vq.name, vq.query); err != nil {
+			return err
+		}
 	}
 
 	return nil
