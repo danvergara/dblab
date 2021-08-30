@@ -70,6 +70,18 @@ func initialKeyBindings() []keyBinding {
 			handler: nextView("constraints", "query"),
 		},
 		{
+			view:    "indexes",
+			key:     gocui.KeyCtrlH,
+			mod:     gocui.ModNone,
+			handler: nextView("indexes", "tables"),
+		},
+		{
+			view:    "indexes",
+			key:     gocui.KeyCtrlK,
+			mod:     gocui.ModNone,
+			handler: nextView("indexes", "query"),
+		},
+		{
 			view:    "constraints",
 			key:     gocui.KeyCtrlF,
 			mod:     gocui.ModNone,
@@ -92,6 +104,18 @@ func initialKeyBindings() []keyBinding {
 			key:     gocui.KeyCtrlS,
 			mod:     gocui.ModNone,
 			handler: setViewOnTop("rows", "structure"),
+		},
+		{
+			view:    "indexes",
+			key:     gocui.KeyCtrlI,
+			mod:     gocui.ModNone,
+			handler: setViewOnTop("indexes", "rows"),
+		},
+		{
+			view:    "rows",
+			key:     gocui.KeyCtrlI,
+			mod:     gocui.ModNone,
+			handler: setViewOnTop("rows", "indexes"),
 		},
 		{
 			view:    "navigation",
