@@ -12,7 +12,7 @@ import (
 
 var (
 	green   = color.New(color.FgGreen).Add(color.Bold)
-	options = []string{"Rows", "Structure", "Constraints"}
+	options = []string{"Rows", "Structure", "Constraints", "Indexes"}
 )
 
 // Layout is called for every screen re-render e.g. when the screen is resized.
@@ -71,6 +71,16 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		if _, err := gui.g.SetCurrentView("query"); err != nil {
 			return err
 		}
+	}
+
+	if v, err := gui.g.SetView("indexes", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		v.Title = "Indexes"
+
+		fmt.Fprintln(v, "Please select a table!")
 	}
 
 	if v, err := gui.g.SetView("constraints", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
