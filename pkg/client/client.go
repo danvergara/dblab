@@ -27,6 +27,7 @@ func New(opts command.Options) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	db, err := sqlx.Open(opts.Driver, conn)
 	if err != nil {
 		return nil, err
@@ -203,6 +204,24 @@ func (c *Client) Constraints(tableName string) ([][]string, []string, error) {
 	}
 
 	return c.Query(sql, tableName)
+}
+
+// Indexes returns a resulset with the information of the indexes given a table name.
+func (c *Client) Indexes(tableName string) ([][]string, []string, error) {
+	var query string
+
+	switch c.driver {
+	case "postgres":
+		fallthrough
+	case "postgresql":
+		query = "SELECT * FROM pg_indexes WHERE tablename = $1;"
+		return c.Query(query, tableName)
+	case "mysql":
+		query = fmt.Sprintf("SHOW INDEX FROM %s", tableName)
+		return c.Query(query)
+	default:
+		return nil, nil, errors.New("not supported driver")
+	}
 }
 
 // DB Return the db attribute.
