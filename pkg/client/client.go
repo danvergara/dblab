@@ -23,7 +23,7 @@ type Client struct {
 
 // New return an instance of the client.
 func New(opts command.Options) (*Client, error) {
-	conn, err := connection.BuildConnectionFromOpts(opts)
+	conn, opts, err := connection.BuildConnectionFromOpts(opts)
 	if err != nil {
 		return nil, err
 	}
