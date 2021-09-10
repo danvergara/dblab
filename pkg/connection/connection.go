@@ -37,16 +37,23 @@ func init() {
 }
 
 // BuildConnectionFromOpts return the connection uri string given the options passed by the uses.
-func BuildConnectionFromOpts(opts command.Options) (string, error) {
+func BuildConnectionFromOpts(opts command.Options) (string, command.Options, error) {
 	if opts.URL != "" {
-		switch opts.Driver {
-		case "postgres":
-			return formatPostgresURL(opts)
-		case "mysql":
-			return formatMySQLURL(opts)
-		default:
-			return "", fmt.Errorf("%s: %w", opts.URL, ErrInvalidURLFormat)
+		if strings.HasPrefix(opts.URL, "postgres") {
+			opts.Driver = "postgres"
+
+			conn, err := formatPostgresURL(opts)
+
+			return conn, opts, err
 		}
+
+		if strings.HasPrefix(opts.URL, "mysql") {
+			opts.Driver = "mysql"
+			conn, err := formatMySQLURL(opts)
+			return conn, opts, err
+		}
+
+		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidURLFormat)
 	}
 
 	if opts.User == "" {
@@ -75,11 +82,11 @@ func BuildConnectionFromOpts(opts command.Options) (string, error) {
 			RawQuery: query.Encode(),
 		}
 
-		return connDB.String(), nil
+		return connDB.String(), opts, nil
 	case "mysql":
-		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), nil
+		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), opts, nil
 	default:
-		return "", fmt.Errorf("%s: %w", opts.URL, ErrInvalidDriver)
+		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidDriver)
 	}
 }
 
