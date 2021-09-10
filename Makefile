@@ -45,7 +45,11 @@ run: build
 run-mysql: build
 	./dblab --host localhost --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql
 
-run: build
+.PHONY: run-url
+## run-url: Runs the app passing the url as paramenter
+run-url: build
+	./dblab --url postgres://postgres:password@localhost:5432/users?sslmode=disable
+
 .PHONY: up
 ## up: Runs all the containers listed in the docker-compose.yml file
 up:
