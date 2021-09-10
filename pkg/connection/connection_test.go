@@ -27,8 +27,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid postgres localhost",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "postgres://user:password@localhost:5432/db?sslmode=disable",
+					URL: "postgres://user:password@localhost:5432/db?sslmode=disable",
 				},
 			},
 			want: want{
@@ -39,8 +38,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid postgres localhost but add sslmode",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "postgres://user:password@localhost:5432/db",
+					URL: "postgres://user:password@localhost:5432/db",
 				},
 			},
 			want: want{
@@ -51,8 +49,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid postgres localhost postgresql as protocol",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "postgresql://user:password@localhost:5432/db",
+					URL: "postgresql://user:password@localhost:5432/db",
 				},
 			},
 			want: want{
@@ -63,26 +60,12 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "error misspelled postgres",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "potgre://user:password@localhost:5432/db",
+					URL: "potgre://user:password@localhost:5432/db",
 				},
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidPostgresURLFormat,
-			},
-		},
-		{
-			name: "error invalid url",
-			given: given{
-				opts: command.Options{
-					Driver: "postgres",
-					URL:    "not-a-url",
-				},
-			},
-			want: want{
-				hasError: true,
-				err:      ErrInvalidPostgresURLFormat,
+				err:      ErrInvalidURLFormat,
 			},
 		},
 		// mysql
@@ -90,8 +73,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid mysql localhost",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@tcp(localhost:3306)/db",
+					URL: "mysql://user:password@tcp(localhost:3306)/db",
 				},
 			},
 			want: want{
@@ -102,8 +84,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid mysql localhost with params",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@tcp(localhost:3306)/db?charset=utf8",
+					URL: "mysql://user:password@tcp(localhost:3306)/db?charset=utf8",
 				},
 			},
 			want: want{
@@ -114,8 +95,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid mysql remote url",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
+					URL: "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
 				},
 			},
 			want: want{
@@ -126,26 +106,24 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "error misspelled mysql",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysq://user:password@tcp(localhost:3306)/db?charset=utf8",
+					URL: "mysq://user:password@tcp(localhost:3306)/db?charset=utf8",
 				},
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidMySQLURLFormat,
+				err:      ErrInvalidURLFormat,
 			},
 		},
 		{
 			name: "error invalid url",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "not-a-url",
+					URL: "not-a-url",
 				},
 			},
 			want: want{
 				hasError: true,
-				err:      ErrInvalidMySQLURLFormat,
+				err:      ErrInvalidURLFormat,
 			},
 		},
 	}
@@ -155,7 +133,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			uri, err := BuildConnectionFromOpts(tc.given.opts)
+			uri, _, err := BuildConnectionFromOpts(tc.given.opts)
 
 			if tc.want.hasError {
 				assert.Error(t, err)
@@ -311,8 +289,7 @@ func TestFormatPostgresURL(t *testing.T) {
 			name: "valid postgres localhost",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "postgres://user:password@localhost:5432/db?sslmode=disable",
+					URL: "postgres://user:password@localhost:5432/db?sslmode=disable",
 				},
 			},
 			want: want{
@@ -323,8 +300,7 @@ func TestFormatPostgresURL(t *testing.T) {
 			name: "valid postgres localhost but add sslmode",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "postgres://user:password@localhost:5432/db",
+					URL: "postgres://user:password@localhost:5432/db",
 				},
 			},
 			want: want{
@@ -335,8 +311,7 @@ func TestFormatPostgresURL(t *testing.T) {
 			name: "valid postgres localhost postgresql as protocol",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "postgresql://user:password@localhost:5432/db",
+					URL: "postgresql://user:password@localhost:5432/db",
 				},
 			},
 			want: want{
@@ -347,8 +322,7 @@ func TestFormatPostgresURL(t *testing.T) {
 			name: "error misspelled postgres",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "potgre://user:password@localhost:5432/db",
+					URL: "potgre://user:password@localhost:5432/db",
 				},
 			},
 			want: want{
@@ -360,8 +334,7 @@ func TestFormatPostgresURL(t *testing.T) {
 			name: "error invalid url",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
-					URL:    "not-a-url",
+					URL: "not-a-url",
 				},
 			},
 			want: want{
@@ -411,8 +384,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "valid mysql localhost",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@tcp(localhost:3306)/db",
+					URL: "mysql://user:password@tcp(localhost:3306)/db",
 				},
 			},
 			want: want{
@@ -423,8 +395,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "valid mysql localhost with params",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@tcp(localhost:3306)/db?charset=utf8",
+					URL: "mysql://user:password@tcp(localhost:3306)/db?charset=utf8",
 				},
 			},
 			want: want{
@@ -435,8 +406,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "valid mysql remote url",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
+					URL: "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
 				},
 			},
 			want: want{
@@ -447,8 +417,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "valid mysql traditional",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@/dbname?sql_mode=TRADITIONAL",
+					URL: "mysql://user:password@/dbname?sql_mode=TRADITIONAL",
 				},
 			},
 			want: want{
@@ -459,8 +428,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "valid mysql google cloud sql on app engine",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
+					URL: "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
 				},
 			},
 			want: want{
@@ -471,8 +439,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "error misspelled mysql",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "mysq://user:password@tcp(localhost:3306)/db?charset=utf8",
+					URL: "mysq://user:password@tcp(localhost:3306)/db?charset=utf8",
 				},
 			},
 			want: want{
@@ -484,8 +451,7 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "error invalid url",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
-					URL:    "not-a-url",
+					URL: "not-a-url",
 				},
 			},
 			want: want{
