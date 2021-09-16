@@ -123,6 +123,7 @@ Now, there's a menu to navigate between hidden views by just clicking on the des
 <img src="screenshots/rows-view.png" />
 <img src="screenshots/structure-view.png" />
 <img src="screenshots/constraints-view.png" />
+<img src="screenshots/indexes-view.png" />
 
 ### Key Bindings
 Key                                     | Description
