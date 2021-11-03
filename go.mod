@@ -20,6 +20,7 @@ require (
 	github.com/kkyr/fig v0.2.0
 	github.com/lib/pq v1.10.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/muesli/termenv v0.8.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.1.3
