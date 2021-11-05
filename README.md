@@ -5,15 +5,15 @@ dblab ![integration tests](https://github.com/danvergara/dblab/actions/workflows
   <img style="float: right;" src="assets/gopher-dblab.png" alt="dblab logo"/  width=200>
 </p>
 
-__Interactive client for PostgreSQL and MySQL.__
+__Interactive client for PostgreSQL, MySQL and SQLite3.__
 
 ## Overview
 
-dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL and MySQL,
+dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3,
 written in Go and works on OSX, Linux and Windows machines. Main idea behind using Go for backend development
 is to utilize ability of the compiler to produce zero-dependency binaries for
 multiple platforms. dblab was created as an attempt to build very simple and portable
-application to work with local or remote PostgreSQL/MySQL databases.
+application to work with local or remote PostgreSQL/MySQL/SQLite3 databases.
 
 ## Features
 
@@ -52,7 +52,7 @@ The script installs downloaded binary to `/usr/local/bin` directory by default, 
 ## Help
 
 ```
-dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite.
+dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite3.
 
 Usage:
   dblab [flags]
@@ -84,6 +84,7 @@ You can start the app passing no flags or parameters, you'll be asked for connec
 
 ```sh
 $ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres
+$ dblab --db path/to/file.sqlite3 --driver sqlite3
 ```
 
 Connection URL scheme is also supported:
@@ -91,6 +92,7 @@ Connection URL scheme is also supported:
 ```sh
 $ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
 $ dblab --url mysql://user:password@tcp(host:port)/db
+$ dblab --url file:test.db?cache=shared&mode=memory
 ```
 
 Now, you can use a configuration file to make a connection to the database.
@@ -111,6 +113,14 @@ database:
   password: "password"
   user: "postgres"
   driver: "postgres"
+```
+
+Or for sqlite3:
+
+```yaml
+database:
+  db: "path/to/file.sqlite3"
+  driver: "sqlite3"
 ```
 
 Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respectively.
