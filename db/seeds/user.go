@@ -17,6 +17,8 @@ func (s Seed) UserSeed() {
 			_, err = s.db.Exec(`INSERT INTO users(username) VALUES ($1)`, faker.Name())
 		case "mysql":
 			_, err = s.db.Exec(`INSERT INTO users(username) VALUES (?)`, faker.Name())
+		case "sqlite3":
+			_, err = s.db.Exec(`INSERT INTO users(username) VALUES (?)`, faker.Name())
 		default:
 			log.Println("unsupported driver")
 		}
