@@ -62,5 +62,18 @@ services:
     networks:
       - dblab
 
+  dblab-sqlite3:
+    build:
+      context: .
+      target: builder
+    volumes:
+      - ./:/src/app:z
+    environment:
+      - DB_NAME=db/dblab.db
+      - DB_DRIVER=sqlite3
+    entrypoint: ["/bin/bash", "./scripts/entrypoint-sqlite3.dev.sh"]
+    networks:
+      - dblab
+
 networks:
   dblab:
