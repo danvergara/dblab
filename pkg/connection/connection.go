@@ -26,6 +26,8 @@ var (
 	ErrInvalidURLFormat = errors.New("invalid url")
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
 	ErrInvalidDriver = errors.New("invalid driver")
+	// ErrInvalidSqlite3Extension is used to notify that the selected file is not a sqlite3 file.
+	ErrInvalidSqlite3Extension = errors.New("invalid sqlite3 file extension")
 )
 
 func init() {
@@ -51,6 +53,12 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			opts.Driver = "mysql"
 			conn, err := formatMySQLURL(opts)
 			return conn, opts, err
+		}
+
+		// this options is for sqlite3.
+		// For more information see https://github.com/mattn/go-sqlite3#connection-string.
+		if strings.HasPrefix(opts.URL, "file:") {
+			return opts.URL, opts, nil
 		}
 
 		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidURLFormat)
@@ -85,6 +93,12 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		return connDB.String(), opts, nil
 	case "mysql":
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), opts, nil
+	case "sqlite3":
+		if hasValidSqlite3FileExtension(opts.DBName) {
+			return opts.DBName, opts, nil
+		}
+
+		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidSqlite3Extension)
 	default:
 		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidDriver)
 	}
@@ -201,4 +215,8 @@ func hasValidPostgresPrefix(rawurl string) bool {
 // hasValidMySQLPrefix checks if a given url has the driver name in it.
 func hasValidMySQLPrefix(rawurl string) bool {
 	return strings.HasPrefix(rawurl, "mysql://")
+}
+
+func hasValidSqlite3FileExtension(fileName string) bool {
+	return strings.HasSuffix(fileName, "sqlite") || strings.HasSuffix(fileName, "db") || strings.HasSuffix(fileName, "db3") || strings.HasSuffix(fileName, "sqlite3")
 }
