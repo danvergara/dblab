@@ -4,15 +4,17 @@ import (
 	"errors"
 	"fmt"
 
-	// mysql driver.
-	_ "github.com/go-sql-driver/mysql"
-	// postgres driver.
-	_ "github.com/lib/pq"
-
 	sq "github.com/Masterminds/squirrel"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/jmoiron/sqlx"
+
+	// mysql driver.
+	_ "github.com/go-sql-driver/mysql"
+	// postgres driver.
+	_ "github.com/lib/pq"
+	// sqlite3 driver.
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Client is used to store the pool of db connection.
@@ -103,6 +105,15 @@ func (c *Client) ShowTables() ([]string, error) {
 			table_name;`
 	case "mysql":
 		query = "SHOW TABLES;"
+	case "sqlite3":
+		query = `
+		SELECT
+			name
+		FROM
+			sqlite_schema
+		WHERE
+			type ='table' AND
+			name NOT LIKE 'sqlite_%';`
 	}
 
 	rows, err := c.db.Queryx(query)
@@ -173,6 +184,9 @@ func (c *Client) TableStructure(tableName string) ([][]string, []string, error) 
 	case "mysql":
 		query = fmt.Sprintf("DESCRIBE %s;", tableName)
 		return c.Query(query)
+	case "sqlite3":
+		query = fmt.Sprintf("PRAGMA table_info(%s);", tableName)
+		return c.Query(query)
 	default:
 		return nil, nil, errors.New("not supported driver")
 	}
@@ -180,7 +194,10 @@ func (c *Client) TableStructure(tableName string) ([][]string, []string, error) 
 
 // Constraints returns the resultet of from information_schema.table_constraints.
 func (c *Client) Constraints(tableName string) ([][]string, []string, error) {
-	var query sq.SelectBuilder
+	var (
+		query sq.SelectBuilder
+		sql   string
+	)
 
 	query = sq.Select(
 		`tc.constraint_name`,
@@ -191,6 +208,14 @@ func (c *Client) Constraints(tableName string) ([][]string, []string, error) {
 		Where("tc.table_name = ?")
 
 	switch c.driver {
+	case "sqlite3":
+		sql = `
+		SELECT *
+		FROM
+			sqlite_master
+		WHERE
+			type='table' AND name = ?;`
+		return c.Query(sql, tableName)
 	case "postgres":
 		fallthrough
 	case "postgresql":
@@ -218,6 +243,10 @@ func (c *Client) Indexes(tableName string) ([][]string, []string, error) {
 		return c.Query(query, tableName)
 	case "mysql":
 		query = fmt.Sprintf("SHOW INDEX FROM %s", tableName)
+		return c.Query(query)
+	case "sqlite3":
+		query = `PRAGMA index_list(%s);`
+		query = fmt.Sprintf(query, tableName)
 		return c.Query(query)
 	default:
 		return nil, nil, errors.New("not supported driver")
