@@ -39,6 +39,14 @@ func TestIsEmpty(t *testing.T) {
 			wanted: false,
 		},
 		{
+			name: "not empty for sqlite3",
+			given: command.Options{
+				Driver: "postgres",
+				DBName: "users",
+			},
+			wanted: false,
+		},
+		{
 			name: "not empty with url",
 			given: command.Options{
 				URL: "postgres://user:password@host:port/db?sslmode=mode",
