@@ -223,7 +223,9 @@ func updateSSL(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 		case "enter":
-			m.ssl = m.modes[m.cursor]
+			if len(m.modes) > 0 {
+				m.ssl = m.modes[m.cursor]
+			}
 			m.steps = 3
 			m.cursor = 0
 			return m, tea.Quit
@@ -297,12 +299,14 @@ func sslView(m *Model) string {
 		m.modes = []string{"disable", "require", "verify-full"}
 	case "mysql":
 		m.modes = []string{"true", "false", "skip-verify", "preferred"}
+	case "sqlite3":
+		m.modes = []string{}
 	default:
 		m.modes = []string{"disable", "require", "verify-full"}
 	}
 
 	// The header.
-	s := "\nSelect the ssl mode:"
+	s := "\nSelect the ssl mode (just press enter if you selected sqlite3:"
 	var choices string
 	// Iterate over the driver.
 	for i, mode := range m.modes {
@@ -352,7 +356,7 @@ func initModel() Model {
 
 	m := Model{
 		// the supported drivers by the client.
-		drivers: []string{"postgres", "mysql"},
+		drivers: []string{"postgres", "mysql", "sqlite3"},
 		// our default value.
 		driver: "postgres",
 
