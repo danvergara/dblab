@@ -126,6 +126,17 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 				err:      ErrInvalidURLFormat,
 			},
 		},
+		{
+			name: "sqlite3 file dsn example",
+			given: given{
+				opts: command.Options{
+					URL: "file:test.db?cache=shared&mode=memory",
+				},
+			},
+			want: want{
+				uri: "file:test.db?cache=shared&mode=memory",
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -156,7 +167,9 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 		opts command.Options
 	}
 	type want struct {
-		uri string
+		uri      string
+		hasError bool
+		err      error
 	}
 	var cases = []struct {
 		name  string
@@ -226,7 +239,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(localhost:3306)/db",
+				uri: "user:password@tcp(localhost:3306)/db",
 			},
 		},
 		{
@@ -242,7 +255,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(127.0.0.1:3306)/db",
+				uri: "user:password@tcp(127.0.0.1:3306)/db",
 			},
 		},
 		{
@@ -258,7 +271,46 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/db",
+				uri: "user:password@tcp(your-amazonaws-uri.com:3306)/db",
+			},
+		},
+		// sqlite3.
+		{
+			name: "success - sqlite3 db file extension",
+			given: given{
+				opts: command.Options{
+					Driver: "sqlite3",
+					DBName: "users.db",
+				},
+			},
+			want: want{
+				uri: "users.db",
+			},
+		},
+		{
+			name: "success - sqlite3 sqlite3 file extension",
+			given: given{
+				opts: command.Options{
+					Driver: "sqlite3",
+					DBName: "users.sqlite3",
+				},
+			},
+			want: want{
+				uri: "users.sqlite3",
+			},
+		},
+		{
+			name: "error - wrong sqlite3 file extension",
+			given: given{
+				opts: command.Options{
+					Driver: "sqlite3",
+					DBName: "users.wrong",
+				},
+			},
+			want: want{
+				uri:      "users.wrong",
+				hasError: true,
+				err:      ErrInvalidSqlite3Extension,
 			},
 		},
 	}
@@ -267,6 +319,22 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+
+			uri, _, err := BuildConnectionFromOpts(tc.given.opts)
+
+			if tc.want.hasError {
+				assert.Error(t, err)
+
+				if !errors.Is(err, tc.want.err) {
+					t.Errorf("got %v, wanted %v", err, tc.want.err)
+				}
+
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want.uri, uri)
+
 		})
 	}
 }
