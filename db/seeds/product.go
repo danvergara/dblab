@@ -18,6 +18,8 @@ func (s Seed) ProductSeed() {
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32())
 		case "mysql":
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES (?, ?)`, faker.Word(), rand.Float32())
+		case "sqlite3":
+			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES (?, ?)`, faker.Word(), rand.Float32())
 		default:
 			log.Println("unsupported driver")
 		}

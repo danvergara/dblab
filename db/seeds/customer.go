@@ -17,6 +17,8 @@ func (s Seed) CustomerSeed() {
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES ($1, $2)`, faker.Name(), faker.Email())
 		case "mysql":
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES (?, ?)`, faker.Name(), faker.Email())
+		case "sqlite3":
+			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES (?, ?)`, faker.Name(), faker.Email())
 		default:
 			log.Println("unsupported driver")
 		}

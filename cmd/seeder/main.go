@@ -9,11 +9,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/danvergara/dblab/db/seeds"
+	"github.com/danvergara/dblab/pkg/config"
+
 	// postgres driver.
 	_ "github.com/lib/pq"
 
-	"github.com/danvergara/dblab/db/seeds"
-	"github.com/danvergara/dblab/pkg/config"
+	// sqlite3 driver.
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -29,11 +32,11 @@ func handleArgs() {
 		switch args[0] {
 		case "seed":
 			connString := cfg.GetSQLXDBConnStr()
-			db, err := sqlx.Open(cfg.Driver(), connString)
+			db, err := sqlx.Open(cfg.Driver, connString)
 			if err != nil {
 				log.Fatalf("Error opening DB: %v", err)
 			}
-			seeds.Execute(db, cfg.Driver(), args[1:]...)
+			seeds.Execute(db, cfg.Driver, args[1:]...)
 			os.Exit(0)
 		}
 	}
