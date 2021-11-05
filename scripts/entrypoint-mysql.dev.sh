@@ -11,7 +11,7 @@ done
 echo "MySQL started"
 
 echo "Running the migrations against the DB"
-go run cmd/dbmigrate/main.go
+go run cmd/dbmigrate/main.go migrate up
 
 echo "Seeding the database"
 go run cmd/seeder/main.go seed
