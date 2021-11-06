@@ -45,8 +45,14 @@ run: build
 run-mysql: build
 	./dblab --host localhost --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql
 
+.PHONY: run-sqlite3
+## run-sqlite3: Runs the application with a connection to sqlite3
+run-sqlite3: build
+	docker-compose run --rm dblab-sqlite3
+	./dblab --db db/dblab.db --driver sqlite3
+
 .PHONY: run-url
-## run-url: Runs the app passing the url as paramenter
+## run-url: Runs the app passing the url as parameter
 run-url: build
 	./dblab --url postgres://postgres:password@localhost:5432/users?sslmode=disable
 
