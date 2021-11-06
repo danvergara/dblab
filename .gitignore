@@ -15,5 +15,8 @@
 # vendor/
 dist/
 
+# SQLite Database
+db/dblab.db
+
 # Dev binary
 dblab
