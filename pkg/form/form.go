@@ -306,7 +306,7 @@ func sslView(m *Model) string {
 	}
 
 	// The header.
-	s := "\nSelect the ssl mode (just press enter if you selected sqlite3:"
+	s := "\nSelect the ssl mode (just press enter if you selected sqlite3):"
 	var choices string
 	// Iterate over the driver.
 	for i, mode := range m.modes {
