@@ -29,7 +29,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		figure.Write(v, myFigure)
 	}
 
-	if v, err := gui.g.SetView("tables", 0, int(0.16*float32(maxY)), int(0.19*float32(maxX)), int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("tables", 0, int(0.16*float32(maxY)), int(0.19*float32(maxX)), int(0.94*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -73,7 +73,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		}
 	}
 
-	if v, err := gui.g.SetView("indexes", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("indexes", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -83,7 +83,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Please select a table!")
 	}
 
-	if v, err := gui.g.SetView("constraints", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("constraints", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -93,7 +93,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Please select a table!")
 	}
 
-	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("structure", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -103,7 +103,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Please select a table!")
 	}
 
-	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.95*float32(maxY))); err != nil {
+	if v, err := gui.g.SetView("rows", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY))); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -111,6 +111,38 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		v.Title = "Rows"
 
 		fmt.Fprintln(v, "Type the sql query above. Press Ctrl-c to quit.")
+	}
+
+	if v, err := gui.g.SetView("current-page", int(0.82*float32(maxX)), int(0.96*float32(maxY)), int(0.88*float32(maxX)), int(0.99*float32(maxY))); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		fmt.Fprintln(v, "100 rows")
+	}
+
+	if v, err := gui.g.SetView("prev-page", int(0.89*float32(maxX)), int(0.96*float32(maxY)), int(0.91*float32(maxX)), int(0.99*float32(maxY))); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		fmt.Fprint(v, " < ")
+	}
+
+	if v, err := gui.g.SetView("page", int(0.92*float32(maxX)), int(0.96*float32(maxY)), int(0.97*float32(maxX)), int(0.99*float32(maxY))); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		fmt.Fprint(v, " 1 of 100 ")
+	}
+
+	if v, err := gui.g.SetView("next-page", int(0.98*float32(maxX)), int(0.96*float32(maxY)), maxX-1, int(0.99*float32(maxY))); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		fmt.Fprint(v, " > ")
 	}
 
 	return nil
