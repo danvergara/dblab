@@ -140,9 +140,9 @@ func (c *Client) TableContent(tableName string) ([][]string, []string, error) {
 	var query string
 
 	if c.driver == "postgres" || c.driver == "postgresql" {
-		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT %d;", tableName, c.limit)
+		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT 100;", tableName)
 	} else {
-		query = fmt.Sprintf("SELECT * FROM %s LIMIT %d;", tableName, c.limit)
+		query = fmt.Sprintf("SELECT * FROM %s LIMIT 100;", tableName)
 	}
 
 	return c.Query(query)
