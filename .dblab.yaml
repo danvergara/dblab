@@ -5,3 +5,4 @@ database:
   password: "password"
   user: "postgres"
   driver: "postgres"
+limit: 50
