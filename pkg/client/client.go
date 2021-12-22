@@ -21,6 +21,7 @@ import (
 type Client struct {
 	db     *sqlx.DB
 	driver string
+	limit  int
 }
 
 // New return an instance of the client.
@@ -38,6 +39,7 @@ func New(opts command.Options) (*Client, error) {
 	c := Client{
 		db:     db,
 		driver: opts.Driver,
+		limit:  opts.Limit,
 	}
 
 	return &c, nil
@@ -138,9 +140,9 @@ func (c *Client) TableContent(tableName string) ([][]string, []string, error) {
 	var query string
 
 	if c.driver == "postgres" || c.driver == "postgresql" {
-		query = fmt.Sprintf("SELECT * FROM public.%s;", tableName)
+		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT %d;", tableName, c.limit)
 	} else {
-		query = fmt.Sprintf("SELECT * FROM %s;", tableName)
+		query = fmt.Sprintf("SELECT * FROM %s LIMIT %d;", tableName, c.limit)
 	}
 
 	return c.Query(query)
