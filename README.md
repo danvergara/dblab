@@ -68,6 +68,7 @@ Flags:
       --driver string   Database driver
   -h, --help            help for dblab
       --host string     Server host name or IP
+      --limit int       Size of the result set from the table content query (default 100)
       --pass string     Password for user
       --port string     Server port
       --ssl string      SSL mode
@@ -83,7 +84,7 @@ You can start the app passing no flags or parameters, you'll be asked for connec
 ![Alt Text](screenshots/dblab-default-form.gif)
 
 ```sh
-$ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres
+$ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
 $ dblab --db path/to/file.sqlite3 --driver sqlite3
 ```
 
@@ -113,6 +114,7 @@ database:
   password: "password"
   user: "postgres"
   driver: "postgres"
+limit: 50
 ```
 
 Or for sqlite3:
