@@ -25,9 +25,8 @@ changelog:
       - '^test:'
 
 brews:
-  -
     # Name template of the recipe
-    name: dblab
+  - name: dblab
 
     # GitHub/GitLab repository to push the formula to
     tap:
@@ -51,11 +50,6 @@ brews:
     # Your app's description.
     # Default is empty.
     description: "Interactive client for PostgreSQL and MySQL"
-
-    # Packages your package depends on.
-    dependencies:
-      - name: git
-      - name: go
 
     # SPDX identifier of your app's license.
     # Default is empty.
