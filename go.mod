@@ -22,6 +22,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.2
+	golang.org/x/text v0.3.7
 )
 
 require (

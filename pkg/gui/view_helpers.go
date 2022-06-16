@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/danvergara/gocui"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // nextView the app to another view.
@@ -20,7 +22,7 @@ func nextView(from, to string) func(g *gocui.Gui, v *gocui.View) error {
 			}
 		}
 
-		if contains(options, strings.Title(to)) {
+		if contains(options, cases.Title(language.English).String(to)) {
 			if err := handleNavigationOptions(g, to); err == nil {
 				return err
 			}
