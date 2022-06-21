@@ -156,7 +156,6 @@ func TestTableContent(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
-		Limit:  100,
 	}
 
 	c, _ := New(opts)

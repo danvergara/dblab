@@ -31,7 +31,6 @@ type Config struct {
 		Driver   string `validate:"required"`
 		SSL      string `default:"disable"`
 	}
-	Limit  int `fig:"limit" default:"100"`
 	User   string
 	Pswd   string
 	Host   string
@@ -76,7 +75,6 @@ func Init() (command.Options, error) {
 		Pass:   cfg.Database.Password,
 		DBName: cfg.Database.DB,
 		SSL:    cfg.Database.SSL,
-		Limit:  cfg.Limit,
 	}
 
 	return opts, nil

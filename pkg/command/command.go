@@ -12,7 +12,6 @@ type Options struct {
 	Pass   string
 	DBName string
 	SSL    string
-	Limit  int
 }
 
 // SetDefault returns a Options struct and fills the empty
