@@ -21,7 +21,6 @@ import (
 type Client struct {
 	db     *sqlx.DB
 	driver string
-	limit  int
 }
 
 // New return an instance of the client.
@@ -39,7 +38,6 @@ func New(opts command.Options) (*Client, error) {
 	c := Client{
 		db:     db,
 		driver: opts.Driver,
-		limit:  opts.Limit,
 	}
 
 	return &c, nil
