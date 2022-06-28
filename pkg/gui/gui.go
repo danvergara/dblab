@@ -34,7 +34,7 @@ func (gui *Gui) prepare() error {
 	gui.g.Mouse = true
 	gui.g.SelFrameColor = gocui.ColorGreen
 
-	gui.g.SetManagerFunc(gui.layout)
+	gui.setLayout()
 
 	if err := gui.keybindings(); err != nil {
 		return err
