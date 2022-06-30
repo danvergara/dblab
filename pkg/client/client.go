@@ -21,6 +21,7 @@ import (
 type Client struct {
 	db     *sqlx.DB
 	driver string
+	limit  int
 }
 
 // New return an instance of the client.
@@ -38,6 +39,7 @@ func New(opts command.Options) (*Client, error) {
 	c := Client{
 		db:     db,
 		driver: opts.Driver,
+		limit:  opts.Limit,
 	}
 
 	return &c, nil
@@ -138,12 +140,32 @@ func (c *Client) TableContent(tableName string) ([][]string, []string, error) {
 	var query string
 
 	if c.driver == "postgres" || c.driver == "postgresql" {
-		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT 100;", tableName)
+		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT %d;", tableName, c.limit)
 	} else {
-		query = fmt.Sprintf("SELECT * FROM %s LIMIT 100;", tableName)
+		query = fmt.Sprintf("SELECT * FROM %s LIMIT %d;", tableName, c.limit)
 	}
 
 	return c.Query(query)
+}
+
+// TableCount returns the count of a given table.
+func (c *Client) TableCount(tableName string) (int, error) {
+	var (
+		query string
+		count int
+	)
+
+	if c.driver == "postgres" || c.driver == "postgresql" {
+		query = fmt.Sprintf("SELECT COUNT(*) FROM public.%s;", tableName)
+	} else {
+		query = fmt.Sprintf("SELECT COUNT(*) FROM %s;", tableName)
+	}
+
+	if err := c.db.Get(&count, query); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // TableStructure returns the structure of the table columns.

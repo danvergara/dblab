@@ -138,8 +138,8 @@ func TestQuery(t *testing.T) {
 
 	r, co, err := c.Query("SELECT * FROM products;")
 
-	assert.Equal(t, 100, len(r))
-	assert.Equal(t, 3, len(co))
+	assert.Len(t, r, 100)
+	assert.Len(t, co, 3)
 	assert.NoError(t, err)
 }
 
@@ -156,14 +156,15 @@ func TestTableContent(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  50,
 	}
 
 	c, _ := New(opts)
 
 	r, co, err := c.TableContent("products")
 
-	assert.Equal(t, 100, len(r))
-	assert.Equal(t, 3, len(co))
+	assert.Len(t, r, opts.Limit)
+	assert.Len(t, co, 3)
 	assert.NoError(t, err)
 }
 
@@ -186,7 +187,7 @@ func TestShowTables(t *testing.T) {
 
 	tables, err := c.ShowTables()
 
-	assert.Equal(t, 4, len(tables))
+	assert.Len(t, tables, 4)
 	assert.NoError(t, err)
 }
 
@@ -211,6 +212,10 @@ func TestTableStructure(t *testing.T) {
 
 	assert.Equal(t, 3, len(r))
 	assert.Equal(t, 8, len(co))
+
+	assert.Len(t, r, 3)
+	assert.Len(t, co, 8)
+
 	assert.NoError(t, err)
 }
 
@@ -263,4 +268,28 @@ func TestIndexes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Greater(t, len(r), 0)
 	assert.Greater(t, len(co), 0)
+}
+
+func TestCountTable(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, _ := New(opts)
+
+	count, err := c.TableCount("products")
+
+	assert.Equal(t, count, 100)
+	assert.NoError(t, err)
 }
