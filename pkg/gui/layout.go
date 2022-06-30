@@ -25,10 +25,10 @@ func (gui *Gui) setLayout() {
 	structure := NewOutputWidget("structure", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Structure", "Please select a table!")
 	rows := NewOutputWidget("rows", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Rows", "Type the sql query above. Press Ctrl-c to quit.")
 
-	rowsPerPage := NewLabelWidget("rows-per-page", int(0.81*float32(maxX)), int(0.96*float32(maxY)), "100 rows", gocui.ColorWhite)
-	currentPage := NewLabelWidget("current-page", int(0.90*float32(maxX)), int(0.96*float32(maxY)), "01", gocui.ColorWhite)
+	rowsPerPage := NewLabelWidget("rows-per-page", int(0.81*float32(maxX)), int(0.96*float32(maxY)), "00 rows", gocui.ColorWhite)
+	currentPage := NewLabelWidget("current-page", int(0.90*float32(maxX)), int(0.96*float32(maxY)), "00", gocui.ColorWhite)
 	slash := NewLabelWidget("slash", int(0.92*float32(maxX)), int(0.96*float32(maxY)), "/", gocui.ColorWhite)
-	totalPages := NewLabelWidget("total-pages", int(0.93*float32(maxX)), int(0.96*float32(maxY)), "50", gocui.ColorWhite)
+	totalPages := NewLabelWidget("total-pages", int(0.93*float32(maxX)), int(0.96*float32(maxY)), "00", gocui.ColorWhite)
 
 	back := NewButtonWidget("back", int(0.86*float32(maxX)), int(0.96*float32(maxY)), "< BACK", gocui.ColorGreen)
 	next := NewButtonWidget("next", int(0.95*float32(maxX)), int(0.96*float32(maxY)), "NEXT >", gocui.ColorGreen)
