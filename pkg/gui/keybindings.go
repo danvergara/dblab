@@ -131,7 +131,7 @@ func initialKeyBindings() []keyBinding {
 		},
 	}
 
-	// view like navigation.
+	// output views navigation.
 	for _, viewName := range []string{"rows", "structure", "constraints"} {
 		bindings = append(bindings, []keyBinding{
 			{view: viewName, key: 'k', mod: gocui.ModNone, handler: moveCursorVertically("up")},
