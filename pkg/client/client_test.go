@@ -59,6 +59,7 @@ func TestNewClientByURL(t *testing.T) {
 	opts := command.Options{
 		Driver: driver,
 		URL:    url,
+		Limit:  50,
 	}
 
 	c, err := New(opts)
@@ -82,6 +83,7 @@ func TestNewClientByUserData(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  50,
 	}
 
 	c, err := New(opts)
@@ -105,6 +107,7 @@ func TestNewClientPing(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  50,
 	}
 
 	c, err := New(opts)
@@ -132,6 +135,7 @@ func TestQuery(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  100,
 	}
 
 	c, _ := New(opts)
@@ -156,12 +160,12 @@ func TestTableContent(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
-		Limit:  50,
+		Limit:  100,
 	}
 
 	c, _ := New(opts)
 
-	r, co, err := c.TableContent("products")
+	r, co, err := c.tableContent("products")
 
 	assert.Len(t, r, opts.Limit)
 	assert.Len(t, co, 3)
@@ -181,6 +185,7 @@ func TestShowTables(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  100,
 	}
 
 	c, _ := New(opts)
@@ -204,14 +209,12 @@ func TestTableStructure(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  100,
 	}
 
 	c, _ := New(opts)
 
-	r, co, err := c.TableStructure("products")
-
-	assert.Equal(t, 3, len(r))
-	assert.Equal(t, 8, len(co))
+	r, co, err := c.tableStructure("products")
 
 	assert.Len(t, r, 3)
 	assert.Len(t, co, 8)
@@ -232,11 +235,12 @@ func TestConstraints(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  100,
 	}
 
 	c, _ := New(opts)
 
-	r, co, err := c.Constraints("products")
+	r, co, err := c.constraints("products")
 
 	t.Logf("constraints columns %v", co)
 	t.Logf("constraints content %v", r)
@@ -259,11 +263,12 @@ func TestIndexes(t *testing.T) {
 		Port:   port,
 		DBName: name,
 		SSL:    "disable",
+		Limit:  100,
 	}
 
 	c, _ := New(opts)
 
-	r, co, err := c.Indexes("products")
+	r, co, err := c.indexes("products")
 
 	assert.NoError(t, err)
 	assert.Greater(t, len(r), 0)
@@ -288,8 +293,50 @@ func TestCountTable(t *testing.T) {
 
 	c, _ := New(opts)
 
-	count, err := c.TableCount("products")
+	count, err := c.tableCount("products")
 
 	assert.Equal(t, count, 100)
 	assert.NoError(t, err)
+}
+
+func TestMetadata(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, _ := New(opts)
+
+	m, err := c.Metadata("products")
+
+	assert.NoError(t, err)
+
+	// Total count.
+	assert.Equal(t, m.TotalCount, 100)
+
+	// indexes.
+	assert.Greater(t, len(m.Indexes.Rows), 0)
+	assert.Greater(t, len(m.Indexes.Columns), 0)
+
+	// constraints.
+	assert.Greater(t, len(m.Constraints.Rows), 0)
+	assert.Greater(t, len(m.Constraints.Columns), 0)
+
+	// structure.
+	assert.Len(t, m.Structure.Rows, 3)
+	assert.Len(t, m.Structure.Columns, 8)
+
+	// table content.
+	assert.Len(t, m.TableContent.Rows, opts.Limit)
+	assert.Len(t, m.TableContent.Columns, 3)
 }
