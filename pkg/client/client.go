@@ -7,6 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/connection"
+	"github.com/danvergara/dblab/pkg/pagination"
 	"github.com/jmoiron/sqlx"
 
 	// mysql driver.
@@ -19,9 +20,10 @@ import (
 
 // Client is used to store the pool of db connection.
 type Client struct {
-	db     *sqlx.DB
-	driver string
-	limit  int
+	db                *sqlx.DB
+	driver            string
+	paginationManager *pagination.Manager
+	limit             int
 }
 
 // New return an instance of the client.
@@ -41,6 +43,13 @@ func New(opts command.Options) (*Client, error) {
 		driver: opts.Driver,
 		limit:  opts.Limit,
 	}
+
+	pm, err := pagination.New(c.limit, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	c.paginationManager = pm
 
 	return &c, nil
 }
@@ -85,6 +94,78 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 	}
 
 	return resultSet, columnNames, nil
+}
+
+// Table represents a SQL table.
+type Table struct {
+	Rows    [][]string
+	Columns []string
+}
+
+// Metadata sums up the most relevant data from a table.
+type Metadata struct {
+	TableContent Table
+	Structure    Table
+	Constraints  Table
+	Indexes      Table
+	TotalCount   int
+}
+
+// Metadata retunrs the most relevant data from a given table.
+func (c *Client) Metadata(tableName string) (*Metadata, error) {
+	pm, err := pagination.New(c.limit, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	c.paginationManager = pm
+
+	count, err := c.tableCount(tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	tcRows, tcColumns, err := c.tableContent(tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	sRows, sColumns, err := c.tableStructure(tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	cRows, cColumns, err := c.constraints(tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	iRows, iColumns, err := c.indexes(tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	m := Metadata{
+		TableContent: Table{
+			Rows:    tcRows,
+			Columns: tcColumns,
+		},
+		Structure: Table{
+			Rows:    sRows,
+			Columns: sColumns,
+		},
+		Constraints: Table{
+			Rows:    cRows,
+			Columns: cColumns,
+		},
+		Indexes: Table{
+			Rows:    iRows,
+			Columns: iColumns,
+		},
+		TotalCount: count,
+	}
+
+	return &m, nil
 }
 
 // ShowTables list all the tables in the database on the tables panel.
@@ -135,21 +216,31 @@ func (c *Client) ShowTables() ([]string, error) {
 	return tables, nil
 }
 
+// DB Return the db attribute.
+func (c *Client) DB() *sqlx.DB {
+	return c.db
+}
+
+// Driver returns the driver of the database.
+func (c *Client) Driver() string {
+	return c.driver
+}
+
 // TableContent returns all the rows of a table.
-func (c *Client) TableContent(tableName string) ([][]string, []string, error) {
+func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 	var query string
 
 	if c.driver == "postgres" || c.driver == "postgresql" {
-		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT %d;", tableName, c.limit)
+		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT %d OFFSET %d;", tableName, c.paginationManager.Limit(), c.paginationManager.Offset())
 	} else {
-		query = fmt.Sprintf("SELECT * FROM %s LIMIT %d;", tableName, c.limit)
+		query = fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d;", tableName, c.paginationManager.Limit(), c.paginationManager.Offset())
 	}
 
 	return c.Query(query)
 }
 
-// TableCount returns the count of a given table.
-func (c *Client) TableCount(tableName string) (int, error) {
+// tableCount returns the count of a given table.
+func (c *Client) tableCount(tableName string) (int, error) {
 	var (
 		query string
 		count int
@@ -168,8 +259,8 @@ func (c *Client) TableCount(tableName string) (int, error) {
 	return count, nil
 }
 
-// TableStructure returns the structure of the table columns.
-func (c *Client) TableStructure(tableName string) ([][]string, []string, error) {
+// tableStructure returns the structure of the table columns.
+func (c *Client) tableStructure(tableName string) ([][]string, []string, error) {
 	var query string
 
 	switch c.driver {
@@ -214,8 +305,8 @@ func (c *Client) TableStructure(tableName string) ([][]string, []string, error) 
 	}
 }
 
-// Constraints returns the resultet of from information_schema.table_constraints.
-func (c *Client) Constraints(tableName string) ([][]string, []string, error) {
+// constraints returns the resultet of from information_schema.table_constraints.
+func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 	var (
 		query sq.SelectBuilder
 		sql   string
@@ -253,8 +344,8 @@ func (c *Client) Constraints(tableName string) ([][]string, []string, error) {
 	return c.Query(sql, tableName)
 }
 
-// Indexes returns a resulset with the information of the indexes given a table name.
-func (c *Client) Indexes(tableName string) ([][]string, []string, error) {
+// indexes returns a resulset with the information of the indexes given a table name.
+func (c *Client) indexes(tableName string) ([][]string, []string, error) {
 	var query string
 
 	switch c.driver {
@@ -273,14 +364,4 @@ func (c *Client) Indexes(tableName string) ([][]string, []string, error) {
 	default:
 		return nil, nil, errors.New("not supported driver")
 	}
-}
-
-// DB Return the db attribute.
-func (c *Client) DB() *sqlx.DB {
-	return c.db
-}
-
-// Driver returns the driver of the database.
-func (c *Client) Driver() string {
-	return c.driver
 }
