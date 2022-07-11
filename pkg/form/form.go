@@ -2,6 +2,7 @@ package form
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -34,6 +35,7 @@ type Model struct {
 	userInput     textinput.Model
 	passwordInput textinput.Model
 	databaseInput textinput.Model
+	limitInput    textinput.Model
 
 	// ssl.
 	modes []string
@@ -47,7 +49,7 @@ func (m *Model) Init() tea.Cmd {
 
 // Update update the view of the meta-model.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// Make sure these keys always quit
+	// if the pressed keys are esc or ctrl + c, finish the execution.
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		k := msg.String()
 		if k == "esc" || k == "ctrl+c" {
@@ -113,6 +115,20 @@ func (m *Model) SSL() string {
 	return m.ssl
 }
 
+// Limit returns the limit input value from the user.
+func (m *Model) Limit() int {
+	limit, err := strconv.Atoi(m.limitInput.Value())
+	if err != nil {
+		return 100
+	}
+
+	if limit <= 0 {
+		return 100
+	}
+
+	return limit
+}
+
 func updateDriver(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// Is it a key press?
@@ -154,6 +170,7 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.userInput,
 				m.passwordInput,
 				m.databaseInput,
+				m.limitInput,
 			}
 
 			s := msg.String()
@@ -196,6 +213,7 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 			m.userInput = inputs[2]
 			m.passwordInput = inputs[3]
 			m.databaseInput = inputs[4]
+			m.limitInput = inputs[5]
 
 			return m, nil
 		}
@@ -256,6 +274,9 @@ func updateInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 	m.databaseInput, cmd = m.databaseInput.Update(msg)
 	cmds = append(cmds, cmd)
 
+	m.limitInput, cmd = m.limitInput.Update(msg)
+	cmds = append(cmds, cmd)
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -280,6 +301,7 @@ func standardView(m *Model) string {
 		m.userInput.View(),
 		m.passwordInput.View(),
 		m.databaseInput.View(),
+		m.limitInput.View(),
 	}
 
 	for i := 0; i < len(inputs); i++ {
@@ -354,6 +376,10 @@ func initModel() Model {
 	database.Placeholder = "Database"
 	database.CharLimit = 200
 
+	limit := textinput.NewModel()
+	limit.Placeholder = "Limit"
+	limit.CharLimit = 200
+
 	m := Model{
 		// the supported drivers by the client.
 		drivers: []string{"postgres", "mysql", "sqlite3"},
@@ -365,6 +391,7 @@ func initModel() Model {
 		userInput:     user,
 		passwordInput: password,
 		databaseInput: database,
+		limitInput:    limit,
 	}
 
 	return m
@@ -385,6 +412,7 @@ func Run() (command.Options, error) {
 		Pass:   m.Password(),
 		DBName: m.Database(),
 		SSL:    m.SSL(),
+		Limit:  m.Limit(),
 	}
 
 	return opts, nil
@@ -392,5 +420,5 @@ func Run() (command.Options, error) {
 
 // IsEmpty checks if the given options objects is empty.
 func IsEmpty(opts command.Options) bool {
-	return cmp.Equal(opts, command.Options{}, cmpopts.IgnoreFields(command.Options{}, "SSL"))
+	return cmp.Equal(opts, command.Options{}, cmpopts.IgnoreFields(command.Options{}, "SSL", "Limit"))
 }
