@@ -37,6 +37,7 @@ type Config struct {
 	Port   string
 	DBName string
 	Driver string
+	Limit  int `fig:"limit" default:"100"`
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
@@ -75,6 +76,7 @@ func Init() (command.Options, error) {
 		Pass:   cfg.Database.Password,
 		DBName: cfg.Database.DB,
 		SSL:    cfg.Database.SSL,
+		Limit:  cfg.Limit,
 	}
 
 	return opts, nil
