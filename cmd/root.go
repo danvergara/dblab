@@ -21,6 +21,7 @@ var (
 	pass   string
 	db     string
 	ssl    string
+	limit  int
 )
 
 // NewRootCmd returns the root command.
@@ -48,6 +49,7 @@ func NewRootCmd() *cobra.Command {
 					Pass:   pass,
 					DBName: db,
 					SSL:    ssl,
+					Limit:  limit,
 				}
 
 				if form.IsEmpty(opts) {
@@ -106,4 +108,5 @@ func init() {
 	rootCmd.Flags().StringVarP(&pass, "pass", "", "", "Password for user")
 	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name")
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
+	rootCmd.Flags().IntVarP(&limit, "limit", "", 100, "Size of the result set from the table content query")
 }
