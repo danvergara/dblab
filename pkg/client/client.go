@@ -108,22 +108,24 @@ type Metadata struct {
 	Structure    Table
 	Constraints  Table
 	Indexes      Table
-	TotalCount   int
+	TotalPages   int
 }
 
 // Metadata retunrs the most relevant data from a given table.
 func (c *Client) Metadata(tableName string) (*Metadata, error) {
-	pm, err := pagination.New(c.limit, 0)
+	count, err := c.tableCount(tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	pm, err := pagination.New(c.limit, count)
 	if err != nil {
 		return nil, err
 	}
 
 	c.paginationManager = pm
 
-	count, err := c.tableCount(tableName)
-	if err != nil {
-		return nil, err
-	}
+	pages := c.paginationManager.TotalPages()
 
 	tcRows, tcColumns, err := c.tableContent(tableName)
 	if err != nil {
@@ -162,7 +164,7 @@ func (c *Client) Metadata(tableName string) (*Metadata, error) {
 			Rows:    iRows,
 			Columns: iColumns,
 		},
-		TotalCount: count,
+		TotalPages: pages,
 	}
 
 	return &m, nil

@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"fmt"
+
 	"github.com/danvergara/gocui"
 	"github.com/fatih/color"
 )
@@ -25,13 +27,13 @@ func (gui *Gui) setLayout() {
 	structure := NewOutputWidget("structure", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Structure", "Please select a table!")
 	rows := NewOutputWidget("rows", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Rows", "Type the sql query above. Press Ctrl-c to quit.")
 
-	rowsPerPage := NewLabelWidget("rows-per-page", int(0.81*float32(maxX)), int(0.96*float32(maxY)), "00 rows", gocui.ColorWhite)
-	currentPage := NewLabelWidget("current-page", int(0.90*float32(maxX)), int(0.96*float32(maxY)), "00", gocui.ColorWhite)
-	slash := NewLabelWidget("slash", int(0.92*float32(maxX)), int(0.96*float32(maxY)), "/", gocui.ColorWhite)
-	totalPages := NewLabelWidget("total-pages", int(0.93*float32(maxX)), int(0.96*float32(maxY)), "00", gocui.ColorWhite)
+	rowsPerPage := NewLabelWidget("rows-per-page", int(0.75*float32(maxX)), int(0.96*float32(maxY)), fmt.Sprintf("%4d rows", 0), gocui.ColorWhite)
+	currentPage := NewLabelWidget("current-page", int(0.84*float32(maxX)), int(0.96*float32(maxY)), fmt.Sprintf("%4d", 0), gocui.ColorWhite)
+	slash := NewLabelWidget("slash", int(0.87*float32(maxX)), int(0.96*float32(maxY)), "/", gocui.ColorWhite)
+	totalPages := NewLabelWidget("total-pages", int(0.89*float32(maxX)), int(0.96*float32(maxY)), fmt.Sprintf("%4d", 0), gocui.ColorWhite)
 
-	back := NewButtonWidget("back", int(0.86*float32(maxX)), int(0.96*float32(maxY)), "< BACK", gocui.ColorGreen)
-	next := NewButtonWidget("next", int(0.95*float32(maxX)), int(0.96*float32(maxY)), "NEXT >", gocui.ColorGreen)
+	back := NewButtonWidget("back", int(0.80*float32(maxX)), int(0.96*float32(maxY)), "< BACK", gocui.ColorGreen)
+	next := NewButtonWidget("next", int(0.92*float32(maxX)), int(0.96*float32(maxY)), "NEXT >", gocui.ColorGreen)
 
 	gui.g.SetManager(banner, tables, navigation, editor, indexes, constraints, structure, rows, rowsPerPage, back, currentPage, slash, totalPages, next)
 }
