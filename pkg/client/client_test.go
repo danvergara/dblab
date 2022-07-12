@@ -322,7 +322,7 @@ func TestMetadata(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Total count.
-	assert.Equal(t, m.TotalCount, 100)
+	assert.Equal(t, m.TotalPages, 1)
 
 	// indexes.
 	assert.Greater(t, len(m.Indexes.Rows), 0)

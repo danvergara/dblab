@@ -67,6 +67,11 @@ func (m *Manager) Limit() int {
 	return m.limit
 }
 
+// TotalPages returns the total pages count.
+func (m *Manager) TotalPages() int {
+	return m.totalPages
+}
+
 // setOffset calculates the offset based of the current page and the limit.
 func (m *Manager) setOffset() {
 	m.offset = (m.currentPage - 1) * m.limit

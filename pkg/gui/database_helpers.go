@@ -63,11 +63,18 @@ func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	for _, vq := range viewQueries {
-		if err := gui.render(g, v, vq.name, vq.columns, vq.rows); err != nil {
+		if err := gui.render(v, vq.name, vq.columns, vq.rows); err != nil {
 			return err
 		}
 	}
 
+	// initial state of navigation label widgets.
+	if err := gui.showLabelContent("total-pages", m.TotalPages); err != nil {
+		return err
+	}
+	if err := gui.showLabelContent("current-page", 1); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -105,7 +112,6 @@ func renderTable(v *gocui.View, columns []string, resultSet [][]string) {
 // the table name as its parameter. The output is a result set as a product of the
 // expected query.
 func (gui *Gui) render(
-	g *gocui.Gui,
 	v *gocui.View,
 	viewName string,
 	columns []string,
@@ -126,6 +132,20 @@ func (gui *Gui) render(
 	}
 
 	renderTable(ov, columns, resultSet)
+
+	return nil
+}
+
+func (gui *Gui) showLabelContent(viewName string, value int) error {
+	v, err := gui.g.View(viewName)
+	if err != nil {
+		return err
+	}
+
+	// Cleans the view.
+	v.Clear()
+
+	fmt.Fprintf(v, "%4d", value)
 
 	return nil
 }
