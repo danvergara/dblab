@@ -149,3 +149,40 @@ func (gui *Gui) showLabelContent(viewName string, value int) error {
 
 	return nil
 }
+
+func (gui *Gui) nextPage(g *gocui.Gui, v *gocui.View) error {
+	v.Rewind()
+
+	table, page, err := gui.c.NextPage()
+	if err != nil {
+		return nil
+	}
+
+	if err := gui.render(v, "rows", table.Columns, table.Rows); err != nil {
+		return err
+	}
+
+	if err := gui.showLabelContent("current-page", page); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gui *Gui) previousPage(g *gocui.Gui, v *gocui.View) error {
+	v.Rewind()
+
+	table, page, err := gui.c.PreviousPage()
+	if err != nil {
+		return nil
+	}
+
+	if err := gui.render(v, "rows", table.Columns, table.Rows); err != nil {
+		return err
+	}
+
+	if err := gui.showLabelContent("current-page", page); err != nil {
+		return err
+	}
+
+	return nil
+}
