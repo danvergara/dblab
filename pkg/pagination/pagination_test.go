@@ -14,7 +14,7 @@ func TestPaginationLifeCycle(t *testing.T) {
 	limit := 50
 	count := 150
 
-	m, err := New(limit, count)
+	m, err := New(limit, count, "users")
 	assert.NoError(t, err)
 
 	for i := 0; i < (count/m.Limit())-1; i++ {

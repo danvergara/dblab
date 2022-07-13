@@ -4,19 +4,21 @@ import "fmt"
 
 // Manager handles the pagination.
 type Manager struct {
-	totalPages  int
-	currentPage int
-	limit       int
-	offset      int
-	active      bool
+	totalPages   int
+	currentPage  int
+	limit        int
+	offset       int
+	currentTable string
+	active       bool
 }
 
 // New returns a pointer to a Manager instance.
-func New(limit, count int) (*Manager, error) {
+func New(limit, count int, currentTable string) (*Manager, error) {
 	m := Manager{
-		limit:       limit,
-		currentPage: 1,
-		active:      true,
+		limit:        limit,
+		currentPage:  1,
+		active:       true,
+		currentTable: currentTable,
 	}
 
 	m.setOffset()
@@ -72,14 +74,24 @@ func (m *Manager) TotalPages() int {
 	return m.totalPages
 }
 
-// setOffset calculates the offset based of the current page and the limit.
-func (m *Manager) setOffset() {
-	m.offset = (m.currentPage - 1) * m.limit
-}
-
 // CurrentPage returns the currentPage value.
 func (m *Manager) CurrentPage() int {
 	return m.currentPage
+}
+
+// SetCurrentTable sets the current table name.
+func (m *Manager) SetCurrentTable(tableName string) {
+	m.currentTable = tableName
+}
+
+// CurrentTable sets the current table name.
+func (m *Manager) CurrentTable() string {
+	return m.currentTable
+}
+
+// setOffset calculates the offset based of the current page and the limit.
+func (m *Manager) setOffset() {
+	m.offset = (m.currentPage - 1) * m.limit
 }
 
 // setTotalPages total pages = count / limit, if the limit is greater than 0.
