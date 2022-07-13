@@ -39,7 +39,7 @@ build:
 .PHONY: run
 ## run: Runs the application
 run: build
-	./dblab --host localhost --user postgres --db users --pass password --ssl disable --port 5432 --driver postgres
+	./dblab --host localhost --user postgres --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
 
 .PHONY: run-mysql
 ## run-mysql: Runs the application with a connection to mysql
