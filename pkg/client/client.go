@@ -44,7 +44,7 @@ func New(opts command.Options) (*Client, error) {
 		limit:  opts.Limit,
 	}
 
-	pm, err := pagination.New(c.limit, 0)
+	pm, err := pagination.New(c.limit, 0, "")
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (c *Client) Metadata(tableName string) (*Metadata, error) {
 		return nil, err
 	}
 
-	pm, err := pagination.New(c.limit, count)
+	pm, err := pagination.New(c.limit, count, tableName)
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +216,48 @@ func (c *Client) ShowTables() ([]string, error) {
 	}
 
 	return tables, nil
+}
+
+// NextPage returns the next page of the given table, based off the limit and the offsite.
+func (c *Client) NextPage() (*Table, int, error) {
+	if err := c.paginationManager.NextPage(); err != nil {
+		return nil, 0, err
+	}
+
+	r, col, err := c.tableContent(c.paginationManager.CurrentTable())
+	if err != nil {
+		return nil, 0, err
+	}
+
+	t := Table{
+		Rows:    r,
+		Columns: col,
+	}
+
+	page := c.paginationManager.CurrentPage()
+
+	return &t, page, nil
+}
+
+// PreviousPage returns the next page of the given table, based off the limit and the offsite.
+func (c *Client) PreviousPage() (*Table, int, error) {
+	if err := c.paginationManager.PreviousPage(); err != nil {
+		return nil, 0, err
+	}
+
+	r, col, err := c.tableContent(c.paginationManager.CurrentTable())
+	if err != nil {
+		return nil, 0, err
+	}
+
+	t := Table{
+		Rows:    r,
+		Columns: col,
+	}
+
+	page := c.paginationManager.CurrentPage()
+
+	return &t, page, nil
 }
 
 // DB Return the db attribute.
