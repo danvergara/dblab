@@ -178,5 +178,14 @@ func (gui *Gui) keybindings() error {
 		return err
 	}
 
+	// SQL pagination.
+	if err := gui.g.SetKeybinding("next", gocui.MouseLeft, gocui.ModNone, gui.nextPage); err != nil {
+		return err
+	}
+
+	if err := gui.g.SetKeybinding("back", gocui.MouseLeft, gocui.ModNone, gui.previousPage); err != nil {
+		return err
+	}
+
 	return nil
 }
