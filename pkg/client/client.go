@@ -260,6 +260,17 @@ func (c *Client) PreviousPage() (*Table, int, error) {
 	return &t, page, nil
 }
 
+// ResetPagination resets the paginationManager field.
+func (c *Client) ResetPagination() error {
+	pm, err := pagination.New(c.limit, 0, "")
+	if err != nil {
+		return err
+	}
+
+	c.paginationManager = pm
+	return nil
+}
+
 // DB Return the db attribute.
 func (c *Client) DB() *sqlx.DB {
 	return c.db

@@ -9,7 +9,6 @@ type Manager struct {
 	limit        int
 	offset       int
 	currentTable string
-	active       bool
 }
 
 // New returns a pointer to a Manager instance.
@@ -17,7 +16,6 @@ func New(limit, count int, currentTable string) (*Manager, error) {
 	m := Manager{
 		limit:        limit,
 		currentPage:  1,
-		active:       true,
 		currentTable: currentTable,
 	}
 
@@ -32,7 +30,7 @@ func New(limit, count int, currentTable string) (*Manager, error) {
 
 // NextPage increases the value currentPage.
 func (m *Manager) NextPage() error {
-	if m.currentPage+1 > m.totalPages || !m.active {
+	if m.currentPage+1 > m.totalPages {
 		return fmt.Errorf("current page should not be greater than the total pages count")
 	}
 
@@ -44,7 +42,7 @@ func (m *Manager) NextPage() error {
 
 // PreviousPage decreases the value of currentPage.
 func (m *Manager) PreviousPage() error {
-	if m.currentPage-1 <= 0 || !m.active {
+	if m.currentPage-1 <= 0 {
 		return fmt.Errorf("current page should not be less than 0")
 	}
 
@@ -52,11 +50,6 @@ func (m *Manager) PreviousPage() error {
 	m.setOffset()
 
 	return nil
-}
-
-// Deactivate sets the active property to false.
-func (m *Manager) Deactivate() {
-	m.active = false
 }
 
 // Offset returns the limit.
