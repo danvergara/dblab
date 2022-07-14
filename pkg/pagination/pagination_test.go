@@ -37,7 +37,7 @@ func TestPaginationLifeCycle(t *testing.T) {
 	err = m.PreviousPage()
 	assert.Error(t, err)
 
-	m.Deactivate()
-	err = m.NextPage()
-	assert.Error(t, err)
+	m.SetCurrentTable("products")
+	ct := m.CurrentTable()
+	assert.Equal(t, "products", ct)
 }

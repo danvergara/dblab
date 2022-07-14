@@ -21,6 +21,17 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 		// Cleans up the rows view.
 		ov.Clear()
 
+		if err := gui.c.ResetPagination(); err != nil {
+			return err
+		}
+
+		if err := gui.showLabelContent("total-pages", 1); err != nil {
+			return err
+		}
+		if err := gui.showLabelContent("current-page", 1); err != nil {
+			return err
+		}
+
 		resultSet, columnNames, err := gui.c.Query(v.Buffer())
 		if err != nil {
 			// Prints the error in red on the rows view.
