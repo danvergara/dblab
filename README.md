@@ -138,7 +138,8 @@ Now, there's a menu to navigate between hidden views by just clicking on the des
 <img src="screenshots/constraints-view.png" />
 <img src="screenshots/indexes-view.png" />
 
-As you may have noticed, navigation has already added, so every time you query the content of a listed table, the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
+As you may have noticed, navigation has already been added, so every time you query the content of a listed table, the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
+Just hit the `BACK` and `NEXT` buttons to go back and forth.
 
 ### Key Bindings
 Key                                     | Description
