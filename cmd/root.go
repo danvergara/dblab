@@ -34,29 +34,15 @@ func NewRootCmd() *cobra.Command {
 			var opts command.Options
 			var err error
 
-			if cfg {
-				opts, err = config.Init()
+			cfgFound, opts, err := config.Init()
+			if err != nil {
+				return err
+			}
+
+			if cfg || !cfgFound {
+				opts, err = form.Run()
 				if err != nil {
 					return err
-				}
-			} else {
-				opts = command.Options{
-					Driver: driver,
-					URL:    url,
-					Host:   host,
-					Port:   port,
-					User:   user,
-					Pass:   pass,
-					DBName: db,
-					SSL:    ssl,
-					Limit:  limit,
-				}
-
-				if form.IsEmpty(opts) {
-					opts, err = form.Run()
-					if err != nil {
-						return err
-					}
 				}
 			}
 

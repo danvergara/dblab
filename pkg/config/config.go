@@ -4,7 +4,11 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/kkyr/fig"
@@ -19,6 +23,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+const filename = ".dblab.yaml"
 
 // Config struct is used to store the db connection data.
 type Config struct {
@@ -55,17 +61,28 @@ func New(cmd *cobra.Command) *Config {
 }
 
 // Init reads in config file and returns a commands/Options instance.
-func Init() (command.Options, error) {
+func Init() (bool, command.Options, error) {
 	var opts command.Options
 	var cfg Config
+	cfgFound := false
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return opts, err
+		return false, opts, err
 	}
 
-	if err := fig.Load(&cfg, fig.File(".dblab.yaml"), fig.Dirs(".", home)); err != nil {
-		return opts, err
+	dirs := []string{".", home}
+	cfgFound, err = fileIsLoad(dirs, &cfg)
+	if err != nil {
+		return cfgFound, opts, err
+	}
+
+	if !cfgFound {
+		cfgFile, err := os.Create(filepath.Join(home, filename))
+		err = cfgFile.Close()
+		if err != nil {
+			return cfgFound, opts, err
+		}
 	}
 
 	opts = command.Options{
@@ -79,7 +96,69 @@ func Init() (command.Options, error) {
 		Limit:  cfg.Limit,
 	}
 
-	return opts, nil
+	return cfgFound, opts, nil
+}
+
+func fileIsLoad(dirs []string, cfg *Config) (bool, error) {
+	fileFound := false
+	for _, dir := range dirs {
+		if fileExists(filepath.Join(dir, filename)) {
+			if err := fig.Load(cfg, fig.File(filename), fig.Dirs(dirs...)); err != nil {
+				return fileFound, err
+			}
+			fileFound = true
+		}
+	}
+	return fileFound, nil
+}
+
+// fileExists returns true if the file exists and is not a
+// directory.
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
+// Write the configuration in the start-up of the program.
+func Write(host, driver, port, user, password, database string, limit int) error {
+	type Cfg struct {
+		Database struct {
+			Host     string
+			Port     string
+			DB       string
+			User     string
+			Password string
+			Driver   string
+		}
+		Limit int
+	}
+	cfg := Cfg{}
+	cfg.Database.Host = host
+	cfg.Database.Port = port
+	cfg.Database.DB = database
+	cfg.Database.User = user
+	cfg.Database.Password = password
+	cfg.Database.Driver = driver
+	cfg.Limit = limit
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err1 := ioutil.WriteFile(filepath.Join(home, filename), data, 0644)
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+	return nil
 }
 
 // Open returns a db connection using the data from the config object.
