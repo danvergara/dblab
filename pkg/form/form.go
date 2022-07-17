@@ -2,6 +2,7 @@ package form
 
 import (
 	"fmt"
+	"github.com/danvergara/dblab/pkg/config"
 	"strconv"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -135,7 +136,7 @@ func updateDriver(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 
 		switch msg.String() {
-		// the "up" and "k" keys mve the cursor up.
+		// the "up" and "k" keys move the cursor up.
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
@@ -179,6 +180,18 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 			if s == "enter" && m.cursor == len(inputs)-1 {
 				m.steps = 2
 				m.cursor = 0
+				err := config.Write(
+					m.Host(),
+					m.driver,
+					m.Port(),
+					m.User(),
+					m.Password(),
+					m.Database(),
+					m.Limit(),
+				)
+				if err != nil {
+					return m, nil
+				}
 				return m, nil
 			}
 
