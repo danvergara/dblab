@@ -35,6 +35,7 @@ type Model struct {
 	userInput     textinput.Model
 	passwordInput textinput.Model
 	databaseInput textinput.Model
+	filePathInput textinput.Model
 	limitInput    textinput.Model
 
 	// ssl.
@@ -129,213 +130,9 @@ func (m *Model) Limit() int {
 	return limit
 }
 
-func updateDriver(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	// Is it a key press?
-	case tea.KeyMsg:
-
-		switch msg.String() {
-		// the "up" and "k" keys mve the cursor up.
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		// the "down" and "j" keys move the cursor down.
-		case "down", "j":
-			if m.cursor < len(m.drivers)-1 {
-				m.cursor++
-			}
-		case "enter":
-			driver := m.drivers[m.cursor]
-			m.driver = driver
-			m.cursor = 0
-			m.steps = 1
-			return m, nil
-		}
-	}
-
-	return m, nil
-}
-
-func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "tab", "shift+tab", "enter", "up", "down":
-			inputs := []textinput.Model{
-				m.hostInput,
-				m.portInput,
-				m.userInput,
-				m.passwordInput,
-				m.databaseInput,
-				m.limitInput,
-			}
-
-			s := msg.String()
-
-			// If so, exit.
-			if s == "enter" && m.cursor == len(inputs)-1 {
-				m.steps = 2
-				m.cursor = 0
-				return m, nil
-			}
-
-			if s == "up" || s == "shift+tab" {
-				m.cursor--
-			} else {
-				m.cursor++
-			}
-
-			if m.cursor > len(inputs) {
-				m.cursor = 0
-			} else if m.cursor < 0 {
-				m.cursor = len(inputs)
-			}
-
-			for i := 0; i <= len(inputs)-1; i++ {
-				if i == m.cursor {
-					// Set focused state.
-					inputs[i].Focus()
-					inputs[i].PromptStyle = focusedStyle
-					inputs[i].TextStyle = focusedStyle
-					continue
-				}
-				// Remove focused state.
-				inputs[i].Blur()
-				inputs[i].PromptStyle = noStyle
-				inputs[i].TextStyle = noStyle
-			}
-
-			m.hostInput = inputs[0]
-			m.portInput = inputs[1]
-			m.userInput = inputs[2]
-			m.passwordInput = inputs[3]
-			m.databaseInput = inputs[4]
-			m.limitInput = inputs[5]
-
-			return m, nil
-		}
-	}
-
-	m, cmd = updateInputs(msg, m)
-	return m, cmd
-}
-
-func updateSSL(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	// Is it a key press?
-	case tea.KeyMsg:
-
-		switch msg.String() {
-		// These keys should exit the program.
-		// the "up" and "k" keys mve the cursor up.
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		// the "down" and "j" keys move the cursor down.
-		case "down", "j":
-			if m.cursor < len(m.modes)-1 {
-				m.cursor++
-			}
-		case "enter":
-			if len(m.modes) > 0 {
-				m.ssl = m.modes[m.cursor]
-			}
-			m.steps = 3
-			m.cursor = 0
-			return m, tea.Quit
-		}
-	}
-
-	return m, nil
-}
-
-func updateInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
-
-	m.hostInput, cmd = m.hostInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.portInput, cmd = m.portInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.userInput, cmd = m.userInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.passwordInput, cmd = m.passwordInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.databaseInput, cmd = m.databaseInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.limitInput, cmd = m.limitInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	return m, tea.Batch(cmds...)
-}
-
-func driverView(m *Model) string {
-	// The header.
-	s := "Select the database driver:"
-	var choices string
-	// Iterate over the driver.
-	for i, driver := range m.drivers {
-		choices += fmt.Sprintf("%s\n", checkbox(driver, m.cursor == i))
-	}
-
-	return fmt.Sprintf("%s\n\n%s", s, choices)
-}
-
-func standardView(m *Model) string {
-	s := "Introduce the connection params:\n\n"
-
-	inputs := []string{
-		m.hostInput.View(),
-		m.portInput.View(),
-		m.userInput.View(),
-		m.passwordInput.View(),
-		m.databaseInput.View(),
-		m.limitInput.View(),
-	}
-
-	for i := 0; i < len(inputs); i++ {
-		s += inputs[i]
-		if i < len(inputs)-1 {
-			s += "\n"
-		}
-	}
-
-	s += "\n"
-	return s
-}
-
-func sslView(m *Model) string {
-	switch m.driver {
-	case "postgres":
-		m.modes = []string{"disable", "require", "verify-full"}
-	case "mysql":
-		m.modes = []string{"true", "false", "skip-verify", "preferred"}
-	case "sqlite3":
-		m.modes = []string{}
-	default:
-		m.modes = []string{"disable", "require", "verify-full"}
-	}
-
-	// The header.
-	s := "\nSelect the ssl mode (just press enter if you selected sqlite3):"
-	var choices string
-	// Iterate over the driver.
-	for i, mode := range m.modes {
-		choices += fmt.Sprintf("%s\n", checkbox(mode, m.cursor == i))
-	}
-
-	return fmt.Sprintf("%s\n\n%s", s, choices)
+// FilePath returns the path to the database file (just in sqlite3) value.
+func (m *Model) FilePath() string {
+	return m.filePathInput.Value()
 }
 
 func checkbox(label string, checked bool) string {
@@ -353,10 +150,10 @@ func colorFg(val, color string) string {
 func initModel() Model {
 	host := textinput.NewModel()
 	host.Placeholder = "Host"
-	host.Focus()
 	host.PromptStyle = focusedStyle
 	host.TextStyle = focusedStyle
 	host.CharLimit = 200
+	host.Focus()
 
 	port := textinput.NewModel()
 	port.Placeholder = "Port"
@@ -380,6 +177,11 @@ func initModel() Model {
 	limit.Placeholder = "Limit"
 	limit.CharLimit = 200
 
+	filePath := textinput.NewModel()
+	filePath.Placeholder = "File Path"
+	filePath.CharLimit = 1000
+	filePath.Focus()
+
 	m := Model{
 		// the supported drivers by the client.
 		drivers: []string{"postgres", "mysql", "sqlite3"},
@@ -392,6 +194,7 @@ func initModel() Model {
 		passwordInput: password,
 		databaseInput: database,
 		limitInput:    limit,
+		filePathInput: filePath,
 	}
 
 	return m
@@ -413,6 +216,10 @@ func Run() (command.Options, error) {
 		DBName: m.Database(),
 		SSL:    m.SSL(),
 		Limit:  m.Limit(),
+	}
+
+	if m.driver == "sqlite3" {
+		opts.URL = fmt.Sprintf("file:%s", m.FilePath())
 	}
 
 	return opts, nil
