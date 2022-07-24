@@ -106,12 +106,12 @@ func (m *Model) Password() string {
 	return m.passwordInput.Value()
 }
 
-// Database returns te database name value.
+// Database returns the database name value.
 func (m *Model) Database() string {
 	return m.databaseInput.Value()
 }
 
-// SSL returns te ssl name value.
+// SSL returns the ssl name value.
 func (m *Model) SSL() string {
 	return m.ssl
 }
