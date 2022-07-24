@@ -36,6 +36,11 @@ build:
 	CGO_ENABLED=0 \
 	go build -o dblab .
 
+.PHONY: build-sqlite3
+## build-sqlite3: Builds the Go program with CGO_ENABLED enabled.
+build-sqlite3:
+	go build -o dblab .
+
 .PHONY: run
 ## run: Runs the application
 run: build
