@@ -7,8 +7,15 @@ before:
     # you may remove this if you don't need go generate
     - go generate ./...
 builds:
-  - env:
+  - id: "main"
+    env:
       - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+  - id: "sqlite3"
+    binary: dblab-sqlite
     goos:
       - linux
       - windows
