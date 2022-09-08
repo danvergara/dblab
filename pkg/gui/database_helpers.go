@@ -56,6 +56,10 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 			}
 		}
 
+		if _, err := gui.g.SetViewOnTop("rows"); err != nil {
+			return err
+		}
+
 		return nil
 	}
 }
