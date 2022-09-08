@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/danvergara/gocui"
 	"github.com/fatih/color"
@@ -32,7 +33,9 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 			return err
 		}
 
-		resultSet, columnNames, err := gui.c.Query(v.Buffer())
+		query := v.Buffer()
+
+		resultSet, columnNames, err := gui.c.Query(query)
 		if err != nil {
 			// Prints the error in red on the rows view.
 			red := color.New(color.FgRed)
@@ -40,6 +43,17 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 			boldRed.Fprintf(ov, "%s\n", err)
 		} else {
 			renderTable(ov, columnNames, resultSet)
+		}
+
+		switch {
+		case strings.Contains(strings.ToLower(query), "alter table"):
+			fallthrough
+		case strings.Contains(strings.ToLower(query), "drop table"):
+			fallthrough
+		case strings.Contains(strings.ToLower(query), "create table"):
+			if err := gui.showTables(); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -100,6 +114,8 @@ func (gui *Gui) showTables() error {
 	if err != nil {
 		return err
 	}
+
+	rv.Clear()
 
 	for _, table := range tables {
 		fmt.Fprintf(rv, "%s\n", table)
