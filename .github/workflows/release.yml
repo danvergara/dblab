@@ -3,7 +3,8 @@ name: goreleaser
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+.*' # Only build tag with semantic versioning format
+      - 'v[0-9]+.[0-9]+.[0-9]+' # Only build tag with semantic versioning format
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+'
 
 permissions:
   contents: write
