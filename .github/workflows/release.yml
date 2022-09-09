@@ -26,7 +26,7 @@ jobs:
       - name: Set the current version as env variable
         run: |
           make build
-          echo "CURRENT_VERSION=$(./dblab --version)" >> $GITHUB_ENV
+          echo "CURRENT_VERSION=$(./dblab version)" >> $GITHUB_ENV
       - name: Test the env variables
         run: |
           echo RELEASE_VERSION
