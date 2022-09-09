@@ -23,15 +23,18 @@ jobs:
           go-version: 1.18
       - name: Set release tag env variable
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      - name: Test release tag env variable
-        run: |
-          echo $RELEASE_VERSION
-          echo ${{ env.RELEASE_VERSION }}
-      - name: Check current binary version
+      - name: Set the current version as env variable
         run: |
           make build
+          echo "CURRENT_VERSION=$(./dblab --version)" >> $GITHUB_ENV
+      - name: Test the env variables
+        run: |
+          echo RELEASE_VERSION
+          echo ${{ env.RELEASE_VERSION }}
+          echo CURRENT_VERSION
+          echo ${{ env.CURRENT_VERSION }}
       - name: Run GoReleaser
-        if: ./dblab version == ${{ env.RELEASE_VERSION }}
+        if: env.RELEASE_VERSION == env.CURRENT_VERSION
         uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
