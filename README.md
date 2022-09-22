@@ -19,9 +19,11 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3 databases.
 
 - Cross-platform support OSX/Linux/Windows 32/64-bit
 - Simple installation (distributed as a single binary)
-- Zero dependencies
+- Zero dependencies (except for the SQLite3 binary with CGO enabled).
 
 ## Installation
+
+> if you need to work with SQLite3, install the CGO enabled binary using the proper bash script listed below
 
 ### Homebrew
 
@@ -41,13 +43,22 @@ $ brew install dblab
 ### Binary Release (Linux/OSX/Windows)
 You can manually download a binary release from [the release page](https://github.com/danvergara/dblab/releases).
 
-Automated install/update, don't forget to always verify what you're piping into bash:
+## Automated install/update
+> Don't forget to always verify what you're piping into bash
+
+Ordinary binary:
 
 ```sh
 curl https://raw.githubusercontent.com/danvergara/dblab/master/scripts/install_update_linux.sh | bash
 ```
 
-The script installs downloaded binary to `/usr/local/bin` directory by default, but it can be changed by setting `DIR` environment variable.
+CGO enabled binary:
+
+```sh
+curl https://raw.githubusercontent.com/danvergara/dblab/master/scripts/install_update_sqlite_linux.sh | bash
+```
+
+The scripts install the binary in `/usr/local/bin` directory by default, but it can be changed by setting the `DIR` environment variable.
 
 ## Help
 
