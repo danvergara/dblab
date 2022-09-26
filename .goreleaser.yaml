@@ -1,35 +1,30 @@
-# This is an example .goreleaser.yml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
 builds:
-  - id: "main"
+    - id: "main"
     env:
       - CGO_ENABLED=0
     goos:
       - linux
       - windows
       - darwin
-  - id: "sqlite3"
-    binary: dblab-sqlite
-    goos:
-      - linux
-      - windows
-      - darwin
-checksum:
-  name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ .Tag }}-next"
-changelog:
+    ignore:
+      - goos: windows
+        goarch: arm64
   sort: asc
   filters:
     exclude:
       - '^docs:'
       - '^test:'
+
+release:
+  draft: true
+  mode: append
+  extra_files:
+    - glob: ./dblab-build/**/*
+    - glob: ./dblab-build/checksums.txt
+  name_template: "Release {{.Tag}}"
 
 brews:
     # Name template of the recipe
