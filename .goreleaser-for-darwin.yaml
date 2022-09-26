@@ -1,0 +1,15 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - id: darwin-sqlite
+    binary: dblab-sqlite
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+snapshot:
+  name_template: "{{ .Tag }}-next"
