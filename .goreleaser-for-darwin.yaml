@@ -11,5 +11,7 @@ builds:
     goarch:
       - amd64
       - arm64
+archives:
+  - name_template: "{{ .ProjectName }}_sqlite_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 snapshot:
   name_template: "{{ .Tag }}-next"
