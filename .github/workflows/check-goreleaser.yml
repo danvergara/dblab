@@ -1,9 +1,9 @@
 name: goreleaser-check
 
-on: [push, pull_request]
-  # push:
-    # paths:
-      # - '.goreleaser*'
+on:
+  push:
+    paths:
+      - '.goreleaser*'
 
 jobs:
   goreleaser-check:
