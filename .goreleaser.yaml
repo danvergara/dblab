@@ -20,7 +20,6 @@ changelog:
       - '^test:'
 
 release:
-  draft: true
   mode: append
   extra_files:
     - glob: ./dblab-build/**/*
