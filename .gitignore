@@ -18,5 +18,8 @@ dist/
 # SQLite Database
 db/dblab.db
 
+# build folder
+dblab-build
+
 # Dev binary
 dblab
