@@ -2,7 +2,7 @@ before:
   hooks:
     - go mod tidy
 builds:
-    - id: "main"
+  - id: "main"
     env:
       - CGO_ENABLED=0
     goos:
@@ -12,6 +12,7 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+changelog:
   sort: asc
   filters:
     exclude:
