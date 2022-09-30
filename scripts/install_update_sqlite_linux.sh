@@ -21,7 +21,7 @@ esac
 
 # prepare the download URL
 GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/danvergara/dblab/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
-GITHUB_FILE="dblab_${GITHUB_LATEST_VERSION//v/}_${OS}_${ARCH}.tar.gz"
+GITHUB_FILE="dblab_sqlite_${GITHUB_LATEST_VERSION//v/}_${OS}_${ARCH}.tar.gz"
 GITHUB_URL="https://github.com/danvergara/dblab/releases/download/${GITHUB_LATEST_VERSION}/${GITHUB_FILE}"
 
 echo $GITHUB_FILE
