@@ -13,26 +13,141 @@ var (
 )
 
 func (gui *Gui) setLayout() {
-	maxX, maxY := gui.g.Size()
+	// banners.
+	banner := NewBannerWidget(
+		"banner",
+		0,
+		0,
+		0.19,
+		0.14,
+		"dblab",
+		gocui.ColorMagenta,
+	)
 
-	banner := NewBannerWidget("banner", 0, 0, int(0.19*float32(maxX)), int(0.14*float32(maxY)), "dblab", gocui.ColorMagenta)
+	// table.
+	tables := NewTableWidget(
+		"tables",
+		0,
+		0.16,
+		0.19,
+		0.94,
+		"Tables",
+		gocui.ColorGreen,
+		gocui.ColorBlack,
+		gui,
+	)
 
-	tables := NewTableWidget("tables", 0, int(0.16*float32(maxY)), int(0.19*float32(maxX)), int(0.94*float32(maxY)), "Tables", gocui.ColorGreen, gocui.ColorBlack, gui)
+	// navigation widget.
+	navigation := NewNavigationWidget(
+		"navigation",
+		0.2,
+		0,
+		-1,
+		0.07,
+		"Navigation",
+		options,
+	)
 
-	navigation := NewNavigationWidget("navigation", int(0.2*float32(maxX)), 0, maxX-1, int(0.07*float32(maxY)), "Navigation", options)
+	// editor.
+	editor := NewEditorWidget(
+		"query",
+		0.2,
+		0.09,
+		-1,
+		0.27,
+		"SQL Query",
+	)
 
-	editor := NewEditorWidget("query", int(0.2*float32(maxX)), int(0.09*float32(maxY)), maxX-1, int(0.27*float32(maxY)), "SQL Query")
-	indexes := NewOutputWidget("indexes", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Indexes", "Please select a table!")
-	constraints := NewOutputWidget("constraints", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Constraints", "Please select a table!")
-	structure := NewOutputWidget("structure", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Structure", "Please select a table!")
-	rows := NewOutputWidget("rows", int(0.2*float32(maxX)), int(0.29*float32(maxY)), maxX-1, int(0.94*float32(maxY)), "Rows", "Type the sql query above. Press Ctrl-c to quit.")
+	// outputs.
+	indexes := NewOutputWidget(
+		"indexes",
+		0.2,
+		0.29,
+		-1,
+		0.94,
+		"Indexes",
+		"Please select a table!",
+	)
+	constraints := NewOutputWidget(
+		"constraints",
+		0.2,
+		0.29,
+		-1,
+		0.94,
+		"Constraints",
+		"Please select a table!",
+	)
+	structure := NewOutputWidget(
+		"structure",
+		0.2,
+		0.29,
+		-1,
+		0.94,
+		"Structure",
+		"Please select a table!",
+	)
+	rows := NewOutputWidget(
+		"rows",
+		0.2,
+		0.29,
+		-1,
+		0.94,
+		"Rows",
+		"Type the sql query above. Press Ctrl-c to quit.",
+	)
 
-	currentPage := NewLabelWidget("current-page", int(0.84*float32(maxX)), int(0.96*float32(maxY)), fmt.Sprintf("%4d", 0), gocui.ColorWhite)
-	slash := NewLabelWidget("slash", int(0.87*float32(maxX)), int(0.96*float32(maxY)), "/", gocui.ColorWhite)
-	totalPages := NewLabelWidget("total-pages", int(0.89*float32(maxX)), int(0.96*float32(maxY)), fmt.Sprintf("%4d", 0), gocui.ColorWhite)
+	// labels.
+	currentPage := NewLabelWidget(
+		"current-page",
+		0.84,
+		0.96,
+		fmt.Sprintf("%4d", 0),
+		gocui.ColorWhite,
+	)
+	slash := NewLabelWidget(
+		"slash",
+		0.87,
+		0.96,
+		"/",
+		gocui.ColorWhite,
+	)
+	totalPages := NewLabelWidget(
+		"total-pages",
+		0.89,
+		0.96,
+		fmt.Sprintf("%4d", 0),
+		gocui.ColorWhite,
+	)
 
-	back := NewButtonWidget("back", int(0.80*float32(maxX)), int(0.96*float32(maxY)), "< BACK", gocui.ColorGreen)
-	next := NewButtonWidget("next", int(0.92*float32(maxX)), int(0.96*float32(maxY)), "NEXT >", gocui.ColorGreen)
+	// buttons.
+	back := NewButtonWidget(
+		"back",
+		0.80,
+		0.96,
+		"< BACK",
+		gocui.ColorGreen,
+	)
+	next := NewButtonWidget(
+		"next",
+		0.92,
+		0.96,
+		"NEXT >",
+		gocui.ColorGreen,
+	)
 
-	gui.g.SetManager(banner, tables, navigation, editor, indexes, constraints, structure, rows, back, currentPage, slash, totalPages, next)
+	gui.g.SetManager(
+		banner,
+		tables,
+		navigation,
+		editor,
+		indexes,
+		constraints,
+		structure,
+		rows,
+		back,
+		currentPage,
+		slash,
+		totalPages,
+		next,
+	)
 }
