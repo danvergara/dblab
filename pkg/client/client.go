@@ -98,8 +98,13 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 
 // Table represents a SQL table.
 type Table struct {
+	name    string
 	Rows    [][]string
 	Columns []string
+}
+
+func (t *Table) Name() string {
+	return t.name
 }
 
 // Metadata sums up the most relevant data from a table.
@@ -238,6 +243,7 @@ func (c *Client) NextPage() (*Table, int, error) {
 	}
 
 	t := Table{
+		name:    c.paginationManager.CurrentTable(),
 		Rows:    r,
 		Columns: col,
 	}
@@ -259,6 +265,7 @@ func (c *Client) PreviousPage() (*Table, int, error) {
 	}
 
 	t := Table{
+		name:    c.paginationManager.CurrentTable(),
 		Rows:    r,
 		Columns: col,
 	}
