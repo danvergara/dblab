@@ -26,10 +26,7 @@ func (gui *Gui) inputQuery() func(g *gocui.Gui, v *gocui.View) error {
 			return err
 		}
 
-		if err := gui.showLabelContent("total-pages", 1); err != nil {
-			return err
-		}
-		if err := gui.showLabelContent("current-page", 1); err != nil {
+		if err := gui.showIndex("index", 1, 1); err != nil {
 			return err
 		}
 
@@ -97,11 +94,7 @@ func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	// initial state of navigation label widgets.
-	if err := gui.showLabelContent("total-pages", m.TotalPages); err != nil {
-		return err
-	}
-	if err := gui.showLabelContent("current-page", 1); err != nil {
+	if err := gui.showIndex("index", 1, m.TotalPages); err != nil {
 		return err
 	}
 	return nil
@@ -167,7 +160,7 @@ func (gui *Gui) render(
 	return nil
 }
 
-func (gui *Gui) showLabelContent(viewName string, value int) error {
+func (gui *Gui) showIndex(viewName string, count, total int) error {
 	v, err := gui.g.View(viewName)
 	if err != nil {
 		return err
@@ -176,7 +169,7 @@ func (gui *Gui) showLabelContent(viewName string, value int) error {
 	// Cleans the view.
 	v.Clear()
 
-	fmt.Fprintf(v, "%4d", value)
+	fmt.Fprintf(v, "%4d / %4d", count, total)
 
 	return nil
 }
@@ -193,9 +186,15 @@ func (gui *Gui) nextPage(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 
-	if err := gui.showLabelContent("current-page", page); err != nil {
+	totalPages := gui.c.TotalPages()
+	if err != nil {
 		return err
 	}
+
+	if err := gui.showIndex("index", page, totalPages); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -211,7 +210,12 @@ func (gui *Gui) previousPage(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 
-	if err := gui.showLabelContent("current-page", page); err != nil {
+	totalPages := gui.c.TotalPages()
+	if err != nil {
+		return err
+	}
+
+	if err := gui.showIndex("index", page, totalPages); err != nil {
 		return err
 	}
 
