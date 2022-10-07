@@ -26,9 +26,9 @@ func NewButtonWidget(name string, x, y float32, label string, color gocui.Attrib
 
 // Layout implements the gocui.Manager interface.
 func (w *ButtonWidget) Layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
+	_, maxY := g.Size()
 
-	x := int(w.x * float32(maxX))
+	x := int(w.x)
 	y := int(w.y * float32(maxY))
 
 	v, err := g.SetView(w.name, x, y, x+w.w, y+2)
@@ -49,22 +49,23 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 // x and y work as factor to determine the widget size. Since the terminal's size is retrieved in the Layout method, using a fixed coordinates is not needed.
 type LabelWidget struct {
 	name  string
-	x, y  float32
+	x     int
+	y     float32
 	w     int
 	color gocui.Attribute
 	label string
 }
 
 // NewLabelWidget returns a pointer to a LabelWidget instance.
-func NewLabelWidget(name string, x, y float32, label string, color gocui.Attribute) *LabelWidget {
+func NewLabelWidget(name string, x int, y float32, label string, color gocui.Attribute) *LabelWidget {
 	return &LabelWidget{name: name, x: x, y: y, w: len(label) + 1, label: label, color: color}
 }
 
 // Layout implements the gocui.Manager interface.
 func (w *LabelWidget) Layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
+	_, maxY := g.Size()
 
-	x := int(w.x * float32(maxX))
+	x := w.x
 	y := int(w.y * float32(maxY))
 
 	v, err := g.SetView(w.name, x, y, x+w.w, y+2)
