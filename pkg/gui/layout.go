@@ -97,39 +97,25 @@ func (gui *Gui) setLayout() {
 	)
 
 	// labels.
-	currentPage := NewLabelWidget(
-		"current-page",
-		0.84,
+	index := NewLabelWidget(
+		"index",
+		9,
 		0.96,
-		fmt.Sprintf("%4d", 0),
-		gocui.ColorWhite,
-	)
-	slash := NewLabelWidget(
-		"slash",
-		0.87,
-		0.96,
-		"/",
-		gocui.ColorWhite,
-	)
-	totalPages := NewLabelWidget(
-		"total-pages",
-		0.89,
-		0.96,
-		fmt.Sprintf("%4d", 0),
+		fmt.Sprintf("%4d / %4d", 0, 0),
 		gocui.ColorWhite,
 	)
 
 	// buttons.
 	back := NewButtonWidget(
 		"back",
-		0.80,
+		0,
 		0.96,
 		"< BACK",
 		gocui.ColorGreen,
 	)
 	next := NewButtonWidget(
 		"next",
-		0.92,
+		23,
 		0.96,
 		"NEXT >",
 		gocui.ColorGreen,
@@ -145,9 +131,7 @@ func (gui *Gui) setLayout() {
 		structure,
 		rows,
 		back,
-		currentPage,
-		slash,
-		totalPages,
+		index,
 		next,
 	)
 }
