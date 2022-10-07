@@ -170,6 +170,14 @@ func (c *Client) Metadata(tableName string) (*Metadata, error) {
 	return &m, nil
 }
 
+func (c *Client) TotalPages() int {
+	if c.paginationManager != nil {
+		return c.paginationManager.TotalPages()
+	}
+
+	return 0
+}
+
 // ShowTables list all the tables in the database on the tables panel.
 func (c *Client) ShowTables() ([]string, error) {
 	var query string

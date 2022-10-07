@@ -340,3 +340,29 @@ func TestMetadata(t *testing.T) {
 	assert.Len(t, m.TableContent.Rows, opts.Limit)
 	assert.Len(t, m.TableContent.Columns, 3)
 }
+
+func TestTotalPages(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		DBName: name,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, _ := New(opts)
+
+	_, err := c.Metadata("products")
+
+	assert.NoError(t, err)
+
+	// Total count.
+	assert.Equal(t, c.TotalPages(), 1)
+}
