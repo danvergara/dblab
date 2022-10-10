@@ -10,28 +10,36 @@ import (
 )
 
 // ButtonWidget struct used to build buttons.
-// x and y work as factor to determine the widget size, since the terminal's size is retrieved in the Layout method.
+// y work as factor to determine the widget's height,
+// since the terminal's size is retrieved in the Layout method.
 type ButtonWidget struct {
 	name  string
-	x, y  float32
+	x     int
+	y     float32
 	w     int
 	color gocui.Attribute
 	label string
 }
 
 // NewButtonWidget returns a pointer to a ButtonWidget instance.
-func NewButtonWidget(name string, x, y float32, label string, color gocui.Attribute) *ButtonWidget {
-	return &ButtonWidget{name: name, x: x, y: y, w: len(label) + 1, label: label, color: color}
+func NewButtonWidget(name string, x int, y float32, label string, color gocui.Attribute) *ButtonWidget {
+	return &ButtonWidget{
+		name:  name,
+		x:     x,
+		y:     y,
+		w:     len(label) + 1,
+		label: label,
+		color: color,
+	}
 }
 
 // Layout implements the gocui.Manager interface.
 func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 	_, maxY := g.Size()
 
-	x := int(w.x)
 	y := int(w.y * float32(maxY))
 
-	v, err := g.SetView(w.name, x, y, x+w.w, y+2)
+	v, err := g.SetView(w.name, w.x, y, w.x+w.w, y+2)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -46,7 +54,8 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 }
 
 // LabelWidget struct used to display data to dynamic data to the user.
-// x and y work as factor to determine the widget size. Since the terminal's size is retrieved in the Layout method, using a fixed coordinates is not needed.
+// y work as factor to determine the widget's height,
+// since the terminal's size is retrieved in the Layout method.
 type LabelWidget struct {
 	name  string
 	x     int
@@ -65,10 +74,9 @@ func NewLabelWidget(name string, x int, y float32, label string, color gocui.Att
 func (w *LabelWidget) Layout(g *gocui.Gui) error {
 	_, maxY := g.Size()
 
-	x := w.x
 	y := int(w.y * float32(maxY))
 
-	v, err := g.SetView(w.name, x, y, x+w.w, y+2)
+	v, err := g.SetView(w.name, w.x, y, w.x+w.w, y+2)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -93,7 +101,15 @@ type BannerWidget struct {
 
 // NewBannerWidget returns a pointer to a BannerWidget instance.
 func NewBannerWidget(name string, x0, y0, x1, y1 float32, label string, color gocui.Attribute) *BannerWidget {
-	return &BannerWidget{name: name, x0: x0, y0: y0, x1: x1, y1: y1, label: label, color: color}
+	return &BannerWidget{
+		name:  name,
+		x0:    x0,
+		y0:    y0,
+		x1:    x1,
+		y1:    y1,
+		label: label,
+		color: color,
+	}
 }
 
 // Layout implements the gocui.Manager interface.
@@ -180,7 +196,15 @@ type NavigationWidget struct {
 
 // NewNavigationWidget returns a pointer to a NavigationWidget instance.
 func NewNavigationWidget(name string, x0, y0, x1, y1 float32, label string, options []string) *NavigationWidget {
-	return &NavigationWidget{name: name, x0: x0, y0: y0, x1: x1, y1: y1, label: label, options: options}
+	return &NavigationWidget{
+		name:    name,
+		x0:      x0,
+		y0:      y0,
+		x1:      x1,
+		y1:      y1,
+		label:   label,
+		options: options,
+	}
 }
 
 // Layout implements the gocui.Manager interface.
@@ -218,7 +242,14 @@ type EditorWidget struct {
 
 // NewEditorWidget returns a pointer to a EditorWidget instance.
 func NewEditorWidget(name string, x0, y0, x1, y1 float32, label string) *EditorWidget {
-	return &EditorWidget{name: name, x0: x0, y0: y0, x1: x1, y1: y1, label: label}
+	return &EditorWidget{
+		name:  name,
+		x0:    x0,
+		y0:    y0,
+		x1:    x1,
+		y1:    y1,
+		label: label,
+	}
 }
 
 // Layout implements the gocui.Manager interface.
