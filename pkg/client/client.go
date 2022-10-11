@@ -301,7 +301,7 @@ func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 	var query string
 
 	if c.driver == "postgres" || c.driver == "postgresql" {
-		query = fmt.Sprintf("SELECT * FROM public.%s LIMIT %d OFFSET %d;", tableName, c.paginationManager.Limit(), c.paginationManager.Offset())
+		query = fmt.Sprintf("SELECT * FROM %q LIMIT %d OFFSET %d;", tableName, c.paginationManager.Limit(), c.paginationManager.Offset())
 	} else {
 		query = fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d;", tableName, c.paginationManager.Limit(), c.paginationManager.Offset())
 	}
@@ -317,7 +317,7 @@ func (c *Client) tableCount(tableName string) (int, error) {
 	)
 
 	if c.driver == "postgres" || c.driver == "postgresql" {
-		query = fmt.Sprintf("SELECT COUNT(*) FROM public.%s;", tableName)
+		query = fmt.Sprintf("SELECT COUNT(*) FROM %q;", tableName)
 	} else {
 		query = fmt.Sprintf("SELECT COUNT(*) FROM %s;", tableName)
 	}
