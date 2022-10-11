@@ -185,22 +185,28 @@ func (c *Client) TotalPages() int {
 
 // ShowTables list all the tables in the database on the tables panel.
 func (c *Client) ShowTables() ([]string, error) {
-	var query string
+	var (
+		query string
+		err   error
+		args  []interface{}
+	)
+
 	tables := make([]string, 0)
 
 	switch c.driver {
 	case "postgres":
 		fallthrough
 	case "postgresql":
-		query = `
-		SELECT
-			table_name
-		FROM
-			information_schema.tables
-		WHERE
-			table_schema = 'public'
-		ORDER BY
-			table_name;`
+		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+		query, args, err = psql.Select("table_name").
+			From("information_schema.tables").
+			Where(sq.Eq{"table_schema": "public"}).
+			OrderBy("table_name").
+			ToSql()
+		if err != nil {
+			return nil, err
+		}
+
 	case "mysql":
 		query = "SHOW TABLES;"
 	case "sqlite3":
@@ -214,7 +220,7 @@ func (c *Client) ShowTables() ([]string, error) {
 			name NOT LIKE 'sqlite_%';`
 	}
 
-	rows, err := c.db.Queryx(query)
+	rows, err := c.db.Queryx(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -337,33 +343,42 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 	case "postgres":
 		fallthrough
 	case "postgresql":
-		query = `
-        SELECT
-			c.column_name,
-			c.is_nullable,
-			c.data_type,
-			c.character_maximum_length,
-			c.numeric_precision,
-			c.numeric_scale,
-			c.ordinal_position,
-			tc.constraint_type pkey
-		FROM
-			information_schema.columns c
-		LEFT JOIN
-			information_schema.constraint_column_usage AS ccu
-		ON
-			c.table_schema = ccu.table_schema
-			AND c.table_name = ccu.table_name
-			AND c.column_name = ccu.column_name
-		LEFT JOIN
-			information_schema.table_constraints AS tc
-		ON
-			ccu.constraint_schema = tc.constraint_schema
-			and ccu.constraint_name = tc.constraint_name
-		WHERE
-			c.table_schema = 'public'
-			AND c.table_name = $1;`
-		return c.Query(query, tableName)
+		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+		query, args, err := psql.Select(
+			"c.column_name",
+			"c.is_nullable",
+			"c.data_type",
+			"c.character_maximum_length",
+			"c.numeric_precision",
+			"c.numeric_scale",
+			"c.ordinal_position",
+			"tc.constraint_type AS pkey",
+		).
+			From("information_schema.columns AS c").
+			LeftJoin(
+				`information_schema.constraint_column_usage AS ccu
+					ON c.table_schema = ccu.table_schema
+						AND c.table_name = ccu.table_name
+						AND c.column_name = ccu.column_name`,
+			).
+			LeftJoin(
+				`information_schema.table_constraints AS tc
+					ON ccu.constraint_schema = tc.constraint_schema
+						AND ccu.constraint_name = tc.constraint_name`,
+			).
+			Where(
+				sq.And{
+					sq.Eq{"c.table_schema": "public"},
+					sq.Eq{"c.table_name": tableName},
+				},
+			).
+			ToSql()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return c.Query(query, args...)
 	case "mysql":
 		query = fmt.Sprintf("DESCRIBE %s;", tableName)
 		return c.Query(query)
