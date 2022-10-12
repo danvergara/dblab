@@ -44,7 +44,7 @@ build-sqlite3:
 .PHONY: run
 ## run: Runs the application
 run: build
-	./dblab --host localhost --user postgres --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
+	./dblab --host localhost --user postgres --db users --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50
 
 .PHONY: run-mysql
 ## run-mysql: Runs the application with a connection to mysql
@@ -53,7 +53,7 @@ run-mysql: build
 
 .PHONY: run-sqlite3
 ## run-sqlite3: Runs the application with a connection to sqlite3
-run-sqlite3: build
+run-sqlite3: build-sqlite3
 	docker-compose run --rm dblab-sqlite3
 	./dblab --db db/dblab.db --driver sqlite3
 
