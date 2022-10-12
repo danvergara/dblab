@@ -82,6 +82,7 @@ Flags:
       --limit int       Size of the result set from the table content query (default 100)
       --pass string     Password for user
       --port string     Server port
+      --schema string   Database schema (postgres only)
       --ssl string      SSL mode
   -u, --url string      Database connection string
       --user string     Database user
@@ -94,6 +95,7 @@ Use "dblab [command] --help" for more information about a command.
 You can start the app passing no flags or parameters, you'll be asked for connection data instead.
 ![Alt Text](screenshots/dblab-default-form.gif)
 
+
 ```sh
 $ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
 $ dblab --db path/to/file.sqlite3 --driver sqlite3
@@ -105,6 +107,13 @@ Connection URL scheme is also supported:
 $ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
 $ dblab --url mysql://user:password@tcp(host:port)/db
 $ dblab --url file:test.db?cache=shared&mode=memory
+```
+
+if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
+
+```sh
+$ dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
+$ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
 ```
 
 Now, you can use a configuration file to make a connection to the database.
@@ -125,6 +134,10 @@ database:
   password: "password"
   user: "postgres"
   driver: "postgres"
+  # optional
+  # postgres only
+  # default value: public
+  schema: "myschema"
 limit: 50
 ```
 
