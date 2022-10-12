@@ -17,5 +17,6 @@ func TestInit(t *testing.T) {
 	assert.Equal(t, "postgres", opts.User)
 	assert.Equal(t, "password", opts.Pass)
 	assert.Equal(t, "postgres", opts.Driver)
+	assert.Equal(t, "public", opts.Schema)
 	assert.Equal(t, 50, opts.Limit)
 }
