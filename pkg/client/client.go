@@ -21,7 +21,7 @@ import (
 // Client is used to store the pool of db connection.
 type Client struct {
 	db                *sqlx.DB
-	driver            string
+	driver, schema    string
 	paginationManager *pagination.Manager
 	limit             int
 }
@@ -42,6 +42,21 @@ func New(opts command.Options) (*Client, error) {
 		db:     db,
 		driver: opts.Driver,
 		limit:  opts.Limit,
+	}
+
+	if opts.Schema == "" {
+		c.schema = "public"
+	} else {
+		c.schema = opts.Schema
+	}
+
+	switch c.driver {
+	case "postgres":
+		fallthrough
+	case "postgresql":
+		if _, err = db.Exec(fmt.Sprintf("set search_path='%s'", c.schema)); err != nil {
+			return nil, err
+		}
 	}
 
 	pm, err := pagination.New(c.limit, 0, "")
@@ -200,7 +215,7 @@ func (c *Client) ShowTables() ([]string, error) {
 		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 		query, args, err = psql.Select("table_name").
 			From("information_schema.tables").
-			Where(sq.Eq{"table_schema": "public"}).
+			Where(sq.Eq{"table_schema": c.schema}).
 			OrderBy("table_name").
 			ToSql()
 		if err != nil {
@@ -369,7 +384,7 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 			).
 			Where(
 				sq.And{
-					sq.Eq{"c.table_schema": "public"},
+					sq.Eq{"c.table_schema": c.schema},
 					sq.Eq{"c.table_name": tableName},
 				},
 			).
@@ -417,7 +432,7 @@ func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 	case "postgres":
 		fallthrough
 	case "postgresql":
-		query = query.Where("tc.table_schema = 'public'")
+		query = query.Where(fmt.Sprintf("tc.table_schema = '%s'", c.schema))
 		query = query.PlaceholderFormat(sq.Dollar)
 	}
 
