@@ -12,6 +12,8 @@ type Options struct {
 	Pass   string
 	DBName string
 	SSL    string
+	// PostgreSQL only.
+	Schema string
 	Limit  int
 }
 
@@ -44,6 +46,10 @@ func SetDefault(opts Options) Options {
 
 	if opts.Port == "" {
 		opts.Port = os.Getenv("DB_PORT")
+	}
+
+	if opts.Schema == "" {
+		opts.Schema = os.Getenv("DB_SCHEMA")
 	}
 
 	return opts
