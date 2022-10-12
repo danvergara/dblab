@@ -36,6 +36,9 @@ func TestSetEnvValues(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err := os.Setenv("DB_SCHEMA", "public"); err != nil {
+		t.Fatal(err)
+	}
 	opts := Options{}
 
 	result := SetDefault(opts)
@@ -46,4 +49,5 @@ func TestSetEnvValues(t *testing.T) {
 	assert.Equal(t, "password", result.Pass)
 	assert.Equal(t, "database", result.DBName)
 	assert.Equal(t, "5432", result.Port)
+	assert.Equal(t, "public", result.Schema)
 }
