@@ -46,4 +46,4 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.46
-          args: --enable=golint --enable=godot
+          args: --enable=golint --enable=godot --timeout=3m
