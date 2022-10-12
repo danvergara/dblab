@@ -23,6 +23,7 @@ var (
 	host     string
 	port     string
 	name     string
+	schema   string
 )
 
 func TestMain(m *testing.M) {
@@ -32,6 +33,7 @@ func TestMain(m *testing.M) {
 	host = os.Getenv("DB_HOST")
 	port = os.Getenv("DB_PORT")
 	name = os.Getenv("DB_NAME")
+	schema = os.Getenv("DB_SCHEMA")
 
 	os.Exit(m.Run())
 }
@@ -39,7 +41,7 @@ func TestMain(m *testing.M) {
 func generateURL(driver string) string {
 	switch driver {
 	case "postgres":
-		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=mode", driver, user, password, host, port, name)
+		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", driver, user, password, host, port, name)
 	case "mysql":
 		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", driver, user, password, host, port, name)
 	case "sqlite3":
@@ -84,6 +86,7 @@ func TestNewClientByUserData(t *testing.T) {
 		DBName: name,
 		SSL:    "disable",
 		Limit:  50,
+		Schema: schema,
 	}
 
 	c, err := New(opts)
@@ -106,6 +109,7 @@ func TestNewClientPing(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  50,
 	}
@@ -134,6 +138,7 @@ func TestQuery(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -159,6 +164,7 @@ func TestTableContent(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -184,6 +190,7 @@ func TestShowTables(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -208,6 +215,7 @@ func TestTableStructure(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -234,6 +242,7 @@ func TestConstraints(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -262,6 +271,7 @@ func TestIndexes(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -287,6 +297,7 @@ func TestCountTable(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -311,6 +322,7 @@ func TestMetadata(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
@@ -353,6 +365,7 @@ func TestTotalPages(t *testing.T) {
 		Host:   host,
 		Port:   port,
 		DBName: name,
+		Schema: schema,
 		SSL:    "disable",
 		Limit:  100,
 	}
