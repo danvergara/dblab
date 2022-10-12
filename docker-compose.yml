@@ -39,6 +39,7 @@ services:
       - DB_NAME=users
       - DB_PORT=5432
       - DB_DRIVER=postgres
+      - DB_SCHEMA=public
     entrypoint: ["/bin/bash", "./scripts/entrypoint.dev.sh"]
     networks:
       - dblab
