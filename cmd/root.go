@@ -19,6 +19,7 @@ var (
 	port   string
 	user   string
 	pass   string
+	schema string
 	db     string
 	ssl    string
 	limit  int
@@ -48,6 +49,7 @@ func NewRootCmd() *cobra.Command {
 					User:   user,
 					Pass:   pass,
 					DBName: db,
+					Schema: schema,
 					SSL:    ssl,
 					Limit:  limit,
 				}
@@ -107,6 +109,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&user, "user", "", "", "Database user")
 	rootCmd.Flags().StringVarP(&pass, "pass", "", "", "Password for user")
 	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name")
+	rootCmd.Flags().StringVarP(&schema, "schema", "", "", "Database schema (postgres only)")
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
 	rootCmd.Flags().IntVarP(&limit, "limit", "", 100, "Size of the result set from the table content query")
 }
