@@ -4,5 +4,6 @@ database:
   db: "users"
   password: "password"
   user: "postgres"
+  schema: "public"
   driver: "postgres"
 limit: 50

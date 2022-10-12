@@ -29,6 +29,7 @@ type Config struct {
 		User     string
 		Password string
 		Driver   string `validate:"required"`
+		Schema   string
 		SSL      string `default:"disable"`
 	}
 	User   string
@@ -76,6 +77,7 @@ func Init() (command.Options, error) {
 		Pass:   cfg.Database.Password,
 		DBName: cfg.Database.DB,
 		SSL:    cfg.Database.SSL,
+		Schema: cfg.Database.Schema,
 		Limit:  cfg.Limit,
 	}
 
