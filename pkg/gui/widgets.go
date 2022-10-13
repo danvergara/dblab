@@ -121,6 +121,14 @@ func (w *BannerWidget) Layout(g *gocui.Gui) error {
 	x1 := int(w.x1 * float32(maxX))
 	y1 := int(w.y1 * float32(maxY))
 
+	if x0 >= x1 {
+		x1 = x0 + 1
+	}
+
+	if y0 >= y1 {
+		y1 = y0 + 1
+	}
+
 	if v, err := g.SetView(w.name, x0, y0, x1, y1); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
@@ -167,6 +175,14 @@ func (w *TableWidget) Layout(g *gocui.Gui) error {
 	y0 := int(w.y0 * float32(maxY))
 	x1 := int(w.x1 * float32(maxX))
 	y1 := int(w.y1 * float32(maxY))
+
+	if x0 >= x1 {
+		x1 = x0 + 1
+	}
+
+	if y0 >= y1 {
+		y1 = y0 + 1
+	}
 
 	if v, err := g.SetView(w.name, x0, y0, x1, y1); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
@@ -216,6 +232,14 @@ func (w *NavigationWidget) Layout(g *gocui.Gui) error {
 	x1 := int(w.x1 + float32(maxX))
 	y1 := int(w.y1 * float32(maxY))
 
+	if x0 >= x1 {
+		x1 = x0 + 1
+	}
+
+	if y0 >= y1 {
+		y1 = y0 + 1
+	}
+
 	if v, err := g.SetView(w.name, x0, y0, x1, y1); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
@@ -261,6 +285,14 @@ func (w *EditorWidget) Layout(g *gocui.Gui) error {
 	x1 := int(w.x1 + float32(maxX))
 	y1 := int(w.y1 * float32(maxY))
 
+	if x0 >= x1 {
+		x1 = x0 + 1
+	}
+
+	if y0 >= y1 {
+		y1 = y0 + 1
+	}
+
 	if v, err := g.SetView(w.name, x0, y0, x1, y1); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
@@ -301,6 +333,14 @@ func (w *OutputWidget) Layout(g *gocui.Gui) error {
 	y0 := int(w.y0 * float32(maxY))
 	x1 := int(w.x1 + float32(maxX))
 	y1 := int(w.y1 * float32(maxY))
+
+	if x0 >= x1 {
+		x1 = x0 + 1
+	}
+
+	if y0 >= y1 {
+		y1 = y0 + 1
+	}
 
 	if v, err := g.SetView(w.name, x0, y0, x1, y1); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
