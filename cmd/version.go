@@ -32,7 +32,7 @@ func NewVersionCmd() *cobra.Command {
 		Long: `The current version of the project.
 		This projects follows the semantic versioning standard.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(cmd.OutOrStdout(), "v0.17.0")
+			fmt.Fprintln(cmd.OutOrStdout(), "v0.17.0-rc1")
 			return nil
 		},
 	}
