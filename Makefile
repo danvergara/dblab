@@ -62,6 +62,11 @@ run-sqlite3: build-sqlite3
 run-url: build
 	./dblab --url postgres://postgres:password@localhost:5432/users?sslmode=disable
 
+.PHONY: run-mysql-url
+## run-mysql-url: Runs the app passing the url as parameter
+run-mysql-url: build
+	./dblab --url "mysql://myuser:5@klkbN#ABC@tcp(localhost:3306)/mydb"
+
 .PHONY: up
 ## up: Runs all the containers listed in the docker-compose.yml file
 up:
