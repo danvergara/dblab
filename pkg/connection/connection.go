@@ -161,6 +161,10 @@ func formatMySQLURL(opts command.Options) (string, error) {
 
 	var e *url.Error
 
+	// removes the mysql:// scheme since mysql does not need this.
+	// we need it to know what database we're trying to connect to.
+	opts.URL = strings.ReplaceAll(opts.URL, "mysql://", "")
+
 	uri, err := url.Parse(opts.URL)
 	if err != nil {
 		// checks if *url.Error is the type of the error.
