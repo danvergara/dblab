@@ -77,7 +77,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(localhost:3306)/db",
+				uri: "user:password@tcp(localhost:3306)/db",
 			},
 		},
 		{
@@ -88,7 +88,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(localhost:3306)/db?charset=utf8",
+				uri: "user:password@tcp(localhost:3306)/db?charset=utf8",
 			},
 		},
 		{
@@ -99,7 +99,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
+				uri: "user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
 			},
 		},
 		{
@@ -456,7 +456,7 @@ func TestFormatMySQLURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(localhost:3306)/db",
+				uri: "user:password@tcp(localhost:3306)/db",
 			},
 		},
 		{
@@ -467,7 +467,7 @@ func TestFormatMySQLURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(localhost:3306)/db?charset=utf8",
+				uri: "user:password@tcp(localhost:3306)/db?charset=utf8",
 			},
 		},
 		{
@@ -478,7 +478,7 @@ func TestFormatMySQLURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
+				uri: "user:password@tcp(your-amazonaws-uri.com:3306)/dbname",
 			},
 		},
 		{
@@ -489,7 +489,7 @@ func TestFormatMySQLURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@/dbname?sql_mode=TRADITIONAL",
+				uri: "user:password@/dbname?sql_mode=TRADITIONAL",
 			},
 		},
 		{
@@ -500,7 +500,7 @@ func TestFormatMySQLURL(t *testing.T) {
 				},
 			},
 			want: want{
-				uri: "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
+				uri: "user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
 			},
 		},
 		{
@@ -525,6 +525,17 @@ func TestFormatMySQLURL(t *testing.T) {
 			want: want{
 				hasError: true,
 				err:      ErrInvalidMySQLURLFormat,
+			},
+		},
+		{
+			name: "valid with strange characters",
+			given: given{
+				opts: command.Options{
+					URL: "mysql://myuser:5@klkbN#ABC@@tcp(localhost:3306)/mydb",
+				},
+			},
+			want: want{
+				uri: "myuser:5@klkbN#ABC@@tcp(localhost:3306)/mydb",
 			},
 		},
 	}
