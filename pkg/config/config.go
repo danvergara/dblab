@@ -22,23 +22,26 @@ import (
 
 // Config struct is used to store the db connection data.
 type Config struct {
-	Database struct {
-		Host     string
-		Port     string
-		DB       string `validate:"required"`
-		User     string
-		Password string
-		Driver   string `validate:"required"`
-		Schema   string
-		SSL      string `default:"disable"`
-	}
-	User   string
-	Pswd   string
-	Host   string
-	Port   string
-	DBName string
-	Driver string
-	Limit  int `fig:"limit" default:"100"`
+	Database []Database
+	User     string
+	Pswd     string
+	Host     string
+	Port     string
+	DBName   string
+	Driver   string
+	Limit    int `fig:"limit" default:"100"`
+}
+
+type Database struct {
+	Name     string
+	Host     string
+	Port     string
+	DB       string `validate:"required"`
+	User     string
+	Password string
+	Driver   string `validate:"required"`
+	Schema   string
+	SSL      string `default:"disable"`
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
@@ -56,9 +59,10 @@ func New(cmd *cobra.Command) *Config {
 }
 
 // Init reads in config file and returns a commands/Options instance.
-func Init() (command.Options, error) {
+func Init(configName string) (command.Options, error) {
 	var opts command.Options
 	var cfg Config
+	var db Database
 
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -69,15 +73,25 @@ func Init() (command.Options, error) {
 		return opts, err
 	}
 
+	if configName != "" {
+		for _, d := range cfg.Database {
+			if configName == d.Name {
+				db = d
+			}
+		}
+	} else {
+		db = cfg.Database[0]
+	}
+
 	opts = command.Options{
-		Driver: cfg.Database.Driver,
-		Host:   cfg.Database.Host,
-		Port:   cfg.Database.Port,
-		User:   cfg.Database.User,
-		Pass:   cfg.Database.Password,
-		DBName: cfg.Database.DB,
-		SSL:    cfg.Database.SSL,
-		Schema: cfg.Database.Schema,
+		Driver: db.Driver,
+		Host:   db.Host,
+		Port:   db.Port,
+		User:   db.User,
+		Pass:   db.Password,
+		DBName: db.DB,
+		SSL:    db.SSL,
+		Schema: db.Schema,
 		Limit:  cfg.Limit,
 	}
 
