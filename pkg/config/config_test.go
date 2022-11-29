@@ -8,15 +8,78 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	opts, err := config.Init()
+	type want struct {
+		host   string
+		port   string
+		dbname string
+		user   string
+		pass   string
+		driver string
+		schema string
+		limit  int
+	}
+	var tests = []struct {
+		name  string
+		input string
+		want  want
+	}{
+		{
+			name:  "empty config name",
+			input: "",
+			want: want{
+				host:   "localhost",
+				port:   "5432",
+				dbname: "users",
+				user:   "postgres",
+				pass:   "password",
+				driver: "postgres",
+				schema: "public",
+				limit:  50,
+			},
+		},
+		{
+			name:  "test config",
+			input: "test",
+			want: want{
+				host:   "localhost",
+				port:   "5432",
+				dbname: "users",
+				user:   "postgres",
+				pass:   "password",
+				driver: "postgres",
+				schema: "public",
+				limit:  50,
+			},
+		},
+		{
+			name:  "production config",
+			input: "prod",
+			want: want{
+				host:   "mydb.123456789012.us-east-1.rds.amazonaws.com",
+				port:   "5432",
+				dbname: "users",
+				user:   "postgres",
+				pass:   "password",
+				driver: "postgres",
+				schema: "public",
+				limit:  50,
+			},
+		},
+	}
 
-	assert.NoError(t, err)
-	assert.Equal(t, "localhost", opts.Host)
-	assert.Equal(t, "5432", opts.Port)
-	assert.Equal(t, "users", opts.DBName)
-	assert.Equal(t, "postgres", opts.User)
-	assert.Equal(t, "password", opts.Pass)
-	assert.Equal(t, "postgres", opts.Driver)
-	assert.Equal(t, "public", opts.Schema)
-	assert.Equal(t, 50, opts.Limit)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts, err := config.Init(tt.input)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want.host, opts.Host)
+			assert.Equal(t, tt.want.port, opts.Port)
+			assert.Equal(t, tt.want.dbname, opts.DBName)
+			assert.Equal(t, tt.want.user, opts.User)
+			assert.Equal(t, tt.want.pass, opts.Pass)
+			assert.Equal(t, tt.want.driver, opts.Driver)
+			assert.Equal(t, tt.want.schema, opts.Schema)
+			assert.Equal(t, tt.want.limit, opts.Limit)
+		})
+	}
 }
