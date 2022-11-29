@@ -1,9 +1,19 @@
 database:
-  host: "localhost"
-  port: 5432
-  db: "users"
-  password: "password"
-  user: "postgres"
-  schema: "public"
-  driver: "postgres"
+  - name: "test"
+    host: "localhost"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    schema: "public"
+    driver: "postgres"
+  - name: "prod"
+    # example endpoint
+    host: "mydb.123456789012.us-east-1.rds.amazonaws.com"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    schema: "public"
+    driver: "postgres"
 limit: 50
