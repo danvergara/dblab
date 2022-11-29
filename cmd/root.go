@@ -12,17 +12,18 @@ import (
 
 // Define all the global flags.
 var (
-	cfg    bool
-	driver string
-	url    string
-	host   string
-	port   string
-	user   string
-	pass   string
-	schema string
-	db     string
-	ssl    string
-	limit  int
+	cfg     bool
+	cfgName string
+	driver  string
+	url     string
+	host    string
+	port    string
+	user    string
+	pass    string
+	schema  string
+	db      string
+	ssl     string
+	limit   int
 )
 
 // NewRootCmd returns the root command.
@@ -36,7 +37,7 @@ func NewRootCmd() *cobra.Command {
 			var err error
 
 			if cfg {
-				opts, err = config.Init()
+				opts, err = config.Init(cfgName)
 				if err != nil {
 					return err
 				}
@@ -99,7 +100,12 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
+	// config file flag.
 	rootCmd.PersistentFlags().BoolVarP(&cfg, "config", "", false, "get the connection data from a config file (default is $HOME/.dblab.yaml or the current directory)")
+	// cfg-name is used to indicate the name of the config section to be used to establish a
+	// connection with desired database.
+	// default: if empty, the first item of the databases options is gonna be selected.
+	rootCmd.Flags().StringVarP(&cfgName, "cfg-name", "", "", "Database config name section")
 
 	// global flags used to open a database connection.
 	rootCmd.Flags().StringVarP(&driver, "driver", "", "", "Database driver")
