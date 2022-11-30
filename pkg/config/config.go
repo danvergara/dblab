@@ -2,6 +2,7 @@ package config
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -71,6 +72,10 @@ func Init(configName string) (command.Options, error) {
 
 	if err := fig.Load(&cfg, fig.File(".dblab.yaml"), fig.Dirs(".", home)); err != nil {
 		return opts, err
+	}
+
+	if len(cfg.Database) == 0 {
+		return opts, errors.New("empty database connection section on config file")
 	}
 
 	if configName != "" {
