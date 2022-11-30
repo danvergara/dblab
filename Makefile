@@ -67,6 +67,11 @@ run-url: build
 run-mysql-url: build
 	./dblab --url "mysql://myuser:5@klkbN#ABC@tcp(localhost:3306)/mydb"
 
+.PHONY: run-config
+## run-config: Runs the client using the config file.
+run-config: build
+	./dblab --config --cfg-name "test"
+
 .PHONY: up
 ## up: Runs all the containers listed in the docker-compose.yml file
 up:
