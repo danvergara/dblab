@@ -74,6 +74,7 @@ Available Commands:
   version     The version of the project
 
 Flags:
+      --cfg-name string   Database config name section
       --config          get the connection data from a config file (default is $HOME/.dblab.yaml or the current directory)
       --db string       Database name
       --driver string   Database driver
@@ -116,28 +117,44 @@ $ dblab --host localhost --user myuser --db users --pass password --schema mysch
 $ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
 ```
 
-Now, you can use a configuration file to make a connection to the database.
+### Config
 
-```sh
-$ dbladb --config
-```
+Enter previous flags every time is tedious, so `dblab` provides a couple of flags to help with it: `--config` and `--cfg-name`.
 
 `dblab` is going to look for a file called `.dblab.yaml`. For now, the only two places where you can drop a config file are $HOME ($HOME/.dblab.yaml) and the current directory where you run the command line tool.
+If you want to use this feature, `--config` is mandatory and `--cfg-name` may be omitted. The config file can store one or multiple database connection sections under the `database` field. `database` is an array, previously was an object only able to store a single connection section at a time. We strongly encourgae you to adopt the new format as of `v0.18.0`. `--cfg-name` takes the name of the desired database section to connect with. It can be omitted and its default values will be the first item on the array.
+
+```sh
+# default: test
+$ dbladb --config
+
+$ dblab --config --cfg-name "prod"
+```
 
 `.dblab.yaml` example:
 
 ```yaml
 database:
-  host: "localhost"
-  port: 5432
-  db: "users"
-  password: "password"
-  user: "postgres"
-  driver: "postgres"
-  # optional
-  # postgres only
-  # default value: public
-  schema: "myschema"
+  - name: "test"
+    host: "localhost"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    driver: "postgres"
+    # optional
+    # postgres only
+    # default value: public
+    schema: "myschema"
+  - name: "prod"
+    # example endpoint
+    host: "mydb.123456789012.us-east-1.rds.amazonaws.com"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    schema: "public"
+    driver: "postgres"
 limit: 50
 ```
 
@@ -145,11 +162,14 @@ Or for sqlite3:
 
 ```yaml
 database:
-  db: "path/to/file.sqlite3"
-  driver: "sqlite3"
+  - name: "prod"
+    db: "path/to/file.sqlite3"
+    driver: "sqlite3"
 ```
 
 Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respectively.
+
+## Navigation
 
 If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
 Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
