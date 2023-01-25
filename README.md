@@ -7,6 +7,24 @@ dblab ![integration tests](https://github.com/danvergara/dblab/actions/workflows
 
 __Interactive client for PostgreSQL, MySQL and SQLite3.__
 
+<img src="screenshots/dblab-cover.png" />
+
+## Table of contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+    - [Homebrew](#homebrew)
+    - [Binary Release](#binary-release-linuxosxwindows)
+    - [Automated installation/update](#automated-installationupdate)
+- [Help Command](#help)
+- [Usage](#usage)
+    - [Configuration](#configuration)
+- [Navigation](#navigation)
+    - [Key Bindings](#key-bindings)
+- [Contribute](#contribute)
+- [License](#license)
+
 ## Overview
 
 dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3,
@@ -43,7 +61,7 @@ $ brew install dblab
 ### Binary Release (Linux/OSX/Windows)
 You can manually download a binary release from [the release page](https://github.com/danvergara/dblab/releases).
 
-## Automated install/update
+## Automated installation/update
 > Don't forget to always verify what you're piping into bash
 
 Ordinary binary:
@@ -117,7 +135,7 @@ $ dblab --host localhost --user myuser --db users --pass password --schema mysch
 $ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
 ```
 
-### Config
+### Configuration
 
 Enter previous flags every time is tedious, so `dblab` provides a couple of flags to help with it: `--config` and `--cfg-name`.
 
