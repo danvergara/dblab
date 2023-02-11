@@ -1,6 +1,9 @@
 package pagination
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // Manager handles the pagination.
 type Manager struct {
@@ -94,7 +97,7 @@ func (m *Manager) setTotalPages(count int) error {
 		return fmt.Errorf("limit should be greater than 0")
 	}
 
-	m.totalPages = count / m.limit
+	m.totalPages = int(math.Ceil(float64(count) / float64(m.limit)))
 
 	return nil
 }
