@@ -7,37 +7,98 @@ import (
 )
 
 func TestPaginationLifeCycle(t *testing.T) {
-	// This is an example of the pagination life cycle.
-	// It starts off with a limit of 50 and count from a sql query of 10000.
-	// The total pages count should be equal to count / limit = 200
-	// I'm calling the NextPage 3 times and PreviousPage two times.
-	limit := 50
-	count := 150
-
-	m, err := New(limit, count, "users")
-	assert.NoError(t, err)
-
-	for i := 0; i < (count/m.Limit())-1; i++ {
-		_ = m.NextPage()
+	type given struct {
+		count     int
+		limit     int
+		tableName string
 	}
 
-	assert.Equal(t, count/m.Limit(), m.CurrentPage())
-	assert.Equal(t, (m.CurrentPage()-1)*limit, m.Offset())
-
-	err = m.NextPage()
-	assert.Error(t, err)
-
-	for i := 0; i < (count/m.Limit())-1; i++ {
-		_ = m.PreviousPage()
+	type expected struct {
+		lastPage      int
+		currentOffset int
+		totalPages    int
+		tableName     string
 	}
 
-	assert.Equal(t, 1, m.CurrentPage())
-	assert.Equal(t, 0, m.Offset())
+	var tests = []struct {
+		name     string
+		given    given
+		expected expected
+	}{
+		{
+			name: "count is higher than limit",
+			given: given{
+				limit:     50,
+				count:     150,
+				tableName: "products",
+			},
+			expected: expected{
+				lastPage:      3,
+				currentOffset: 0,
+				totalPages:    3,
+				tableName:     "products",
+			},
+		},
+		{
+			name: "limit is higher than count",
+			given: given{
+				limit:     150,
+				count:     50,
+				tableName: "products",
+			},
+			expected: expected{
+				lastPage:      1,
+				currentOffset: 0,
+				totalPages:    1,
+				tableName:     "products",
+			},
+		},
+		{
+			name: "count is odd and higher than limit",
+			given: given{
+				limit:     50,
+				count:     151,
+				tableName: "products",
+			},
+			expected: expected{
+				lastPage:      4,
+				currentOffset: 0,
+				totalPages:    4,
+				tableName:     "products",
+			},
+		},
+	}
 
-	err = m.PreviousPage()
-	assert.Error(t, err)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := New(tc.given.limit, tc.given.count, "users")
+			assert.NoError(t, err)
 
-	m.SetCurrentTable("products")
-	ct := m.CurrentTable()
-	assert.Equal(t, "products", ct)
+			assert.Equal(t, tc.expected.totalPages, m.TotalPages())
+
+			for i := 0; i < m.TotalPages(); i++ {
+				_ = m.NextPage()
+			}
+
+			assert.Equal(t, tc.expected.lastPage, m.CurrentPage())
+			assert.Equal(t, (m.CurrentPage()-1)*tc.given.limit, m.Offset())
+
+			err = m.NextPage()
+			assert.Error(t, err)
+
+			for i := 0; i < m.TotalPages(); i++ {
+				_ = m.PreviousPage()
+			}
+			assert.Equal(t, 1, m.CurrentPage())
+			assert.Equal(t, tc.expected.currentOffset, m.Offset())
+
+			err = m.PreviousPage()
+			assert.Error(t, err)
+
+			m.SetCurrentTable(tc.given.tableName)
+			ct := m.CurrentTable()
+			assert.Equal(t, tc.expected.tableName, ct)
+		})
+	}
 }
