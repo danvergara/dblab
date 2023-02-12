@@ -14,7 +14,7 @@ type Options struct {
 	SSL    string
 	// PostgreSQL only.
 	Schema string
-	Limit  int
+	Limit  uint
 }
 
 // SetDefault returns a Options struct and fills the empty
