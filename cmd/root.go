@@ -23,7 +23,7 @@ var (
 	schema  string
 	db      string
 	ssl     string
-	limit   int
+	limit   uint
 )
 
 // NewRootCmd returns the root command.
@@ -117,5 +117,5 @@ func init() {
 	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name")
 	rootCmd.Flags().StringVarP(&schema, "schema", "", "", "Database schema (postgres only)")
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
-	rootCmd.Flags().IntVarP(&limit, "limit", "", 100, "Size of the result set from the table content query")
+	rootCmd.Flags().UintVarP(&limit, "limit", "", 100, "Size of the result set from the table content query")
 }
