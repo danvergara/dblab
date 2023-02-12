@@ -98,7 +98,7 @@ Flags:
       --driver string   Database driver
   -h, --help            help for dblab
       --host string     Server host name or IP
-      --limit int       Size of the result set from the table content query (default 100)
+      --limit int       Size of the result set from the table content query (should be greater than zero, otherwise the app will error out) (default 100)
       --pass string     Password for user
       --port string     Server port
       --schema string   Database schema (postgres only)
@@ -173,6 +173,7 @@ database:
     user: "postgres"
     schema: "public"
     driver: "postgres"
+# should be greater than 0, otherwise the app will error out
 limit: 50
 ```
 
