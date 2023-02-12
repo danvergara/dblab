@@ -30,7 +30,7 @@ type Config struct {
 	Port     string
 	DBName   string
 	Driver   string
-	Limit    int `fig:"limit" default:"100"`
+	Limit    uint `fig:"limit" default:"100"`
 }
 
 type Database struct {

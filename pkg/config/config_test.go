@@ -16,7 +16,7 @@ func TestInit(t *testing.T) {
 		pass   string
 		driver string
 		schema string
-		limit  int
+		limit  uint
 	}
 	var tests = []struct {
 		name  string
