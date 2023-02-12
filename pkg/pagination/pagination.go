@@ -9,13 +9,13 @@ import (
 type Manager struct {
 	totalPages   int
 	currentPage  int
-	limit        int
+	limit        uint
 	offset       int
 	currentTable string
 }
 
 // New returns a pointer to a Manager instance.
-func New(limit, count int, currentTable string) (*Manager, error) {
+func New(limit uint, count int, currentTable string) (*Manager, error) {
 	m := Manager{
 		limit:        limit,
 		currentPage:  1,
@@ -61,7 +61,7 @@ func (m *Manager) Offset() int {
 }
 
 // Limit returns the limit.
-func (m *Manager) Limit() int {
+func (m *Manager) Limit() uint {
 	return m.limit
 }
 
@@ -87,16 +87,11 @@ func (m *Manager) CurrentTable() string {
 
 // setOffset calculates the offset based of the current page and the limit.
 func (m *Manager) setOffset() {
-	m.offset = (m.currentPage - 1) * m.limit
+	m.offset = (m.currentPage - 1) * int(m.limit)
 }
 
 // setTotalPages total pages = count / limit, if the limit is greater than 0.
 func (m *Manager) setTotalPages(count int) error {
-	// limit must be greater than 0.
-	if m.limit <= 0 {
-		return fmt.Errorf("limit should be greater than 0")
-	}
-
 	m.totalPages = int(math.Ceil(float64(count) / float64(m.limit)))
 
 	return nil
