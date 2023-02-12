@@ -23,7 +23,7 @@ type Client struct {
 	db                *sqlx.DB
 	driver, schema    string
 	paginationManager *pagination.Manager
-	limit             int
+	limit             uint
 }
 
 // New return an instance of the client.
