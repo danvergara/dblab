@@ -9,7 +9,7 @@ import (
 func TestPaginationLifeCycle(t *testing.T) {
 	type given struct {
 		count     int
-		limit     int
+		limit     uint
 		tableName string
 	}
 
@@ -82,7 +82,7 @@ func TestPaginationLifeCycle(t *testing.T) {
 			}
 
 			assert.Equal(t, tc.expected.lastPage, m.CurrentPage())
-			assert.Equal(t, (m.CurrentPage()-1)*tc.given.limit, m.Offset())
+			assert.Equal(t, (m.CurrentPage()-1)*int(tc.given.limit), m.Offset())
 
 			err = m.NextPage()
 			assert.Error(t, err)
