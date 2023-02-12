@@ -173,7 +173,7 @@ func TestTableContent(t *testing.T) {
 
 	r, co, err := c.tableContent("products")
 
-	assert.Len(t, r, opts.Limit)
+	assert.Len(t, r, int(opts.Limit))
 	assert.Len(t, co, 3)
 	assert.NoError(t, err)
 }
@@ -349,7 +349,7 @@ func TestMetadata(t *testing.T) {
 	assert.Len(t, m.Structure.Columns, 8)
 
 	// table content.
-	assert.Len(t, m.TableContent.Rows, opts.Limit)
+	assert.Len(t, m.TableContent.Rows, int(opts.Limit))
 	assert.Len(t, m.TableContent.Columns, 3)
 }
 
