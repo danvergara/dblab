@@ -117,17 +117,17 @@ func (m *Model) SSL() string {
 }
 
 // Limit returns the limit input value from the user.
-func (m *Model) Limit() int {
+func (m *Model) Limit() (uint, error) {
 	limit, err := strconv.Atoi(m.limitInput.Value())
 	if err != nil {
-		return 100
+		return uint(0), err
 	}
 
 	if limit <= 0 {
-		return 100
+		return uint(0), fmt.Errorf("invalid limit %d", limit)
 	}
 
-	return limit
+	return uint(limit), nil
 }
 
 // FilePath returns the path to the database file (just in sqlite3) value.
@@ -207,6 +207,11 @@ func Run() (command.Options, error) {
 		return command.Options{}, err
 	}
 
+	limit, err := m.Limit()
+	if err != nil {
+		return command.Options{}, err
+	}
+
 	opts := command.Options{
 		Driver: m.driver,
 		Host:   m.Host(),
@@ -215,7 +220,7 @@ func Run() (command.Options, error) {
 		Pass:   m.Password(),
 		DBName: m.Database(),
 		SSL:    m.SSL(),
-		Limit:  m.Limit(),
+		Limit:  limit,
 	}
 
 	if m.driver == "sqlite3" {
