@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # allow specifying different destination directory
-DIR="${DIR:-"/usr/local/bin"}"
+DIR="${DIR:-"$HOME/.local/bin"}"
 
 # get the OS
 OS=$(uname -s)
@@ -30,6 +30,6 @@ echo $GITHUB_URL
 
 # install/update the local binary
 curl -L -o dblab.tar.gz $GITHUB_URL
-tar xzvf dblab.tar.gz
-sudo mv -f dblab-sqlite "$DIR"
+tar xzvf dblab.tar.gz dblab-sqlite
+mv -f dblab-sqlite "$DIR"
 rm dblab.tar.gz
