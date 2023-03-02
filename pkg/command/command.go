@@ -15,6 +15,7 @@ type Options struct {
 	// PostgreSQL only.
 	Schema string
 	Limit  uint
+	Socket string
 }
 
 // SetDefault returns a Options struct and fills the empty
