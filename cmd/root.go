@@ -24,6 +24,7 @@ var (
 	db      string
 	ssl     string
 	limit   uint
+	socket  string
 )
 
 // NewRootCmd returns the root command.
@@ -53,6 +54,7 @@ func NewRootCmd() *cobra.Command {
 					Schema: schema,
 					SSL:    ssl,
 					Limit:  limit,
+					Socket: socket,
 				}
 
 				if form.IsEmpty(opts) {
@@ -118,4 +120,5 @@ func init() {
 	rootCmd.Flags().StringVarP(&schema, "schema", "", "", "Database schema (postgres only)")
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
 	rootCmd.Flags().UintVarP(&limit, "limit", "", 100, "Size of the result set from the table content query (should be greater than zero, otherwise the app will error out)")
+	rootCmd.Flags().StringVarP(&socket, "socket", "", "", "Path to a Unix socket file")
 }
