@@ -103,6 +103,17 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			},
 		},
 		{
+			name: "valid socket connection",
+			given: given{
+				opts: command.Options{
+					URL: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
+				},
+			},
+			want: want{
+				uri: "user@unix(/path/to/socket)/dbname?charset=utf8",
+			},
+		},
+		{
 			name: "error misspelled mysql",
 			given: given{
 				opts: command.Options{
@@ -272,6 +283,20 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			},
 			want: want{
 				uri: "user:password@tcp(your-amazonaws-uri.com:3306)/db",
+			},
+		},
+		{
+			name: "success - sockets connection",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					User:   "user",
+					DBName: "db",
+					Socket: "/path/to/socket",
+				},
+			},
+			want: want{
+				uri: "user@unix(/path/to/socket)/db?charset=utf8",
 			},
 		},
 		// sqlite3.
@@ -504,6 +529,17 @@ func TestFormatMySQLURL(t *testing.T) {
 			},
 		},
 		{
+			name: "valid socket connection",
+			given: given{
+				opts: command.Options{
+					URL: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
+				},
+			},
+			want: want{
+				uri: "user@unix(/path/to/socket)/dbname?charset=utf8",
+			},
+		},
+		{
 			name: "error misspelled mysql",
 			given: given{
 				opts: command.Options{
@@ -592,6 +628,15 @@ func TestParseDSN(t *testing.T) {
 			},
 			want: want{
 				uri: "mysql://user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname",
+			},
+		},
+		{
+			name: "valid socket connection",
+			given: given{
+				dsn: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
+			},
+			want: want{
+				uri: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
 			},
 		},
 		{
