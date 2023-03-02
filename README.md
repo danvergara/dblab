@@ -102,6 +102,7 @@ Flags:
       --pass string     Password for user
       --port string     Server port
       --schema string   Database schema (postgres only)
+      --socket string     Path to a Unix socket file
       --ssl string      SSL mode
   -u, --url string      Database connection string
       --user string     Database user
@@ -133,6 +134,13 @@ if you're using PostgreSQL, you have the option to define the schema you want to
 ```sh
 $ dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
 $ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
+```
+
+As a request made in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
+
+```sh
+$ dblab --url mysql://user@unix(/path/to/socket)/dbname?charset=utf8
+$ dblab --socket /path/to/socket --user myuser --db users --ssl disable --port 5432 --driver mysql --limit 50
 ```
 
 ### Configuration
