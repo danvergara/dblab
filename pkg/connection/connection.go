@@ -19,9 +19,9 @@ var (
 	// in the system to be used as database username.
 	ErrCantDetectUSer = errors.New("could not detect default username")
 	// ErrInvalidPostgresURLFormat is the error used to notify that the postgres given url is not valid.
-	ErrInvalidPostgresURLFormat = errors.New("invalid URL - Valid format: postgres://user:password@host:port/db?sslmode=mode")
+	ErrInvalidPostgresURLFormat = errors.New("invalid url - valid format: postgres://user:password@host:port/db?sslmode=mode")
 	// ErrInvalidMySQLURLFormat is the error used to notify that the given mysql url is not valid.
-	ErrInvalidMySQLURLFormat = errors.New("invalid URL - valid format: mysql://user:password@tcp(host:port)/db")
+	ErrInvalidMySQLURLFormat = errors.New("invalid url - valid format: mysql://user:password@tcp(host:port)/db")
 	// ErrInvalidURLFormat is used to notify the url is invalid.
 	ErrInvalidURLFormat = errors.New("invalid url")
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
@@ -92,6 +92,10 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 
 		return connDB.String(), opts, nil
 	case "mysql":
+		if opts.Socket != "" {
+			return fmt.Sprintf("%s@unix(%s)/%s?charset=utf8", opts.User, opts.Socket, opts.DBName), opts, nil
+		}
+
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), opts, nil
 	case "sqlite3":
 		if hasValidSqlite3FileExtension(opts.DBName) {
