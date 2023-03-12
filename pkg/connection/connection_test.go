@@ -119,11 +119,11 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid socket connection",
 			given: given{
 				opts: command.Options{
-					URL: fmt.Sprintf("mysql://user@unix(%s)/dbname?charset=utf8", socketFile.Name()),
+					URL: fmt.Sprintf("mysql://user:password@unix(%s)/dbname?charset=utf8", socketFile.Name()),
 				},
 			},
 			want: want{
-				uri: fmt.Sprintf("user@unix(%s)/dbname?charset=utf8", socketFile.Name()),
+				uri: fmt.Sprintf("user:password@unix(%s)/dbname?charset=utf8", socketFile.Name()),
 			},
 		},
 		{
@@ -306,12 +306,13 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				opts: command.Options{
 					Driver: "mysql",
 					User:   "user",
+					Pass:   "password",
 					DBName: "db",
 					Socket: socketFile.Name(),
 				},
 			},
 			want: want{
-				uri: fmt.Sprintf("user@unix(%s)/db?charset=utf8", socketFile.Name()),
+				uri: fmt.Sprintf("user:password@unix(%s)/db?charset=utf8", socketFile.Name()),
 			},
 		},
 		{
@@ -320,6 +321,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				opts: command.Options{
 					Driver: "mysql",
 					User:   "user",
+					Pass:   "password",
 					DBName: "db",
 					Socket: "/path/to/not-wrong-file",
 				},
@@ -335,6 +337,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				opts: command.Options{
 					Driver: "mysql",
 					User:   "user",
+					Pass:   "password",
 					DBName: "db",
 					Socket: "/path/to/not-existing-file.sock",
 				},
@@ -577,11 +580,11 @@ func TestFormatMySQLURL(t *testing.T) {
 			name: "valid socket connection",
 			given: given{
 				opts: command.Options{
-					URL: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
+					URL: "mysql://user:password@unix(/path/to/socket)/dbname?charset=utf8",
 				},
 			},
 			want: want{
-				uri: "user@unix(/path/to/socket)/dbname?charset=utf8",
+				uri: "user:password@unix(/path/to/socket)/dbname?charset=utf8",
 			},
 		},
 		{
@@ -678,10 +681,10 @@ func TestParseDSN(t *testing.T) {
 		{
 			name: "valid socket connection",
 			given: given{
-				dsn: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
+				dsn: "mysql://user:password@unix(/path/to/socket)/dbname?charset=utf8",
 			},
 			want: want{
-				uri: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
+				uri: "mysql://user:password@unix(/path/to/socket)/dbname?charset=utf8",
 			},
 		},
 		{
