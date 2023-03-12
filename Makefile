@@ -13,7 +13,7 @@ unit-test:
 .PHONY: int-test
 ## int-test: Runs the integration tests
 int-test:
-	docker compose run --entrypoint=make dblab test
+	docker-compose run --entrypoint=make dblab test
 
 .PHONY: linter
 ## linter: Runs the golangci-lint command
@@ -64,7 +64,7 @@ run-mysql-socket-url: build
 .PHONY: run-sqlite3
 ## run-sqlite3: Runs the application with a connection to sqlite3
 run-sqlite3: build-sqlite3
-	docker compose run --rm dblab-sqlite3
+	docker-compose run --rm dblab-sqlite3
 	./dblab --db db/dblab.db --driver sqlite3
 
 .PHONY: run-url
@@ -85,12 +85,12 @@ run-config: build
 .PHONY: up
 ## up: Runs all the containers listed in the docker-compose.yml file
 up:
-	docker compose up --build -d
+	docker-compose up --build -d
 
 .PHONY: down
 ## down: Shut down all the containers listed in the docker-compose.yml file
 down:
-	docker compose down
+	docker-compose down
 
 .PHONY: form
 ## form: Runs the application with no arguments
