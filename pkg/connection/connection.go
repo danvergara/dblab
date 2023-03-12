@@ -105,7 +105,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 				return "", opts, ErrSocketFileDoNotExist
 			}
 
-			return fmt.Sprintf("%s@unix(%s)/%s?charset=utf8", opts.User, opts.Socket, opts.DBName), opts, nil
+			return fmt.Sprintf("%s:%s@unix(%s)/%s?charset=utf8", opts.User, opts.Pass, opts.Socket, opts.DBName), opts, nil
 		}
 
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), opts, nil
