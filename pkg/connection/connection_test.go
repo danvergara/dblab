@@ -2,13 +2,26 @@ package connection
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/stretchr/testify/assert"
 )
 
+func createTempSocketFile(t *testing.T) *os.File {
+	t.Helper()
+
+	socketFile, err := os.CreateTemp("", "mysqld*.sock")
+	assert.NoError(t, err)
+
+	return socketFile
+}
+
 func TestBuildConnectionFromOptsFromURL(t *testing.T) {
+	socketFile := createTempSocketFile(t)
+
 	type given struct {
 		opts command.Options
 	}
@@ -106,11 +119,11 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid socket connection",
 			given: given{
 				opts: command.Options{
-					URL: "mysql://user@unix(/path/to/socket)/dbname?charset=utf8",
+					URL: fmt.Sprintf("mysql://user@unix(%s)/dbname?charset=utf8", socketFile.Name()),
 				},
 			},
 			want: want{
-				uri: "user@unix(/path/to/socket)/dbname?charset=utf8",
+				uri: fmt.Sprintf("user@unix(%s)/dbname?charset=utf8", socketFile.Name()),
 			},
 		},
 		{
@@ -174,6 +187,8 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 }
 
 func TestBuildConnectionFromOptsUserData(t *testing.T) {
+	socketFile := createTempSocketFile(t)
+
 	type given struct {
 		opts command.Options
 	}
@@ -292,11 +307,41 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 					Driver: "mysql",
 					User:   "user",
 					DBName: "db",
-					Socket: "/path/to/socket",
+					Socket: socketFile.Name(),
 				},
 			},
 			want: want{
-				uri: "user@unix(/path/to/socket)/db?charset=utf8",
+				uri: fmt.Sprintf("user@unix(%s)/db?charset=utf8", socketFile.Name()),
+			},
+		},
+		{
+			name: "error - invalid socket file name",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					User:   "user",
+					DBName: "db",
+					Socket: "/path/to/not-wrong-file",
+				},
+			},
+			want: want{
+				hasError: true,
+				err:      ErrInvalidSocketFile,
+			},
+		},
+		{
+			name: "error - socket file do not exist",
+			given: given{
+				opts: command.Options{
+					Driver: "mysql",
+					User:   "user",
+					DBName: "db",
+					Socket: "/path/to/not-existing-file.sock",
+				},
+			},
+			want: want{
+				hasError: true,
+				err:      ErrSocketFileDoNotExist,
 			},
 		},
 		// sqlite3.
