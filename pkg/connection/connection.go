@@ -28,6 +28,10 @@ var (
 	ErrInvalidDriver = errors.New("invalid driver")
 	// ErrInvalidSqlite3Extension is used to notify that the selected file is not a sqlite3 file.
 	ErrInvalidSqlite3Extension = errors.New("invalid sqlite3 file extension")
+	// ErrSocketFileDoNotExist indicates that the given path to the socket files leads to no file.
+	ErrSocketFileDoNotExist = errors.New("socket file does not exist")
+	// ErrInvalidSocketFile indicates that the socket file must end with .sock as suffix.
+	ErrInvalidSocketFile = errors.New("invalid socket file - must end with .sock")
 )
 
 func init() {
@@ -93,6 +97,14 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		return connDB.String(), opts, nil
 	case "mysql":
 		if opts.Socket != "" {
+			if !validSocketFile(opts.Socket) {
+				return "", opts, ErrInvalidSocketFile
+			}
+
+			if !socketFileExists(opts.Socket) {
+				return "", opts, ErrSocketFileDoNotExist
+			}
+
 			return fmt.Sprintf("%s@unix(%s)/%s?charset=utf8", opts.User, opts.Socket, opts.DBName), opts, nil
 		}
 
@@ -227,4 +239,17 @@ func hasValidMySQLPrefix(rawurl string) bool {
 
 func hasValidSqlite3FileExtension(fileName string) bool {
 	return strings.HasSuffix(fileName, "sqlite") || strings.HasSuffix(fileName, "db") || strings.HasSuffix(fileName, "db3") || strings.HasSuffix(fileName, "sqlite3")
+}
+
+func socketFileExists(socketFile string) bool {
+	info, err := os.Stat(socketFile)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return !info.IsDir()
+}
+
+func validSocketFile(socketFile string) bool {
+	return strings.HasSuffix(socketFile, ".sock")
 }
