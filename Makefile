@@ -56,6 +56,11 @@ run-mysql: build
 run-mysql-socket: build
 	./dblab --socket /var/lib/mysql/mysql.sock --user myuser --pass password --db mydb --ssl enable --port 3306 --driver mysql
 
+.PHONY: run-mysql-socket-url
+## run-mysql-socket-url: Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
+run-mysql-socket-url: build
+	./dblab --url "mysql://myuser:password@unix(/var/lib/mysql/mysql.sock)/mydb?charset=utf8"
+
 .PHONY: run-sqlite3
 ## run-sqlite3: Runs the application with a connection to sqlite3
 run-sqlite3: build-sqlite3
