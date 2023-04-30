@@ -1,6 +1,6 @@
 module github.com/danvergara/dblab
 
-go 1.18
+go 1.20
 
 require (
 	github.com/Masterminds/squirrel v1.5.3
