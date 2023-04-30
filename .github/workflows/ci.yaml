@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        goVer: [1.16, 1.17, 1.18]
+        goVer: ['1.19', '1.20']
     # Defines the platform for each test run.
     runs-on: ${{ matrix.os }}
     # define the container services used to run integration tests
@@ -44,7 +44,7 @@ jobs:
 
       # The steps that will be run through for each version and platform combination.
       - name: Set up Go ${{ matrix.goVer }}
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.goVer }}
           cache: true
