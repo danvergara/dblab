@@ -39,6 +39,7 @@ build:
 .PHONY: build-sqlite3
 ## build-sqlite3: Builds the Go program with CGO_ENABLED enabled.
 build-sqlite3:
+	CGO_ENABLED=0 \
 	go build -o dblab .
 
 .PHONY: run
@@ -65,7 +66,7 @@ run-mysql-socket-url: build
 ## run-sqlite3: Runs the application with a connection to sqlite3
 run-sqlite3: build-sqlite3
 	docker compose run --rm dblab-sqlite3
-	./dblab --db db/dblab.db --driver sqlite3
+	./dblab --db db/dblab.db --driver sqlite
 
 .PHONY: run-url
 ## run-url: Runs the app passing the url as parameter
