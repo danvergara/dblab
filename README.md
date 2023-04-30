@@ -37,11 +37,12 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3 databases.
 
 - Cross-platform support OSX/Linux/Windows 32/64-bit
 - Simple installation (distributed as a single binary)
-- Zero dependencies (except for the SQLite3 binary with CGO enabled).
+- Zero dependencies.
 
 ## Installation
 
-> if you need to work with SQLite3, install the CGO enabled binary using the proper bash script listed below
+> ~~if you need to work with SQLite3, install the CGO enabled binary using the proper bash script listed below.~~
+> The above comment is deprecated and CGO is not needed anymore. There will be a single binary capable to deal with all supported clients.
 
 ### Homebrew
 
@@ -64,19 +65,11 @@ You can manually download a binary release from [the release page](https://githu
 ## Automated installation/update
 > Don't forget to always verify what you're piping into bash
 
-Ordinary binary:
+Install the binarry using our bash script:
 
 ```sh
 curl https://raw.githubusercontent.com/danvergara/dblab/master/scripts/install_update_linux.sh | bash
 ```
-
-CGO enabled binary:
-
-```sh
-curl https://raw.githubusercontent.com/danvergara/dblab/master/scripts/install_update_sqlite_linux.sh | bash
-```
-
-The scripts install the binary in `/usr/local/bin` directory by default, but it can be changed by setting the `DIR` environment variable.
 
 ## Help
 
@@ -118,7 +111,7 @@ You can start the app passing no flags or parameters, you'll be asked for connec
 
 ```sh
 $ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
-$ dblab --db path/to/file.sqlite3 --driver sqlite3
+$ dblab --db path/to/file.sqlite3 --driver sqlite
 ```
 
 Connection URL scheme is also supported:
@@ -185,13 +178,13 @@ database:
 limit: 50
 ```
 
-Or for sqlite3:
+Or for sqlite:
 
 ```yaml
 database:
   - name: "prod"
     db: "path/to/file.sqlite3"
-    driver: "sqlite3"
+    driver: "sqlite"
 ```
 
 Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respectively.
