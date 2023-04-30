@@ -184,7 +184,7 @@ func initModel() Model {
 
 	m := Model{
 		// the supported drivers by the client.
-		drivers: []string{"postgres", "mysql", "sqlite3"},
+		drivers: []string{"postgres", "mysql", "sqlite"},
 		// our default value.
 		driver: "postgres",
 
@@ -223,7 +223,7 @@ func Run() (command.Options, error) {
 		Limit:  limit,
 	}
 
-	if m.driver == "sqlite3" {
+	if m.driver == "sqlite" {
 		opts.URL = fmt.Sprintf("file:%s", m.FilePath())
 	}
 

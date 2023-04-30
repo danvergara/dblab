@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/kkyr/fig"
 	"github.com/spf13/cobra"
 
@@ -18,7 +19,7 @@ import (
 	// drivers.
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 // Config struct is used to store the db connection data.
@@ -122,7 +123,7 @@ func (c *Config) MigrateInstance() (*migrate.Migrate, error) {
 	}
 
 	switch c.Driver {
-	case "sqlite3":
+	case drivers.SQLITE:
 		dbDriver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
 		if err != nil {
 			fmt.Printf("instance error: %v \n", err)
@@ -181,11 +182,11 @@ func (c *Config) GetSQLXDBConnStr() string {
 // getDBConnStr returns the connection string based on the provied host and db name.
 func (c *Config) getDBConnStr(dbhost, dbname string) string {
 	switch c.Driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
-	case "mysql":
+	case drivers.MYSQL:
 		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
-	case "sqlite3":
+	case drivers.SQLITE:
 		return c.DBName
 	default:
 		return ""
@@ -195,11 +196,11 @@ func (c *Config) getDBConnStr(dbhost, dbname string) string {
 // getSQLXConnStr returns the connection string based on the provied host and db name.
 func (c *Config) getSQLXConnStr(dbhost, dbname string) string {
 	switch c.Driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
-	case "mysql":
+	case drivers.MYSQL:
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", c.User, c.Pswd, dbhost, c.Port, dbname)
-	case "sqlite3":
+	case drivers.SQLITE:
 		return c.DBName
 	default:
 		return ""

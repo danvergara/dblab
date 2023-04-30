@@ -1,6 +1,10 @@
 package form
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/danvergara/dblab/pkg/drivers"
+)
 
 func driverView(m *Model) string {
 	// The header.
@@ -33,7 +37,7 @@ func standardView(m *Model) string {
 func viewInputs(m *Model) []string {
 	var inputs []string
 
-	if m.driver == "sqlite3" {
+	if m.driver == drivers.SQLITE {
 		inputs = []string{
 			m.filePathInput.View(),
 			m.limitInput.View(),
@@ -54,11 +58,11 @@ func viewInputs(m *Model) []string {
 
 func sslView(m *Model) string {
 	switch m.driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		m.modes = []string{"disable", "require", "verify-full"}
-	case "mysql":
+	case drivers.MYSQL:
 		m.modes = []string{"true", "false", "skip-verify", "preferred"}
-	case "sqlite3":
+	case drivers.SQLITE:
 		m.modes = []string{}
 	default:
 		m.modes = []string{"disable", "require", "verify-full"}

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/bxcodec/faker/v3"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
 // CustomerSeed seeds the database with customers.
@@ -13,11 +14,11 @@ func (s Seed) CustomerSeed() {
 
 		// execute query.
 		switch s.driver {
-		case "postgres":
+		case drivers.POSTGRES:
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES ($1, $2)`, faker.Name(), faker.Email())
-		case "mysql":
+		case drivers.MYSQL:
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES (?, ?)`, faker.Name(), faker.Email())
-		case "sqlite3":
+		case drivers.SQLITE:
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES (?, ?)`, faker.Name(), faker.Email())
 		default:
 			log.Println("unsupported driver")

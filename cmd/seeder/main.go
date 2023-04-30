@@ -15,8 +15,8 @@ import (
 	// postgres driver.
 	_ "github.com/lib/pq"
 
-	// sqlite3 driver.
-	_ "github.com/mattn/go-sqlite3"
+	// sqlite driver.
+	_ "modernc.org/sqlite"
 )
 
 func main() {
