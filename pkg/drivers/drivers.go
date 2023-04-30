@@ -1,8 +1,8 @@
 package drivers
 
 const (
-	POSTGRES   string = "postgres"
-	POSTGRESQL string = "postgresql"
-	MYSQL      string = "mysql"
-	SQLITE     string = "sqlite"
+	Postgres   string = "postgres"
+	PostgreSQL string = "postgresql"
+	MySQL      string = "mysql"
+	SQLite     string = "sqlite"
 )

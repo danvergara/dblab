@@ -208,7 +208,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - localhost with no explicit ssl mode - postgres",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.POSTGRES,
+					Driver: drivers.Postgres,
 					User:   "user",
 					Pass:   "password",
 					Host:   "localhost",
@@ -224,7 +224,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - 127.0.0.1 with no explicit ssl mode - postgres",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.POSTGRES,
+					Driver: drivers.Postgres,
 					User:   "user",
 					Pass:   "password",
 					Host:   "127.0.0.1",
@@ -240,7 +240,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - remote host - postgres",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.POSTGRES,
+					Driver: drivers.Postgres,
 					User:   "user",
 					Pass:   "password",
 					Host:   "your-amazonaws-uri.com",
@@ -257,7 +257,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - localhost - mysql",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.MYSQL,
+					Driver: drivers.MySQL,
 					User:   "user",
 					Pass:   "password",
 					Host:   "localhost",
@@ -273,7 +273,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - 127.0.0.1 - mysql",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.MYSQL,
+					Driver: drivers.MySQL,
 					User:   "user",
 					Pass:   "password",
 					Host:   "127.0.0.1",
@@ -289,7 +289,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - remote host -mysql",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.MYSQL,
+					Driver: drivers.MySQL,
 					User:   "user",
 					Pass:   "password",
 					Host:   "your-amazonaws-uri.com",
@@ -305,7 +305,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - sockets connection",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.MYSQL,
+					Driver: drivers.MySQL,
 					User:   "user",
 					Pass:   "password",
 					DBName: "db",
@@ -320,7 +320,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "error - invalid socket file name",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.MYSQL,
+					Driver: drivers.MySQL,
 					User:   "user",
 					Pass:   "password",
 					DBName: "db",
@@ -336,7 +336,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "error - socket file do not exist",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.MYSQL,
+					Driver: drivers.MySQL,
 					User:   "user",
 					Pass:   "password",
 					DBName: "db",
@@ -353,7 +353,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - sqlite db file extension",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.SQLITE,
+					Driver: drivers.SQLite,
 					User:   "user",
 					DBName: "users.db",
 				},
@@ -366,7 +366,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - sqlite sqlite3 file extension",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.SQLITE,
+					Driver: drivers.SQLite,
 					DBName: "users.sqlite3",
 				},
 			},
@@ -378,7 +378,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "error - wrong sqlite3 file extension",
 			given: given{
 				opts: command.Options{
-					Driver: drivers.SQLITE,
+					Driver: drivers.SQLite,
 					DBName: "users.wrong",
 				},
 			},

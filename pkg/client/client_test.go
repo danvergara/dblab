@@ -42,11 +42,11 @@ func TestMain(m *testing.M) {
 
 func generateURL(driver string) string {
 	switch driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", driver, user, password, host, port, name)
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", driver, user, password, host, port, name)
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		return name
 	default:
 		return ""

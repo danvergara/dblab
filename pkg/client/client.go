@@ -52,9 +52,9 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	switch c.driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		fallthrough
-	case drivers.POSTGRESQL:
+	case drivers.PostgreSQL:
 		if _, err = db.Exec(fmt.Sprintf("set search_path='%s'", c.schema)); err != nil {
 			return nil, err
 		}
@@ -210,9 +210,9 @@ func (c *Client) ShowTables() ([]string, error) {
 	tables := make([]string, 0)
 
 	switch c.driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		fallthrough
-	case drivers.POSTGRESQL:
+	case drivers.PostgreSQL:
 		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 		query, args, err = psql.Select("table_name").
 			From("information_schema.tables").
@@ -223,9 +223,9 @@ func (c *Client) ShowTables() ([]string, error) {
 			return nil, err
 		}
 
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		query = "SHOW TABLES;"
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		query = `
 		SELECT
 			name
@@ -356,9 +356,9 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 	var query string
 
 	switch c.driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		fallthrough
-	case drivers.POSTGRESQL:
+	case drivers.PostgreSQL:
 		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 		query, args, err := psql.Select(
@@ -395,10 +395,10 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 		}
 
 		return c.Query(query, args...)
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		query = fmt.Sprintf("DESCRIBE %s;", tableName)
 		return c.Query(query)
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		query = fmt.Sprintf("PRAGMA table_info(%s);", tableName)
 		return c.Query(query)
 	default:
@@ -422,7 +422,7 @@ func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 		Where("tc.table_name = ?")
 
 	switch c.driver {
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		sql = `
 		SELECT *
 		FROM
@@ -430,9 +430,9 @@ func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 		WHERE
 			type='table' AND name = ?;`
 		return c.Query(sql, tableName)
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		fallthrough
-	case drivers.POSTGRESQL:
+	case drivers.PostgreSQL:
 		query = query.Where(fmt.Sprintf("tc.table_schema = '%s'", c.schema))
 		query = query.PlaceholderFormat(sq.Dollar)
 	}
@@ -450,15 +450,15 @@ func (c *Client) indexes(tableName string) ([][]string, []string, error) {
 	var query string
 
 	switch c.driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		fallthrough
-	case drivers.POSTGRESQL:
+	case drivers.PostgreSQL:
 		query = "SELECT * FROM pg_indexes WHERE tablename = $1;"
 		return c.Query(query, tableName)
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		query = fmt.Sprintf("SHOW INDEX FROM %s", tableName)
 		return c.Query(query)
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		query = `PRAGMA index_list(%s);`
 		query = fmt.Sprintf(query, tableName)
 		return c.Query(query)

@@ -46,16 +46,16 @@ func init() {
 // BuildConnectionFromOpts return the connection uri string given the options passed by the uses.
 func BuildConnectionFromOpts(opts command.Options) (string, command.Options, error) {
 	if opts.URL != "" {
-		if strings.HasPrefix(opts.URL, drivers.POSTGRES) {
-			opts.Driver = drivers.POSTGRES
+		if strings.HasPrefix(opts.URL, drivers.Postgres) {
+			opts.Driver = drivers.Postgres
 
 			conn, err := formatPostgresURL(opts)
 
 			return conn, opts, err
 		}
 
-		if strings.HasPrefix(opts.URL, drivers.MYSQL) {
-			opts.Driver = drivers.MYSQL
+		if strings.HasPrefix(opts.URL, drivers.MySQL) {
+			opts.Driver = drivers.MySQL
 			conn, err := formatMySQLURL(opts)
 			return conn, opts, err
 		}
@@ -77,7 +77,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 	}
 
 	switch opts.Driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		query := url.Values{}
 		if opts.SSL != "" {
 			query.Add("sslmode", opts.SSL)
@@ -96,7 +96,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		}
 
 		return connDB.String(), opts, nil
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		if opts.Socket != "" {
 			if !validSocketFile(opts.Socket) {
 				return "", opts, ErrInvalidSocketFile
@@ -110,7 +110,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		}
 
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), opts, nil
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		if hasValidSqlite3FileExtension(opts.DBName) {
 			return opts.DBName, opts, nil
 		}
