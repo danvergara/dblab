@@ -39,11 +39,10 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.20'
-          check-latest: true
-
+          cache: false
       # Runs the default linters provided by golangci-lint plus golint and godot.
       - name: Run linters
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.46
+          version: v1.52
           args: --enable=golint --enable=godot --timeout=3m
