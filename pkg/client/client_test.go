@@ -9,11 +9,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	// postgres driver.
 	_ "github.com/lib/pq"
-	// sqlite3 driver.
-	_ "github.com/mattn/go-sqlite3"
+	// sqlite driver.
+	_ "modernc.org/sqlite"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
 var (
@@ -40,11 +42,11 @@ func TestMain(m *testing.M) {
 
 func generateURL(driver string) string {
 	switch driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", driver, user, password, host, port, name)
-	case "mysql":
+	case drivers.MYSQL:
 		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", driver, user, password, host, port, name)
-	case "sqlite3":
+	case drivers.SQLITE:
 		return name
 	default:
 		return ""

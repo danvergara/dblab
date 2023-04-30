@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -151,7 +152,7 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			},
 		},
 		{
-			name: "sqlite3 file dsn example",
+			name: "sqlite file dsn example",
 			given: given{
 				opts: command.Options{
 					URL: "file:test.db?cache=shared&mode=memory",
@@ -207,7 +208,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - localhost with no explicit ssl mode - postgres",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
+					Driver: drivers.POSTGRES,
 					User:   "user",
 					Pass:   "password",
 					Host:   "localhost",
@@ -223,7 +224,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - 127.0.0.1 with no explicit ssl mode - postgres",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
+					Driver: drivers.POSTGRES,
 					User:   "user",
 					Pass:   "password",
 					Host:   "127.0.0.1",
@@ -239,7 +240,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - remote host - postgres",
 			given: given{
 				opts: command.Options{
-					Driver: "postgres",
+					Driver: drivers.POSTGRES,
 					User:   "user",
 					Pass:   "password",
 					Host:   "your-amazonaws-uri.com",
@@ -256,7 +257,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - localhost - mysql",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
+					Driver: drivers.MYSQL,
 					User:   "user",
 					Pass:   "password",
 					Host:   "localhost",
@@ -272,7 +273,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - 127.0.0.1 - mysql",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
+					Driver: drivers.MYSQL,
 					User:   "user",
 					Pass:   "password",
 					Host:   "127.0.0.1",
@@ -288,7 +289,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - remote host -mysql",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
+					Driver: drivers.MYSQL,
 					User:   "user",
 					Pass:   "password",
 					Host:   "your-amazonaws-uri.com",
@@ -304,7 +305,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "success - sockets connection",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
+					Driver: drivers.MYSQL,
 					User:   "user",
 					Pass:   "password",
 					DBName: "db",
@@ -319,7 +320,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "error - invalid socket file name",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
+					Driver: drivers.MYSQL,
 					User:   "user",
 					Pass:   "password",
 					DBName: "db",
@@ -335,7 +336,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "error - socket file do not exist",
 			given: given{
 				opts: command.Options{
-					Driver: "mysql",
+					Driver: drivers.MYSQL,
 					User:   "user",
 					Pass:   "password",
 					DBName: "db",
@@ -347,12 +348,13 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				err:      ErrSocketFileDoNotExist,
 			},
 		},
-		// sqlite3.
+		// sqlite.
 		{
-			name: "success - sqlite3 db file extension",
+			name: "success - sqlite db file extension",
 			given: given{
 				opts: command.Options{
-					Driver: "sqlite3",
+					Driver: drivers.SQLITE,
+					User:   "user",
 					DBName: "users.db",
 				},
 			},
@@ -361,10 +363,10 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			},
 		},
 		{
-			name: "success - sqlite3 sqlite3 file extension",
+			name: "success - sqlite sqlite3 file extension",
 			given: given{
 				opts: command.Options{
-					Driver: "sqlite3",
+					Driver: drivers.SQLITE,
 					DBName: "users.sqlite3",
 				},
 			},
@@ -376,7 +378,7 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			name: "error - wrong sqlite3 file extension",
 			given: given{
 				opts: command.Options{
-					Driver: "sqlite3",
+					Driver: drivers.SQLITE,
 					DBName: "users.wrong",
 				},
 			},

@@ -71,7 +71,7 @@ services:
       - ./:/src/app:z
     environment:
       - DB_NAME=db/dblab.db
-      - DB_DRIVER=sqlite3
+      - DB_DRIVER=sqlite
     entrypoint: ["/bin/bash", "./scripts/entrypoint-sqlite3.dev.sh"]
     networks:
       - dblab

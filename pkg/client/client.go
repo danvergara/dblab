@@ -7,6 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/connection"
+	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/danvergara/dblab/pkg/pagination"
 	"github.com/jmoiron/sqlx"
 
@@ -14,8 +15,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	// postgres driver.
 	_ "github.com/lib/pq"
-	// sqlite3 driver.
-	_ "github.com/mattn/go-sqlite3"
+	// sqlite driver.
+	_ "modernc.org/sqlite"
 )
 
 // Client is used to store the pool of db connection.
@@ -51,9 +52,9 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	switch c.driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		fallthrough
-	case "postgresql":
+	case drivers.POSTGRESQL:
 		if _, err = db.Exec(fmt.Sprintf("set search_path='%s'", c.schema)); err != nil {
 			return nil, err
 		}
@@ -209,9 +210,9 @@ func (c *Client) ShowTables() ([]string, error) {
 	tables := make([]string, 0)
 
 	switch c.driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		fallthrough
-	case "postgresql":
+	case drivers.POSTGRESQL:
 		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 		query, args, err = psql.Select("table_name").
 			From("information_schema.tables").
@@ -222,9 +223,9 @@ func (c *Client) ShowTables() ([]string, error) {
 			return nil, err
 		}
 
-	case "mysql":
+	case drivers.MYSQL:
 		query = "SHOW TABLES;"
-	case "sqlite3":
+	case drivers.SQLITE:
 		query = `
 		SELECT
 			name
@@ -355,9 +356,9 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 	var query string
 
 	switch c.driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		fallthrough
-	case "postgresql":
+	case drivers.POSTGRESQL:
 		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 		query, args, err := psql.Select(
@@ -394,10 +395,10 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 		}
 
 		return c.Query(query, args...)
-	case "mysql":
+	case drivers.MYSQL:
 		query = fmt.Sprintf("DESCRIBE %s;", tableName)
 		return c.Query(query)
-	case "sqlite3":
+	case drivers.SQLITE:
 		query = fmt.Sprintf("PRAGMA table_info(%s);", tableName)
 		return c.Query(query)
 	default:
@@ -421,7 +422,7 @@ func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 		Where("tc.table_name = ?")
 
 	switch c.driver {
-	case "sqlite3":
+	case drivers.SQLITE:
 		sql = `
 		SELECT *
 		FROM
@@ -429,9 +430,9 @@ func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 		WHERE
 			type='table' AND name = ?;`
 		return c.Query(sql, tableName)
-	case "postgres":
+	case drivers.POSTGRES:
 		fallthrough
-	case "postgresql":
+	case drivers.POSTGRESQL:
 		query = query.Where(fmt.Sprintf("tc.table_schema = '%s'", c.schema))
 		query = query.PlaceholderFormat(sq.Dollar)
 	}
@@ -449,15 +450,15 @@ func (c *Client) indexes(tableName string) ([][]string, []string, error) {
 	var query string
 
 	switch c.driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		fallthrough
-	case "postgresql":
+	case drivers.POSTGRESQL:
 		query = "SELECT * FROM pg_indexes WHERE tablename = $1;"
 		return c.Query(query, tableName)
-	case "mysql":
+	case drivers.MYSQL:
 		query = fmt.Sprintf("SHOW INDEX FROM %s", tableName)
 		return c.Query(query)
-	case "sqlite3":
+	case drivers.SQLITE:
 		query = `PRAGMA index_list(%s);`
 		query = fmt.Sprintf(query, tableName)
 		return c.Query(query)

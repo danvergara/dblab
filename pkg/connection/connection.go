@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
 var (
@@ -27,7 +28,7 @@ var (
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
 	ErrInvalidDriver = errors.New("invalid driver")
 	// ErrInvalidSqlite3Extension is used to notify that the selected file is not a sqlite3 file.
-	ErrInvalidSqlite3Extension = errors.New("invalid sqlite3 file extension")
+	ErrInvalidSqlite3Extension = errors.New("invalid sqlite file extension")
 	// ErrSocketFileDoNotExist indicates that the given path to the socket files leads to no file.
 	ErrSocketFileDoNotExist = errors.New("socket file does not exist")
 	// ErrInvalidSocketFile indicates that the socket file must end with .sock as suffix.
@@ -45,21 +46,21 @@ func init() {
 // BuildConnectionFromOpts return the connection uri string given the options passed by the uses.
 func BuildConnectionFromOpts(opts command.Options) (string, command.Options, error) {
 	if opts.URL != "" {
-		if strings.HasPrefix(opts.URL, "postgres") {
-			opts.Driver = "postgres"
+		if strings.HasPrefix(opts.URL, drivers.POSTGRES) {
+			opts.Driver = drivers.POSTGRES
 
 			conn, err := formatPostgresURL(opts)
 
 			return conn, opts, err
 		}
 
-		if strings.HasPrefix(opts.URL, "mysql") {
-			opts.Driver = "mysql"
+		if strings.HasPrefix(opts.URL, drivers.MYSQL) {
+			opts.Driver = drivers.MYSQL
 			conn, err := formatMySQLURL(opts)
 			return conn, opts, err
 		}
 
-		// this options is for sqlite3.
+		// this options is for sqlite.
 		// For more information see https://github.com/mattn/go-sqlite3#connection-string.
 		if strings.HasPrefix(opts.URL, "file:") {
 			return opts.URL, opts, nil
@@ -76,7 +77,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 	}
 
 	switch opts.Driver {
-	case "postgres":
+	case drivers.POSTGRES:
 		query := url.Values{}
 		if opts.SSL != "" {
 			query.Add("sslmode", opts.SSL)
@@ -95,7 +96,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		}
 
 		return connDB.String(), opts, nil
-	case "mysql":
+	case drivers.MYSQL:
 		if opts.Socket != "" {
 			if !validSocketFile(opts.Socket) {
 				return "", opts, ErrInvalidSocketFile
@@ -109,7 +110,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		}
 
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), opts, nil
-	case "sqlite3":
+	case drivers.SQLITE:
 		if hasValidSqlite3FileExtension(opts.DBName) {
 			return opts.DBName, opts, nil
 		}

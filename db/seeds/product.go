@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/bxcodec/faker/v3"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
 // ProductSeed seeds product data.
@@ -14,11 +15,11 @@ func (s Seed) ProductSeed() {
 
 		// execute query.
 		switch s.driver {
-		case "postgres":
+		case drivers.POSTGRES:
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32())
-		case "mysql":
+		case drivers.MYSQL:
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES (?, ?)`, faker.Word(), rand.Float32())
-		case "sqlite3":
+		case drivers.SQLITE:
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES (?, ?)`, faker.Word(), rand.Float32())
 		default:
 			log.Println("unsupported driver")
