@@ -14,11 +14,11 @@ func (s Seed) CustomerSeed() {
 
 		// execute query.
 		switch s.driver {
-		case drivers.POSTGRES:
+		case drivers.Postgres:
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES ($1, $2)`, faker.Name(), faker.Email())
-		case drivers.MYSQL:
+		case drivers.MySQL:
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES (?, ?)`, faker.Name(), faker.Email())
-		case drivers.SQLITE:
+		case drivers.SQLite:
 			_, err = s.db.Exec(`INSERT INTO customers(name, email) VALUES (?, ?)`, faker.Name(), faker.Email())
 		default:
 			log.Println("unsupported driver")

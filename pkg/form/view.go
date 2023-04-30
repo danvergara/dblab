@@ -37,7 +37,7 @@ func standardView(m *Model) string {
 func viewInputs(m *Model) []string {
 	var inputs []string
 
-	if m.driver == drivers.SQLITE {
+	if m.driver == drivers.SQLite {
 		inputs = []string{
 			m.filePathInput.View(),
 			m.limitInput.View(),
@@ -58,11 +58,11 @@ func viewInputs(m *Model) []string {
 
 func sslView(m *Model) string {
 	switch m.driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		m.modes = []string{"disable", "require", "verify-full"}
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		m.modes = []string{"true", "false", "skip-verify", "preferred"}
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		m.modes = []string{}
 	default:
 		m.modes = []string{"disable", "require", "verify-full"}

@@ -123,7 +123,7 @@ func (c *Config) MigrateInstance() (*migrate.Migrate, error) {
 	}
 
 	switch c.Driver {
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		dbDriver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
 		if err != nil {
 			fmt.Printf("instance error: %v \n", err)
@@ -182,11 +182,11 @@ func (c *Config) GetSQLXDBConnStr() string {
 // getDBConnStr returns the connection string based on the provied host and db name.
 func (c *Config) getDBConnStr(dbhost, dbname string) string {
 	switch c.Driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		return c.DBName
 	default:
 		return ""
@@ -196,11 +196,11 @@ func (c *Config) getDBConnStr(dbhost, dbname string) string {
 // getSQLXConnStr returns the connection string based on the provied host and db name.
 func (c *Config) getSQLXConnStr(dbhost, dbname string) string {
 	switch c.Driver {
-	case drivers.POSTGRES:
+	case drivers.Postgres:
 		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
-	case drivers.MYSQL:
+	case drivers.MySQL:
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", c.User, c.Pswd, dbhost, c.Port, dbname)
-	case drivers.SQLITE:
+	case drivers.SQLite:
 		return c.DBName
 	default:
 		return ""

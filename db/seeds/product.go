@@ -15,11 +15,11 @@ func (s Seed) ProductSeed() {
 
 		// execute query.
 		switch s.driver {
-		case drivers.POSTGRES:
+		case drivers.Postgres:
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32())
-		case drivers.MYSQL:
+		case drivers.MySQL:
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES (?, ?)`, faker.Word(), rand.Float32())
-		case drivers.SQLITE:
+		case drivers.SQLite:
 			_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES (?, ?)`, faker.Word(), rand.Float32())
 		default:
 			log.Println("unsupported driver")
