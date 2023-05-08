@@ -1,0 +1,85 @@
+### Using flags
+
+You can start the app without passing flags or parameters, so then an interactive command prompt will ask for the connection details.  
+
+![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/dblab-default-form.gif){ width="500" : .center }
+
+Otherwise, you can explicitly include the connection details using multiple parameters:
+
+```sh
+$ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
+$ dblab --db path/to/file.sqlite3 --driver sqlite
+```
+
+Connection URL scheme is also supported:
+
+```sh
+$ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
+$ dblab --url mysql://user:password@tcp(host:port)/db
+$ dblab --url file:test.db?cache=shared&mode=memory
+```
+
+if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
+
+```sh
+$ dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
+$ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
+```
+
+As a request made in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
+
+```sh
+$ dblab --url "mysql://user:pasword@unix(/path/to/socket/mysql.sock)/dbname?charset=utf8"
+$ dblab --socket /path/to/socket/mysql.sock --user user --db dbname --pass password --ssl disable --port 5432 --driver mysql --limit 50
+```
+
+For more information about the available flags check the [Usage section](https://dblab.danvergara.com/usage/#usage).
+
+### Using a config file
+
+
+```sh
+# default: test
+$ dbladb --config
+
+$ dblab --config --cfg-name "prod"
+```
+
+`.dblab.yaml` example:
+
+```yaml
+database:
+  - name: "test"
+    host: "localhost"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    driver: "postgres"
+    # optional
+    # postgres only
+    # default value: public
+    schema: "myschema"
+  - name: "prod"
+    # example endpoint
+    host: "mydb.123456789012.us-east-1.rds.amazonaws.com"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    schema: "public"
+    driver: "postgres"
+# should be greater than 0, otherwise the app will error out
+limit: 50
+```
+
+Or for sqlite:
+
+```yaml
+database:
+  - name: "prod"
+    db: "path/to/file.sqlite3"
+    driver: "sqlite"
+```
+
+Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respectively.

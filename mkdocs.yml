@@ -1,0 +1,59 @@
+site_name: dblab
+site_description: dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3, written in Go and works on OSX, Linux and Windows machines.
+site_url: https://dblab.danvergara.com/
+theme:
+  name: material
+  palette:
+  - media: '(prefers-color-scheme: light)'
+    scheme: default
+    primary: teal
+    accent: amber
+    toggle:
+      icon: material/lightbulb
+      name: Switch to light mode
+  - media: '(prefers-color-scheme: dark)'
+    scheme: slate
+    primary: teal
+    accent: amber
+    toggle:
+      icon: material/lightbulb-outline
+      name: Switch to dark mode
+repo_name: danvergara/dblab
+repo_url: https://github.com/danvergara/dblab
+edit_uri: ''
+plugins:
+- search
+nav:
+- dblab: index.md
+- quickstart.md
+- usage.md
+- features.md
+- release-notes.md
+- contribute.md
+
+markdown_extensions:
+- toc:
+    permalink: true
+- def_list
+- pymdownx.tasklist:
+    custom_checkbox: true
+- pymdownx.critic
+- pymdownx.caret
+- pymdownx.keys
+- pymdownx.mark
+- pymdownx.tilde
+- markdown.extensions.codehilite:
+    guess_lang: false
+- admonition
+- codehilite
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: !!python/name:pymdownx.superfences.fence_code_format ''
+- pymdownx.tabbed:
+    alternate_style: true
+- attr_list
+- md_in_html
+extra_css:
+- css/extra.css
