@@ -6,15 +6,15 @@ theme:
   palette:
   - media: '(prefers-color-scheme: light)'
     scheme: default
-    primary: teal
-    accent: amber
+    primary: blue
+    accent: teal
     toggle:
       icon: material/lightbulb
       name: Switch to light mode
   - media: '(prefers-color-scheme: dark)'
     scheme: slate
-    primary: teal
-    accent: amber
+    primary: blue
+    accent: teal
     toggle:
       icon: material/lightbulb-outline
       name: Switch to dark mode
