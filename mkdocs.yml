@@ -26,9 +26,6 @@ plugins:
 nav:
 - dblab: index.md
 - quickstart.md
-- Tutorials:
-    - tutorials/index.md
-    - tutorials/first-steps.md
 - usage.md
 - features.md
 - release-notes.md
@@ -58,3 +55,5 @@ markdown_extensions:
     alternate_style: true
 - attr_list
 - md_in_html
+extra_css:
+- css/extra.css

@@ -1,8 +1,18 @@
 # Welcome to **dblab**
 
-![dblab](https://github.com/danvergara/dblab/blob/main/assets/gopher-dblab.png){ width="300" }
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/gopher-dblab.png){ width="300" : .center }
 
+Cross-platform, zero dependencies, terminal based UI application for your Data Bases.  
 
+![integration tests](https://github.com/danvergara/dblab/actions/workflows/ci.yaml/badge.svg)  ![unit tests](https://github.com/danvergara/dblab/actions/workflows/test.yaml/badge.svg)  [![Release](https://img.shields.io/github/release/danvergara/dblab.svg?label=Release)](https://github.com/danvergara/dblab/releases)
+
+---
+
+**Documentation**: <a href="https://dblab.danvergara.com" target="_blank">https://dblab.danvergara.com</a>
+
+**Source Code**: <a href="https://github.com/danvergara/dblab" target="_blank">https://github.com/danvergara/dblab</a>
+
+---
 
 ## Overview
 
