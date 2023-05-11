@@ -1,0 +1,7 @@
+- Fork this repository
+- Create a new feature branch for a new functionality or bugfix
+- Commit your changes
+- Execute test suite
+- Push your code and open a new pull request
+- Use [issues](https://github.com/danvergara/dblab/issues) for any questions
+- Check [wiki](https://github.com/danvergara/dblab/wiki) for extra documentation
