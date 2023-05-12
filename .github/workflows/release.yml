@@ -10,78 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  build-linux-binary:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.20'
-          check-latest: true
-          cache: true
-      - name: Install cross-compiler for linux/arm64
-        run: |
-          sudo apt update
-          sudo apt-get -y install gcc-aarch64-linux-gnu
-      - name: Build
-        uses: goreleaser/goreleaser-action@v3
-        with:
-          args: release --skip-publish --config .goreleaser-for-linux.yaml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: dblab-linux
-          path: dist/dblab*
-  build-darwin-binary:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.20'
-          check-latest: true
-          cache: true
-      - name: Build
-        uses: goreleaser/goreleaser-action@v3
-        with:
-          args: release --skip-publish --config .goreleaser-for-darwin.yaml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: dblab-darwin
-          path: dist/dblab*
-  build-windows-binary:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@v2
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.20'
-          check-latest: true
-          cache: true
-      - name: Build
-        uses: goreleaser/goreleaser-action@v3
-        with:
-          args: release --skip-publish --config .goreleaser-for-windows.yaml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: dblab-windows
-          path: dist/dblab*
-
   goreleaser:
-    needs: [build-linux-binary, build-darwin-binary, build-windows-binary]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -89,40 +18,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: '1.20'
           check-latest: true
           cache: true
-      - name: Make directories
-        run: |
-          mkdir -p ./dblab-build/linux
-          mkdir -p ./dblab-build/darwin
-          mkdir -p ./dblab-build/windows
-      - name: Download linux binaries
-        uses: actions/download-artifact@v3
-        with:
-          name: dblab-linux
-          path: ./dblab-build/linux
-      - name: Download darwin binaries
-        uses: actions/download-artifact@v3
-        with:
-          name: dblab-darwin
-          path: ./dblab-build/darwin
-      - name: Download windows binaries
-        uses: actions/download-artifact@v3
-        with:
-          name: dblab-windows
-          path: ./dblab-build/windows
-      - name: Merge checksum file
-        run: |
-          cd ./dblab-build
-          cat ./darwin/dblab*checksums.txt >> checksums.txt
-          cat ./linux/dblab*checksums.txt >> checksums.txt
-          cat ./windows/dblab*checksums.txt >> checksums.txt
-          rm ./darwin/dblab*checksums.txt
-          rm ./linux/dblab*checksums.txt
-          rm ./windows/dblab*checksums.txt
       - name: Set release tag env variable
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Set the current version as env variable
