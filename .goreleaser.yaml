@@ -15,19 +15,21 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
       - '^docs:'
       - '^test:'
-
-release:
-  mode: append
-  extra_files:
-    - glob: ./dblab-build/**/*
-    - glob: ./dblab-build/checksums.txt
-  name_template: "Release {{.Tag}}"
 
 brews:
     # Name template of the recipe
