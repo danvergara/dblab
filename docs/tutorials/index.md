@@ -28,7 +28,7 @@ Then you will be asked to select the ssl mode for the connection with your datab
 Select the ssl mode (just press enter if you selected sqlite3):
 ```
 
-If everything went well you should see the UI
+If everything went well you should see the UI  
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/docs/tutorials/resources/images/full-ui.png){ width="500" : .center }
 
 For further knowledge on the navigation of the UI you can check this [first steps in navigation](https://dblab.danvergara.com/tutorials/navigation/)
