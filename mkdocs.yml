@@ -23,9 +23,13 @@ repo_url: https://github.com/danvergara/dblab
 edit_uri: ''
 plugins:
 - search
+- termynal
 nav:
 - dblab: index.md
 - quickstart.md
+- Tutorials:
+  - First steps: tutorials/index.md
+  - tutorials/navigation.md
 - usage.md
 - features.md
 - release-notes.md
