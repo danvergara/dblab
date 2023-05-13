@@ -26,6 +26,9 @@ plugins:
 nav:
 - dblab: index.md
 - quickstart.md
+- Tutorials:
+  - First steps: tutorials/index.md
+  - tutorials/navigation.md
 - usage.md
 - features.md
 - release-notes.md
