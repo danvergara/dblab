@@ -9,6 +9,12 @@ __Interactive client for PostgreSQL, MySQL and SQLite3.__
 
 <img src="screenshots/dblab-cover.png" />
 
+---
+
+**Documentation**: <a href="https://dblab.danvergara.com" target="_blank">https://dblab.danvergara.com</a>
+
+---
+
 ## Table of contents
 
 - [Overview](#overview)
