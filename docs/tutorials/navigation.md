@@ -11,13 +11,13 @@ In the top right you can find a tab menu were you can navigate through the diffe
   
 When selected each panel will show different information in the bottom box:
 
-- Rows: will show the result of the executed query  
+- Rows: Will show the result of the executed query. Press <kbd>Ctrl+Space</kbd> to execute the query.
     ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/rows-result.png){ width="600" : .center }
-- Structure: will show the schema of the table selected  
+- Structure: Will show the schema of the table selected  
     ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/structure-result.png){ width="400" : .center }
-- Constraints: will show the constraints of the table selected  
+- Constraints: Will show the constraints of the table selected  
     ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/constraints-result.png){ width="400" : .center }
-- Indexes: will show the indexes of the table selected  
+- Indexes: Will show the indexes of the table selected  
     ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/indexes-result.png){ width="400" : .center }
 
 In order to be able to see the information of `Structure`, `Constraints` or `Indexes` first you need to select a table from the left menu.  
