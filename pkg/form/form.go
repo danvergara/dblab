@@ -13,6 +13,10 @@ import (
 	"github.com/muesli/termenv"
 )
 
+const (
+	defaultLimit = 100
+)
+
 var (
 	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	noStyle      = lipgloss.NewStyle()
@@ -118,6 +122,10 @@ func (m *Model) SSL() string {
 
 // Limit returns the limit input value from the user.
 func (m *Model) Limit() (uint, error) {
+	// if the user skipped the question, resort to default value
+	if m.limitInput.Value() == "" {
+		return defaultLimit, nil
+	}
 	limit, err := strconv.Atoi(m.limitInput.Value())
 	if err != nil {
 		return uint(0), err
