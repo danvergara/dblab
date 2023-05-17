@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DefaultLimit = 100
+	defaultLimit = 100
 )
 
 var (
@@ -124,7 +124,7 @@ func (m *Model) SSL() string {
 func (m *Model) Limit() (uint, error) {
 	// if the user skipped the question, resort to default value
 	if m.limitInput.Value() == "" {
-		return DefaultLimit, nil
+		return defaultLimit, nil
 	}
 	limit, err := strconv.Atoi(m.limitInput.Value())
 	if err != nil {
