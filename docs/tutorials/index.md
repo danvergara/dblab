@@ -1,7 +1,7 @@
 Once the installation is done you can start by typing dblab 
 
 <!-- termynal -->
-```
+```sh
 $ dblab
 Select the database driver:
 

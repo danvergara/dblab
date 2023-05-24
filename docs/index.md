@@ -43,15 +43,15 @@ There will be a single binary capable to deal with all supported clients.
 
 It works with Linux too.
 
-```
-$ brew install danvergara/tools/dblab
+```{ .sh .copy }
+brew install danvergara/tools/dblab
 ```
 
 Or
 
-```
-$ brew tap danvergara/tools
-$ brew install dblab
+```{ .sh .copy }
+brew tap danvergara/tools
+brew install dblab
 ```
 
 ### Manual Binary Installation
@@ -63,7 +63,7 @@ You can manually download and install the binary release from [the release page]
 
 Install the binary using our bash script:
 
-```sh
+```{ .sh .copy }
 curl https://raw.githubusercontent.com/danvergara/dblab/master/scripts/install_update_linux.sh | bash
 ```
 
