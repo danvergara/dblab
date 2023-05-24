@@ -3,6 +3,9 @@ site_description: dblab is a fast and lightweight interactive terminal based UI 
 site_url: https://dblab.danvergara.com/
 theme:
   name: material
+  theme:
+    features:
+      - content.code.copy
   palette:
   - media: '(prefers-color-scheme: light)'
     scheme: default
@@ -30,6 +33,7 @@ nav:
 - Tutorials:
   - First steps: tutorials/index.md
   - tutorials/navigation.md
+  - Config File: tutorials/config-file.md
 - usage.md
 - features.md
 - release-notes.md

@@ -6,48 +6,59 @@ You can start the app without passing flags or parameters, so then an interactiv
 
 Otherwise, you can explicitly include the connection details using multiple parameters:
 
-```sh
-$ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
-$ dblab --db path/to/file.sqlite3 --driver sqlite
+```{ .sh .copy }
+dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
+```
+
+```{ .sh .copy }
+dblab --db path/to/file.sqlite3 --driver sqlite
 ```
 
 Connection URL scheme is also supported:
 
-```sh
-$ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
-$ dblab --url mysql://user:password@tcp(host:port)/db
-$ dblab --url file:test.db?cache=shared&mode=memory
+```{ .sh .copy }
+dblab --url postgres://user:password@host:port/database?sslmode=[mode]
+```
+```{ .sh .copy }
+dblab --url mysql://user:password@tcp(host:port)/db
+```
+```{ .sh .copy }
+dblab --url file:test.db?cache=shared&mode=memory
 ```
 
 if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
 
-```sh
-$ dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
-$ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
+```{ .sh .copy }
+dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
+```
+```{ .sh .copy }
+dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
 ```
 
 As a request made in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
 
-```sh
-$ dblab --url "mysql://user:pasword@unix(/path/to/socket/mysql.sock)/dbname?charset=utf8"
-$ dblab --socket /path/to/socket/mysql.sock --user user --db dbname --pass password --ssl disable --port 5432 --driver mysql --limit 50
+```{ .sh .copy }
+dblab --url "mysql://user:pasword@unix(/path/to/socket/mysql.sock)/dbname?charset=utf8"
+```
+```{ .sh .copy }
+dblab --socket /path/to/socket/mysql.sock --user user --db dbname --pass password --ssl disable --port 5432 --driver mysql --limit 50
 ```
 
 For more information about the available flags check the [Usage section](https://dblab.danvergara.com/usage/#usage).
 
 ### Using a config file
 
-
-```sh
-# default: test
-$ dbladb --config
-
-$ dblab --config --cfg-name "prod"
+default: the first configuration after the `database` field.
+```{ .sh .copy } 
+dbladb --config
+```
+```{ .sh .copy } 
+dblab --config --cfg-name "prod"
 ```
 
 `.dblab.yaml` example:
 
-```yaml
+```{ .yaml .copy }
 database:
   - name: "test"
     host: "localhost"
@@ -75,7 +86,7 @@ limit: 50
 
 Or for sqlite:
 
-```yaml
+```{ .yaml .copy }
 database:
   - name: "prod"
     db: "path/to/file.sqlite3"
