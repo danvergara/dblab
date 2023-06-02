@@ -87,6 +87,22 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			}
 		}
 
+		if opts.SSLCert != "" {
+			query.Add("sslcert", opts.SSLCert)
+		}
+
+		if opts.SSLKey != "" {
+			query.Add("sslkey", opts.SSLKey)
+		}
+
+		if opts.SSLPassword != "" {
+			query.Add("sslpassword", opts.SSLPassword)
+		}
+
+		if opts.SSLRootcert != "" {
+			query.Add("sslrootcert", opts.SSLRootcert)
+		}
+
 		connDB := url.URL{
 			Scheme:   opts.Driver,
 			Host:     fmt.Sprintf("%v:%v", opts.Host, opts.Port),
