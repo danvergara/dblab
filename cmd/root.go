@@ -12,19 +12,23 @@ import (
 
 // Define all the global flags.
 var (
-	cfg     bool
-	cfgName string
-	driver  string
-	url     string
-	host    string
-	port    string
-	user    string
-	pass    string
-	schema  string
-	db      string
-	ssl     string
-	limit   uint
-	socket  string
+	cfg         bool
+	cfgName     string
+	driver      string
+	url         string
+	host        string
+	port        string
+	user        string
+	pass        string
+	schema      string
+	db          string
+	ssl         string
+	limit       uint
+	socket      string
+	sslcert     string
+	sslkey      string
+	sslpassword string
+	sslrootcert string
 )
 
 // NewRootCmd returns the root command.
@@ -44,17 +48,21 @@ func NewRootCmd() *cobra.Command {
 				}
 			} else {
 				opts = command.Options{
-					Driver: driver,
-					URL:    url,
-					Host:   host,
-					Port:   port,
-					User:   user,
-					Pass:   pass,
-					DBName: db,
-					Schema: schema,
-					SSL:    ssl,
-					Limit:  limit,
-					Socket: socket,
+					Driver:      driver,
+					URL:         url,
+					Host:        host,
+					Port:        port,
+					User:        user,
+					Pass:        pass,
+					DBName:      db,
+					Schema:      schema,
+					SSL:         ssl,
+					Limit:       limit,
+					Socket:      socket,
+					SSLCert:     sslcert,
+					SSLKey:      sslkey,
+					SSLPassword: sslpassword,
+					SSLRootcert: sslrootcert,
 				}
 
 				if form.IsEmpty(opts) {
@@ -121,4 +129,26 @@ func init() {
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
 	rootCmd.Flags().UintVarP(&limit, "limit", "", 100, "Size of the result set from the table content query (should be greater than zero, otherwise the app will error out)")
 	rootCmd.Flags().StringVarP(&socket, "socket", "", "", "Path to a Unix socket file")
+	rootCmd.Flags().StringVarP(
+		&sslcert,
+		"sslcert",
+		"",
+		"~/.postgresql/postgresql.crt",
+		"This parameter specifies the file name of the client SSL certificate, replacing the default ~/.postgresql/postgresql.crt",
+	)
+	rootCmd.Flags().StringVarP(
+		&sslkey,
+		"sslkey",
+		"",
+		"~/.postgresql/postgresql.key",
+		"This parameter specifies the location for the secret key used for the client certificate. It can either specify a file name that will be used instead of the default ~/.postgresql/postgresql.key, or it can specify a key obtained from an external “engine”",
+	)
+	rootCmd.Flags().StringVarP(&sslpassword, "sslpassword", "", "", "This parameter specifies the password for the secret key specified in sslkey")
+	rootCmd.Flags().StringVarP(
+		&sslrootcert,
+		"sslrootcert",
+		"",
+		"~/.postgresql/root.crt",
+		"This parameter specifies the name of a file containing SSL certificate authority (CA) certificate(s) The default is ~/.postgresql/root.crt",
+	)
 }
