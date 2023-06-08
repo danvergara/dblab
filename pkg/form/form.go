@@ -240,5 +240,19 @@ func Run() (command.Options, error) {
 
 // IsEmpty checks if the given options objects is empty.
 func IsEmpty(opts command.Options) bool {
-	return cmp.Equal(opts, command.Options{}, cmpopts.IgnoreFields(command.Options{}, "SSL", "Limit"))
+	return cmp.Equal(
+		opts,
+		command.Options{},
+		cmpopts.IgnoreFields(
+			command.Options{},
+			"SSL",
+			"Limit",
+			"Socket",
+			"SSL",
+			"SSLCert",
+			"SSLKey",
+			"SSLPassword",
+			"SSLRootcert",
+		),
+	)
 }
