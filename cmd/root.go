@@ -133,14 +133,14 @@ func init() {
 		&sslcert,
 		"sslcert",
 		"",
-		"~/.postgresql/postgresql.crt",
+		"",
 		"This parameter specifies the file name of the client SSL certificate, replacing the default ~/.postgresql/postgresql.crt",
 	)
 	rootCmd.Flags().StringVarP(
 		&sslkey,
 		"sslkey",
 		"",
-		"~/.postgresql/postgresql.key",
+		"",
 		"This parameter specifies the location for the secret key used for the client certificate. It can either specify a file name that will be used instead of the default ~/.postgresql/postgresql.key, or it can specify a key obtained from an external “engine”",
 	)
 	rootCmd.Flags().StringVarP(&sslpassword, "sslpassword", "", "", "This parameter specifies the password for the secret key specified in sslkey")
@@ -148,7 +148,7 @@ func init() {
 		&sslrootcert,
 		"sslrootcert",
 		"",
-		"~/.postgresql/root.crt",
+		"",
 		"This parameter specifies the name of a file containing SSL certificate authority (CA) certificate(s) The default is ~/.postgresql/root.crt",
 	)
 }
