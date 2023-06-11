@@ -15,8 +15,8 @@ type Options struct {
 	Schema string
 	Limit  uint
 	Socket string
+	SSL    string
 	// SSL connection params.
-	SSL         string
 	SSLCert     string
 	SSLKey      string
 	SSLPassword string
