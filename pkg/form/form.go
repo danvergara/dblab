@@ -33,6 +33,12 @@ type Model struct {
 	drivers []string
 	driver  string
 
+	// ssl connection params.
+	sslCertInput     textinput.Model
+	sslKeyInput      textinput.Model
+	sslPasswordInput textinput.Model
+	sslRootcertInput textinput.Model
+
 	// std data.
 	hostInput     textinput.Model
 	portInput     textinput.Model
@@ -43,8 +49,10 @@ type Model struct {
 	limitInput    textinput.Model
 
 	// ssl.
-	modes []string
-	ssl   string
+	postgreSQLSSLModes []string
+	mySQLSSLModes      []string
+	sqliteSSLModes     []string
+	sslMode            string
 }
 
 // Init initialize the meta-model.
@@ -68,7 +76,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case 1:
 		return updateStd(msg, m)
 	case 2:
-		return updateSSL(msg, m)
+		return updateSSLMode(msg, m)
+	case 3:
+		return updateSSLConn(msg, m)
 	}
 
 	return m, tea.Quit
@@ -85,6 +95,8 @@ func (m *Model) View() string {
 		s = standardView(m)
 	case 2:
 		s = sslView(m)
+	case 3:
+		s = sslConnView(m)
 	}
 
 	return fmt.Sprint(s)
@@ -115,9 +127,25 @@ func (m *Model) Database() string {
 	return m.databaseInput.Value()
 }
 
-// SSL returns the ssl name value.
-func (m *Model) SSL() string {
-	return m.ssl
+// SSLMode returns the ssl mode name value.
+func (m *Model) SSLMode() string {
+	return m.sslMode
+}
+
+func (m *Model) SSLCert() string {
+	return m.sslCertInput.Value()
+}
+
+func (m *Model) SSLKey() string {
+	return m.sslKeyInput.Value()
+}
+
+func (m *Model) SSLPassword() string {
+	return m.sslPasswordInput.Value()
+}
+
+func (m *Model) SSLRootcert() string {
+	return m.sslRootcertInput.Value()
 }
 
 // Limit returns the limit input value from the user.
@@ -190,19 +218,45 @@ func initModel() Model {
 	filePath.CharLimit = 1000
 	filePath.Focus()
 
+	sslCert := textinput.NewModel()
+	sslCert.Placeholder = "Client SSL certificate"
+	sslCert.CharLimit = 1000
+	sslCert.Focus()
+
+	sslKey := textinput.NewModel()
+	sslKey.Placeholder = "The location for the secret key used for the client certificate"
+	sslKey.CharLimit = 1000
+
+	sslPassord := textinput.NewModel()
+	sslPassord.Placeholder = "The password for the secret key"
+	sslPassord.CharLimit = 1000
+
+	sslRootCert := textinput.NewModel()
+	sslRootCert.Placeholder = "The name of a file containing SSL certificate authority (CA) certificate(s)"
+	sslRootCert.CharLimit = 1000
+
 	m := Model{
 		// the supported drivers by the client.
 		drivers: []string{"postgres", "mysql", "sqlite"},
 		// our default value.
 		driver: "postgres",
 
-		hostInput:     host,
-		portInput:     port,
-		userInput:     user,
-		passwordInput: password,
-		databaseInput: database,
-		limitInput:    limit,
-		filePathInput: filePath,
+		sslMode:            "disable",
+		postgreSQLSSLModes: []string{"disable", "require", "verify-full", "verify-ca"},
+		mySQLSSLModes:      []string{"true", "false", "skip-verify", "preferred"},
+		sqliteSSLModes:     []string{},
+
+		hostInput:        host,
+		portInput:        port,
+		userInput:        user,
+		passwordInput:    password,
+		databaseInput:    database,
+		limitInput:       limit,
+		filePathInput:    filePath,
+		sslCertInput:     sslCert,
+		sslKeyInput:      sslKey,
+		sslPasswordInput: sslPassord,
+		sslRootcertInput: sslRootCert,
 	}
 
 	return m
@@ -221,14 +275,18 @@ func Run() (command.Options, error) {
 	}
 
 	opts := command.Options{
-		Driver: m.driver,
-		Host:   m.Host(),
-		Port:   m.Port(),
-		User:   m.User(),
-		Pass:   m.Password(),
-		DBName: m.Database(),
-		SSL:    m.SSL(),
-		Limit:  limit,
+		Driver:      m.driver,
+		Host:        m.Host(),
+		Port:        m.Port(),
+		User:        m.User(),
+		Pass:        m.Password(),
+		DBName:      m.Database(),
+		SSL:         m.SSLMode(),
+		SSLCert:     m.SSLCert(),
+		SSLKey:      m.SSLKey(),
+		SSLPassword: m.SSLPassword(),
+		SSLRootcert: m.SSLRootcert(),
+		Limit:       limit,
 	}
 
 	if m.driver == "sqlite" {

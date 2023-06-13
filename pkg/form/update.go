@@ -10,7 +10,6 @@ func updateDriver(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// Is it a key press?
 	case tea.KeyMsg:
-
 		switch msg.String() {
 		// the "up" and "k" keys mve the cursor up.
 		case "up", "k":
@@ -48,10 +47,14 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 
 			s := msg.String()
 
-			// If so, exit.
 			if s == "enter" && m.cursor == len(inputs)-1 {
 				m.steps = 2
 				m.cursor = 0
+
+				if m.driver == drivers.SQLite {
+					return m, tea.Quit
+				}
+
 				return m, nil
 			}
 
@@ -129,36 +132,6 @@ func assignStdInputValues(m *Model, inputs []textinput.Model) {
 	}
 }
 
-func updateSSL(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	// Is it a key press?
-	case tea.KeyMsg:
-
-		switch msg.String() {
-		// These keys should exit the program.
-		// the "up" and "k" keys mve the cursor up.
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		// the "down" and "j" keys move the cursor down.
-		case "down", "j":
-			if m.cursor < len(m.modes)-1 {
-				m.cursor++
-			}
-		case "enter":
-			if len(m.modes) > 0 {
-				m.ssl = m.modes[m.cursor]
-			}
-			m.steps = 3
-			m.cursor = 0
-			return m, tea.Quit
-		}
-	}
-
-	return m, nil
-}
-
 func updateInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
@@ -187,6 +160,155 @@ func updateInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 
 	m.limitInput, cmd = m.limitInput.Update(msg)
 	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+func updateSSLMode(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	// Is it a key press?
+	case tea.KeyMsg:
+		switch msg.String() {
+		// These keys should exit the program.
+		// the "up" and "k" keys mve the cursor up.
+		case "up", "k":
+			if m.cursor > 0 {
+				m.cursor--
+			}
+		// the "down" and "j" keys move the cursor down.
+		case "down", "j":
+			switch m.driver {
+			case drivers.Postgres:
+				if m.cursor < len(m.postgreSQLSSLModes)-1 {
+					m.cursor++
+				}
+			case drivers.MySQL:
+				if m.cursor < len(m.mySQLSSLModes)-1 {
+					m.cursor++
+				}
+			}
+		case "enter":
+			switch m.driver {
+			case drivers.Postgres:
+				m.sslMode = m.postgreSQLSSLModes[m.cursor]
+			case drivers.MySQL:
+				m.sslMode = m.mySQLSSLModes[m.cursor]
+			}
+
+			m.steps = 3
+			m.cursor = 0
+
+			if m.driver != drivers.Postgres || m.sslMode == "disable" {
+				return m, tea.Quit
+			}
+
+			return m, nil
+		}
+	}
+
+	return m, nil
+}
+
+func updateSSLConn(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
+	var (
+		cmd    tea.Cmd
+		inputs []textinput.Model
+	)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "tab", "shift+tab", "enter", "up", "down":
+			inputs = sslConnInputs(m)
+
+			s := msg.String()
+
+			if s == "enter" && m.cursor == len(inputs)-1 {
+				m.steps = 4
+				m.cursor = 0
+
+				return m, tea.Quit
+			}
+
+			if s == "up" || s == "shift+tab" {
+				m.cursor--
+			} else {
+				m.cursor++
+			}
+
+			if m.cursor > len(inputs) {
+				m.cursor = 0
+			} else if m.cursor < 0 {
+				m.cursor = len(inputs)
+			}
+
+			for i := 0; i <= len(inputs)-1; i++ {
+				if i == m.cursor {
+					// Set focused state.
+					inputs[i].Focus()
+					inputs[i].PromptStyle = focusedStyle
+					inputs[i].TextStyle = focusedStyle
+					continue
+				}
+				// Remove focused state.
+				inputs[i].Blur()
+				inputs[i].PromptStyle = noStyle
+				inputs[i].TextStyle = noStyle
+			}
+
+			assignSSLConnInputValues(m, inputs)
+
+			return m, nil
+		}
+	}
+
+	m, cmd = updateSSLConnInputs(msg, m)
+	return m, cmd
+}
+
+func sslConnInputs(m *Model) []textinput.Model {
+	var inputs []textinput.Model
+
+	if m.driver == drivers.Postgres {
+		inputs = []textinput.Model{
+			m.sslCertInput,
+			m.sslKeyInput,
+			m.sslPasswordInput,
+			m.sslRootcertInput,
+		}
+	}
+
+	return inputs
+}
+
+func assignSSLConnInputValues(m *Model, inputs []textinput.Model) {
+	if m.driver == drivers.Postgres && len(inputs) == 4 {
+		m.sslCertInput = inputs[0]
+		m.sslKeyInput = inputs[1]
+		m.sslPasswordInput = inputs[2]
+		m.sslRootcertInput = inputs[3]
+	}
+}
+
+func updateSSLConnInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
+	if m.driver == drivers.Postgres {
+		m.sslCertInput, cmd = m.sslCertInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.sslKeyInput, cmd = m.sslKeyInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.sslPasswordInput, cmd = m.sslPasswordInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.sslRootcertInput, cmd = m.sslRootcertInput.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	return m, tea.Batch(cmds...)
 }
