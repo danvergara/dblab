@@ -88,11 +88,11 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 				opts: command.Options{
 					// keep url params in alphetic orden
 					// see: https://github.com/golang/go/issues/29985
-					URL: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.pem",
+					URL: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.crt",
 				},
 			},
 			want: want{
-				uri: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.pem",
+				uri: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.crt",
 			},
 		},
 		// mysql
@@ -263,11 +263,30 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 					SSL:         "require",
 					SSLCert:     "client-cert.pem",
 					SSLKey:      "client-key.pem",
-					SSLRootcert: "server-ca.pem",
+					SSLRootcert: "server-ca.crt",
 				},
 			},
 			want: want{
-				uri: "postgres://user:password@db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.pem",
+				uri: "postgres://user:password@db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.crt",
+			},
+		},
+		{
+			name: "success  ssl mode - require",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.Postgres,
+					User:   "user",
+					Pass:   "password",
+					// fake instance.
+					Host:        "db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com",
+					Port:        "5432",
+					DBName:      "db",
+					SSL:         "require",
+					SSLRootcert: "server-ca.crt",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com:5432/db?sslmode=require&sslrootcert=server-ca.crt",
 			},
 		},
 		{
