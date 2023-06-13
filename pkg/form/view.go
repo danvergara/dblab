@@ -57,7 +57,7 @@ func viewInputs(m *Model) []string {
 }
 
 func sslView(m *Model) string {
-	sslModes := make([]string, 0)
+	var sslModes []string
 
 	switch m.driver {
 	case drivers.Postgres:
