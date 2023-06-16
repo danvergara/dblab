@@ -82,6 +82,19 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 				err:      ErrInvalidURLFormat,
 			},
 		},
+		{
+			name: "valid postgres url with sslmode equals to require",
+			given: given{
+				opts: command.Options{
+					// keep url params in alphetic orden
+					// see: https://github.com/golang/go/issues/29985
+					URL: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.crt",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.crt",
+			},
+		},
 		// mysql
 		{
 			name: "valid mysql localhost",
@@ -234,6 +247,46 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			},
 			want: want{
 				uri: "postgres://user:password@127.0.0.1:5432/db?sslmode=disable",
+			},
+		},
+		{
+			name: "success  ssl mode - require",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.Postgres,
+					User:   "user",
+					Pass:   "password",
+					// fake instance.
+					Host:        "db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com",
+					Port:        "5432",
+					DBName:      "db",
+					SSL:         "require",
+					SSLCert:     "client-cert.pem",
+					SSLKey:      "client-key.pem",
+					SSLRootcert: "server-ca.crt",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.crt",
+			},
+		},
+		{
+			name: "success  ssl mode - require",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.Postgres,
+					User:   "user",
+					Pass:   "password",
+					// fake instance.
+					Host:        "db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com",
+					Port:        "5432",
+					DBName:      "db",
+					SSL:         "require",
+					SSLRootcert: "server-ca.crt",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@db-postgresql-nyc1-12345-do-user-123456-0.b.db.ondigitalocean.com:5432/db?sslmode=require&sslrootcert=server-ca.crt",
 			},
 		},
 		{
@@ -459,6 +512,28 @@ func TestFormatPostgresURL(t *testing.T) {
 			},
 			want: want{
 				uri: "postgresql://user:password@localhost:5432/db?sslmode=disable",
+			},
+		},
+		{
+			name: "valid postgres url ssl mode require all params",
+			given: given{
+				opts: command.Options{
+					URL: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.pem",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require&sslrootcert=server-ca.pem",
+			},
+		},
+		{
+			name: "valid postgres url ssl mode require missing params",
+			given: given{
+				opts: command.Options{
+					URL: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?sslcert=client-cert.pem&sslkey=client-key.pem&sslmode=require",
 			},
 		},
 		{

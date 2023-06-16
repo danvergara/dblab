@@ -11,11 +11,16 @@ type Options struct {
 	User   string
 	Pass   string
 	DBName string
-	SSL    string
 	// PostgreSQL only.
 	Schema string
 	Limit  uint
 	Socket string
+	SSL    string
+	// SSL connection params.
+	SSLCert     string
+	SSLKey      string
+	SSLPassword string
+	SSLRootcert string
 }
 
 // SetDefault returns a Options struct and fills the empty
