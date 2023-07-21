@@ -129,6 +129,12 @@ dblab --url "mysql://user:pasword@unix(/path/to/socket/mysql.sock)/dbname?charse
 dblab --socket /path/to/socket/mysql.sock --user user --db dbname --pass password --ssl disable --port 5432 --driver mysql --limit 50
 ```
 
+Now, it is possible to ensure SSL connections with `PostgreSQL` databases. SSL related parameters has been added, such as `--sslcert`, `--sslkey`, `--sslpassword`, `--sslrootcert`. More information on how to use such connection flags can be found [here](https://www.postgresql.org/docs/current/libpq-connect.html).
+
+```{ .sh .copy }
+dblab --host  db-postgresql-nyc3-56456-do-user-foo-0.fake.db.ondigitalocean.com --user myuser --db users --pass password --schema myschema --port 5432 --driver postgres --limit 50 --ssl require --sslrootcert ~/Downloads/foo.crt
+```
+
 ### Configuration
 
 Entering the parameters and flags every time you want to use it is tedious, 
