@@ -146,6 +146,8 @@ If you want to use this feature, `--config` is mandatory and `--cfg-name` may be
 
 We strongly encourgae you to adopt the new format as of `v0.18.0`. `--cfg-name` takes the name of the desired database section to connect with. It can be omitted and its default values will be the first item on the array.
 
+As of `v0.21.0`, ssl connections options are supported in the config file.
+
 ```{ .sh .copy } 
 dbladb --config
 ```
@@ -177,6 +179,8 @@ database:
     user: "postgres"
     schema: "public"
     driver: "postgres"
+    ssl: "require"
+    sslrootcert: "~/.postgresql/root.crt."
 # should be greater than 0, otherwise the app will error out
 limit: 50
 ```

@@ -153,7 +153,7 @@ dblab --host  db-postgresql-nyc3-56456-do-user-foo-0.fake.db.ondigitalocean.com 
 Enter previous flags every time is tedious, so `dblab` provides a couple of flags to help with it: `--config` and `--cfg-name`.
 
 `dblab` is going to look for a file called `.dblab.yaml`. For now, the only two places where you can drop a config file are $HOME ($HOME/.dblab.yaml) and the current directory where you run the command line tool.
-If you want to use this feature, `--config` is mandatory and `--cfg-name` may be omitted. The config file can store one or multiple database connection sections under the `database` field. `database` is an array, previously was an object only able to store a single connection section at a time. We strongly encourgae you to adopt the new format as of `v0.18.0`. `--cfg-name` takes the name of the desired database section to connect with. It can be omitted and its default values will be the first item on the array.
+If you want to use this feature, `--config` is mandatory and `--cfg-name` may be omitted. The config file can store one or multiple database connection sections under the `database` field. `database` is an array, previously was an object only able to store a single connection section at a time. We strongly encourgae you to adopt the new format as of `v0.18.0`. `--cfg-name` takes the name of the desired database section to connect with. It can be omitted and its default values will be the first item on the array. As of `v0.21.0`, ssl connections options are supported in the config file.
 
 ```sh
 # default: test
@@ -186,6 +186,8 @@ database:
     user: "postgres"
     schema: "public"
     driver: "postgres"
+    ssl: "require"
+    sslrootcert: "~/.postgresql/root.crt."
 # should be greater than 0, otherwise the app will error out
 limit: 50
 ```
