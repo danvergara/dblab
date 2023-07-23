@@ -16,4 +16,6 @@ database:
     user: "postgres"
     schema: "public"
     driver: "postgres"
+    ssl: "require"
+    sslrootcert: "~/.postgresql/root.crt."
 limit: 50

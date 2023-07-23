@@ -3,20 +3,26 @@ package config_test
 import (
 	"testing"
 
-	"github.com/danvergara/dblab/pkg/config"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/danvergara/dblab/pkg/config"
 )
 
 func TestInit(t *testing.T) {
 	type want struct {
-		host   string
-		port   string
-		dbname string
-		user   string
-		pass   string
-		driver string
-		schema string
-		limit  uint
+		host        string
+		port        string
+		dbname      string
+		user        string
+		pass        string
+		driver      string
+		schema      string
+		limit       uint
+		ssl         string
+		sslcert     string
+		sslkey      string
+		sslpassword string
+		sslrootcert string
 	}
 	var tests = []struct {
 		name  string
@@ -34,6 +40,7 @@ func TestInit(t *testing.T) {
 				pass:   "password",
 				driver: "postgres",
 				schema: "public",
+				ssl:    "disable",
 				limit:  50,
 			},
 		},
@@ -48,6 +55,7 @@ func TestInit(t *testing.T) {
 				pass:   "password",
 				driver: "postgres",
 				schema: "public",
+				ssl:    "disable",
 				limit:  50,
 			},
 		},
@@ -55,14 +63,16 @@ func TestInit(t *testing.T) {
 			name:  "production config",
 			input: "prod",
 			want: want{
-				host:   "mydb.123456789012.us-east-1.rds.amazonaws.com",
-				port:   "5432",
-				dbname: "users",
-				user:   "postgres",
-				pass:   "password",
-				driver: "postgres",
-				schema: "public",
-				limit:  50,
+				host:        "mydb.123456789012.us-east-1.rds.amazonaws.com",
+				port:        "5432",
+				dbname:      "users",
+				user:        "postgres",
+				pass:        "password",
+				driver:      "postgres",
+				schema:      "public",
+				ssl:         "require",
+				sslrootcert: "~/.postgresql/root.crt.",
+				limit:       50,
 			},
 		},
 	}
@@ -80,6 +90,12 @@ func TestInit(t *testing.T) {
 			assert.Equal(t, tt.want.driver, opts.Driver)
 			assert.Equal(t, tt.want.schema, opts.Schema)
 			assert.Equal(t, tt.want.limit, opts.Limit)
+			assert.Equal(t, tt.want.ssl, opts.SSL)
+			assert.Equal(t, tt.want.sslcert, opts.SSLCert)
+			assert.Equal(t, tt.want.sslkey, opts.SSLKey)
+			assert.Equal(t, tt.want.sslpassword, opts.SSLPassword)
+			assert.Equal(t, tt.want.sslrootcert, opts.SSLRootcert)
+
 		})
 	}
 }
