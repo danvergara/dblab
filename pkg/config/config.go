@@ -7,19 +7,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/danvergara/dblab/pkg/command"
-	"github.com/danvergara/dblab/pkg/drivers"
-	"github.com/kkyr/fig"
-	"github.com/spf13/cobra"
-
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/mysql"    // mysql driver
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // postgres driver
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/kkyr/fig"
+	"github.com/spf13/cobra"
+	_ "modernc.org/sqlite" // sqlite driver
 
-	// drivers.
-	_ "github.com/golang-migrate/migrate/v4/database/mysql"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "modernc.org/sqlite"
+	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
 // Config struct is used to store the db connection data.
@@ -43,7 +41,12 @@ type Database struct {
 	Password string
 	Driver   string `validate:"required"`
 	Schema   string
-	SSL      string `default:"disable"`
+	// SSL connection params.
+	SSL         string `default:"disable"`
+	SSLCert     string `fig:"sslcert"`
+	SSLKey      string `fig:"sslkey"`
+	SSLPassword string `fig:"sslpassword"`
+	SSLRootcert string `fig:"sslrootcert"`
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
@@ -90,15 +93,19 @@ func Init(configName string) (command.Options, error) {
 	}
 
 	opts = command.Options{
-		Driver: db.Driver,
-		Host:   db.Host,
-		Port:   db.Port,
-		User:   db.User,
-		Pass:   db.Password,
-		DBName: db.DB,
-		SSL:    db.SSL,
-		Schema: db.Schema,
-		Limit:  cfg.Limit,
+		Driver:      db.Driver,
+		Host:        db.Host,
+		Port:        db.Port,
+		User:        db.User,
+		Pass:        db.Password,
+		DBName:      db.DB,
+		Schema:      db.Schema,
+		Limit:       cfg.Limit,
+		SSL:         db.SSL,
+		SSLCert:     db.SSLCert,
+		SSLKey:      db.SSLKey,
+		SSLPassword: db.SSLPassword,
+		SSLRootcert: db.SSLRootcert,
 	}
 
 	return opts, nil
@@ -183,9 +190,25 @@ func (c *Config) GetSQLXDBConnStr() string {
 func (c *Config) getDBConnStr(dbhost, dbname string) string {
 	switch c.Driver {
 	case drivers.Postgres:
-		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
+		return fmt.Sprintf(
+			"%s://%s:%s@%s:%s/%s?sslmode=disable",
+			c.Driver,
+			c.User,
+			c.Pswd,
+			dbhost,
+			c.Port,
+			dbname,
+		)
 	case drivers.MySQL:
-		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
+		return fmt.Sprintf(
+			"%s://%s:%s@tcp(%s:%s)/%s",
+			c.Driver,
+			c.User,
+			c.Pswd,
+			dbhost,
+			c.Port,
+			dbname,
+		)
 	case drivers.SQLite:
 		return c.DBName
 	default:
@@ -197,7 +220,15 @@ func (c *Config) getDBConnStr(dbhost, dbname string) string {
 func (c *Config) getSQLXConnStr(dbhost, dbname string) string {
 	switch c.Driver {
 	case drivers.Postgres:
-		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", c.Driver, c.User, c.Pswd, dbhost, c.Port, dbname)
+		return fmt.Sprintf(
+			"%s://%s:%s@%s:%s/%s?sslmode=disable",
+			c.Driver,
+			c.User,
+			c.Pswd,
+			dbhost,
+			c.Port,
+			dbname,
+		)
 	case drivers.MySQL:
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", c.User, c.Pswd, dbhost, c.Port, dbname)
 	case drivers.SQLite:
