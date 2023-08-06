@@ -3,7 +3,7 @@ name: goreleaser-check
 on:
   push:
     paths:
-      - '.goreleaser*'
+      - '.goreleaser.yaml'
 
 jobs:
   goreleaser-check:

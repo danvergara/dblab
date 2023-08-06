@@ -33,7 +33,7 @@ brews:
   - name: dblab
 
     # GitHub/GitLab repository to push the formula to
-    tap:
+    repository:
       owner: danvergara
       name: homebrew-tools
 
