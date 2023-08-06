@@ -227,9 +227,9 @@ func initModel() Model {
 	sslKey.Placeholder = "The location for the secret key used for the client certificate"
 	sslKey.CharLimit = 1000
 
-	sslPassord := textinput.NewModel()
-	sslPassord.Placeholder = "The password for the secret key"
-	sslPassord.CharLimit = 1000
+	sslPassword := textinput.NewModel()
+	sslPassword.Placeholder = "The password for the secret key"
+	sslPassword.CharLimit = 1000
 
 	sslRootCert := textinput.NewModel()
 	sslRootCert.Placeholder = "The name of a file containing SSL certificate authority (CA) certificate(s)"
@@ -255,7 +255,7 @@ func initModel() Model {
 		filePathInput:    filePath,
 		sslCertInput:     sslCert,
 		sslKeyInput:      sslKey,
-		sslPasswordInput: sslPassord,
+		sslPasswordInput: sslPassword,
 		sslRootcertInput: sslRootCert,
 	}
 

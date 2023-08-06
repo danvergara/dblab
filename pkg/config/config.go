@@ -186,7 +186,7 @@ func (c *Config) GetSQLXDBConnStr() string {
 	return c.getSQLXConnStr(c.Host, c.DBName)
 }
 
-// getDBConnStr returns the connection string based on the provied host and db name.
+// getDBConnStr returns the connection string based on the provided host and db name.
 func (c *Config) getDBConnStr(dbhost, dbname string) string {
 	switch c.Driver {
 	case drivers.Postgres:
@@ -216,7 +216,7 @@ func (c *Config) getDBConnStr(dbhost, dbname string) string {
 	}
 }
 
-// getSQLXConnStr returns the connection string based on the provied host and db name.
+// getSQLXConnStr returns the connection string based on the provided host and db name.
 func (c *Config) getSQLXConnStr(dbhost, dbname string) string {
 	switch c.Driver {
 	case drivers.Postgres:

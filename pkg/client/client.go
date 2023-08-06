@@ -132,7 +132,7 @@ type Metadata struct {
 	TotalPages   int
 }
 
-// Metadata retunrs the most relevant data from a given table.
+// Metadata returns the most relevant data from a given table.
 func (c *Client) Metadata(tableName string) (*Metadata, error) {
 	count, err := c.tableCount(tableName)
 	if err != nil {
