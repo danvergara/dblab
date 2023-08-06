@@ -5,19 +5,23 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	_ "modernc.org/sqlite"
+
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/danvergara/dblab/pkg/pagination"
-	"github.com/jmoiron/sqlx"
-
-	// mysql driver.
-	_ "github.com/go-sql-driver/mysql"
-	// postgres driver.
-	_ "github.com/lib/pq"
-	// sqlite driver.
-	_ "modernc.org/sqlite"
 )
+
+type databaseQuerier interface {
+	ShowTables(schema string) (string, []interface{}, error)
+	TableStructure(tableName, schema string) (string, []interface{}, error)
+	Constraints(tableName string) (string, []interface{}, error)
+	Indexes(tableName string) (string, error)
+}
 
 // Client is used to store the pool of db connection.
 type Client struct {
