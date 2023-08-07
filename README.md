@@ -138,7 +138,7 @@ $ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schem
 As a request made in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
 
 ```sh
-$ dblab --url "mysql://user:pasword@unix(/path/to/socket/mysql.sock)/dbname?charset=utf8"
+$ dblab --url "mysql://user:password@unix(/path/to/socket/mysql.sock)/dbname?charset=utf8"
 $ dblab --socket /path/to/socket/mysql.sock --user user --db dbname --pass password --ssl disable --port 5432 --driver mysql --limit 50
 ```
 

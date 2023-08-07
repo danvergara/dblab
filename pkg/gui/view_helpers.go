@@ -81,7 +81,7 @@ func moveCursorHorizontally(direction string) func(g *gocui.Gui, v *gocui.View) 
 
 // moveCursorVertically moves the cursor vertically given a direction.
 // the down position is handled in a special way to prevent the cursor keep going
-// down when there's no characaters in the next lines.
+// down when there's no characters in the next lines.
 func moveCursorVertically(direction string) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		if v != nil {

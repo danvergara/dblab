@@ -51,13 +51,13 @@ make up
 
 Then, you'll have 2 containers up and running in your system for every kind of database supported by dblab.
 
-Run dblab openning a connection with the postgres container.
+Run dblab opening a connection with the postgres container.
 
 ```bash
 make run
 ```
 
-You can do the same with the mysql container by runnning:
+You can do the same with the mysql container by running:
 
 ```bash
 make run-mysql
