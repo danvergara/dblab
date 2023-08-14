@@ -1,10 +1,8 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 
-	sq "github.com/Masterminds/squirrel"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -16,16 +14,22 @@ import (
 	"github.com/danvergara/dblab/pkg/pagination"
 )
 
+// databaseQuerier is an interface that indicates the methods
+// a given type has to implement to interact with a database,
+// to get specific data.
+// This allows us to decouple the client from the database implementation and
+// make adding new databases easier.
 type databaseQuerier interface {
-	ShowTables(schema string) (string, []interface{}, error)
-	TableStructure(tableName, schema string) (string, []interface{}, error)
+	ShowTables() (string, []interface{}, error)
+	TableStructure(tableName string) (string, []interface{}, error)
 	Constraints(tableName string) (string, []interface{}, error)
-	Indexes(tableName string) (string, error)
+	Indexes(tableName string) (string, []interface{}, error)
 }
 
 // Client is used to store the pool of db connection.
 type Client struct {
 	db                *sqlx.DB
+	databaseQuerier   databaseQuerier
 	driver, schema    string
 	paginationManager *pagination.Manager
 	limit             uint
@@ -53,6 +57,18 @@ func New(opts command.Options) (*Client, error) {
 		c.schema = "public"
 	} else {
 		c.schema = opts.Schema
+	}
+
+	// This is where an implementation of databaseQuerier is getting picked up.
+	switch c.driver {
+	case drivers.Postgres, drivers.PostgreSQL:
+		c.databaseQuerier = newPostgres(c.schema)
+	case drivers.MySQL:
+		c.databaseQuerier = newMySQL()
+	case drivers.SQLite:
+		c.databaseQuerier = newSQLite()
+	default:
+		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}
 
 	switch c.driver {
@@ -213,31 +229,9 @@ func (c *Client) ShowTables() ([]string, error) {
 
 	tables := make([]string, 0)
 
-	switch c.driver {
-	case drivers.Postgres:
-		fallthrough
-	case drivers.PostgreSQL:
-		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-		query, args, err = psql.Select("table_name").
-			From("information_schema.tables").
-			Where(sq.Eq{"table_schema": c.schema}).
-			OrderBy("table_name").
-			ToSql()
-		if err != nil {
-			return nil, err
-		}
-
-	case drivers.MySQL:
-		query = "SHOW TABLES;"
-	case drivers.SQLite:
-		query = `
-		SELECT
-			name
-		FROM
-			sqlite_schema
-		WHERE
-			type ='table' AND
-			name NOT LIKE 'sqlite_%';`
+	query, args, err = c.databaseQuerier.ShowTables()
+	if err != nil {
+		return nil, err
 	}
 
 	rows, err := c.db.Queryx(query, args...)
@@ -357,116 +351,36 @@ func (c *Client) tableCount(tableName string) (int, error) {
 
 // tableStructure returns the structure of the table columns.
 func (c *Client) tableStructure(tableName string) ([][]string, []string, error) {
-	var query string
-
-	switch c.driver {
-	case drivers.Postgres:
-		fallthrough
-	case drivers.PostgreSQL:
-		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-
-		query, args, err := psql.Select(
-			"c.column_name",
-			"c.is_nullable",
-			"c.data_type",
-			"c.character_maximum_length",
-			"c.numeric_precision",
-			"c.numeric_scale",
-			"c.ordinal_position",
-			"tc.constraint_type AS pkey",
-		).
-			From("information_schema.columns AS c").
-			LeftJoin(
-				`information_schema.constraint_column_usage AS ccu
-					ON c.table_schema = ccu.table_schema
-						AND c.table_name = ccu.table_name
-						AND c.column_name = ccu.column_name`,
-			).
-			LeftJoin(
-				`information_schema.table_constraints AS tc
-					ON ccu.constraint_schema = tc.constraint_schema
-						AND ccu.constraint_name = tc.constraint_name`,
-			).
-			Where(
-				sq.And{
-					sq.Eq{"c.table_schema": c.schema},
-					sq.Eq{"c.table_name": tableName},
-				},
-			).
-			ToSql()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return c.Query(query, args...)
-	case drivers.MySQL:
-		query = fmt.Sprintf("DESCRIBE %s;", tableName)
-		return c.Query(query)
-	case drivers.SQLite:
-		query = fmt.Sprintf("PRAGMA table_info(%s);", tableName)
-		return c.Query(query)
-	default:
-		return nil, nil, errors.New("not supported driver")
-	}
-}
-
-// constraints returns the resultet of from information_schema.table_constraints.
-func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 	var (
-		query sq.SelectBuilder
-		sql   string
+		query string
+		err   error
+		args  []interface{}
 	)
 
-	query = sq.Select(
-		`tc.constraint_name`,
-		`tc.table_name`,
-		`tc.constraint_type`,
-	).
-		From("information_schema.table_constraints AS tc").
-		Where("tc.table_name = ?")
-
-	switch c.driver {
-	case drivers.SQLite:
-		sql = `
-		SELECT *
-		FROM
-			sqlite_master
-		WHERE
-			type='table' AND name = ?;`
-		return c.Query(sql, tableName)
-	case drivers.Postgres:
-		fallthrough
-	case drivers.PostgreSQL:
-		query = query.Where(fmt.Sprintf("tc.table_schema = '%s'", c.schema))
-		query = query.PlaceholderFormat(sq.Dollar)
-	}
-
-	sql, _, err := query.ToSql()
+	query, args, err = c.databaseQuerier.TableStructure(tableName)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return c.Query(sql, tableName)
+	return c.Query(query, args...)
+}
+
+// constraints returns the resultet of from information_schema.table_constraints.
+func (c *Client) constraints(tableName string) ([][]string, []string, error) {
+	sql, args, err := c.databaseQuerier.Constraints(tableName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return c.Query(sql, args...)
 }
 
 // indexes returns a resulset with the information of the indexes given a table name.
 func (c *Client) indexes(tableName string) ([][]string, []string, error) {
-	var query string
-
-	switch c.driver {
-	case drivers.Postgres:
-		fallthrough
-	case drivers.PostgreSQL:
-		query = "SELECT * FROM pg_indexes WHERE tablename = $1;"
-		return c.Query(query, tableName)
-	case drivers.MySQL:
-		query = fmt.Sprintf("SHOW INDEX FROM %s", tableName)
-		return c.Query(query)
-	case drivers.SQLite:
-		query = `PRAGMA index_list(%s);`
-		query = fmt.Sprintf(query, tableName)
-		return c.Query(query)
-	default:
-		return nil, nil, errors.New("not supported driver")
+	query, args, err := c.databaseQuerier.Indexes(tableName)
+	if err != nil {
+		return nil, nil, err
 	}
+
+	return c.Query(query, args...)
 }
