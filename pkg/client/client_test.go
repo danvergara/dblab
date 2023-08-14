@@ -5,14 +5,10 @@ import (
 	"os"
 	"testing"
 
-	// mysql driver.
 	_ "github.com/go-sql-driver/mysql"
-	// postgres driver.
 	_ "github.com/lib/pq"
-	// sqlite driver.
-	_ "modernc.org/sqlite"
-
 	"github.com/stretchr/testify/assert"
+	_ "modernc.org/sqlite"
 
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/drivers"
@@ -334,6 +330,7 @@ func TestMetadata(t *testing.T) {
 	m, err := c.Metadata("products")
 
 	assert.NoError(t, err)
+	assert.NotNil(t, m)
 
 	// Total count.
 	assert.Equal(t, m.TotalPages, 1)
