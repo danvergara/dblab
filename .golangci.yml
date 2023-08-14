@@ -1,0 +1,15 @@
+# Options for analysis running.
+run:
+  timeout: 5m
+  skip-dirs:
+    - .git
+linters:
+   enable:
+    - revive
+    - godot
+linters-settings:
+  revive:
+    rules:
+      - name: blank-imports
+        severity: warning
+        disabled: true
