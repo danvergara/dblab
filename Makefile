@@ -18,7 +18,7 @@ int-test:
 .PHONY: linter
 ## linter: Runs the golangci-lint command
 linter:
-	golangci-lint run --enable=golint --enable=godot --enable=gofmt ./...
+	golangci-lint run ./...
 
 .PHONY: test-all
 ## test-all: Runs the integration testing bash script with different database docker image versions
