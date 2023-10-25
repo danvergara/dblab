@@ -34,21 +34,21 @@ __Interactive client for PostgreSQL, MySQL and SQLite3.__
 ## Overview
 
 dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3,
-written in Go and works on OSX, Linux and Windows machines. Main idea behind using Go for backend development
+written in Go, works on OSX, Linux and Windows machines. The main idea behind using Go for backend development
 is to utilize ability of the compiler to produce zero-dependency binaries for
 multiple platforms. dblab was created as an attempt to build very simple and portable
 application to work with local or remote PostgreSQL/MySQL/SQLite3 databases.
 
 ## Features
 
-- Cross-platform support OSX/Linux/Windows 32/64-bit
-- Simple installation (distributed as a single binary)
+- Cross-platform support OSX/Linux/Windows 32/64-bit.
+- Simple installation (distributed as a single binary.)
 - Zero dependencies.
 
 ## Installation
 
 > ~~if you need to work with SQLite3, install the CGO enabled binary using the proper bash script listed below.~~
-> The above comment is deprecated and CGO is not needed anymore. There will be a single binary capable to deal with all supported clients.
+> The above comment is deprecated and CGO is not needed anymore. There will be a single binary capable with dealing with all supported clients.
 
 ### Homebrew
 
@@ -66,12 +66,14 @@ $ brew install dblab
 ```
 
 ### Binary Release (Linux/OSX/Windows)
+
 You can manually download a binary release from [the release page](https://github.com/danvergara/dblab/releases).
 
 ## Automated installation/update
+
 > Don't forget to always verify what you're piping into bash
 
-Install the binarry using our bash script:
+Install the binary using our bash script:
 
 ```sh
 curl https://raw.githubusercontent.com/danvergara/dblab/master/scripts/install_update_linux.sh | bash
@@ -91,17 +93,17 @@ Available Commands:
   version     The version of the project
 
 Flags:
-      --cfg-name string   Database config name section
-      --config          get the connection data from a config file (default is $HOME/.dblab.yaml or the current directory)
+      --cfg-name string Database config name section
+      --config          Get the connection data from a config file (default is $HOME/.dblab.yaml or the current directory)
       --db string       Database name
       --driver string   Database driver
-  -h, --help            help for dblab
+  -h, --help            Print the help for dblab
       --host string     Server host name or IP
       --limit int       Size of the result set from the table content query (should be greater than zero, otherwise the app will error out) (default 100)
       --pass string     Password for user
       --port string     Server port
-      --schema string   Database schema (postgres only)
-      --socket string     Path to a Unix socket file
+      --schema string   Database schema (Postgres only)
+      --socket string   Path to a Unix socket file
       --ssl string      SSL mode
   -u, --url string      Database connection string
       --user string     Database user
@@ -111,7 +113,7 @@ Use "dblab [command] --help" for more information about a command.
 
 ## Usage
 
-You can start the app passing no flags or parameters, you'll be asked for connection data instead.
+You can start the app without passing flags or parameters, you'll be interactively asked for connection data instead.
 ![Alt Text](screenshots/dblab-default-form.gif)
 
 
@@ -128,7 +130,7 @@ $ dblab --url mysql://user:password@tcp(host:port)/db
 $ dblab --url file:test.db?cache=shared&mode=memory
 ```
 
-if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
+if you're using PostgreSQL, you have the option to define the schema you want to work with. The default value is `public`.
 
 ```sh
 $ dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
@@ -142,7 +144,8 @@ $ dblab --url "mysql://user:password@unix(/path/to/socket/mysql.sock)/dbname?cha
 $ dblab --socket /path/to/socket/mysql.sock --user user --db dbname --pass password --ssl disable --port 5432 --driver mysql --limit 50
 ```
 
-Now, it is possible to ensure SSL connections with `PostgreSQL` databases. SSL related parameters has been added, such as `--sslcert`, `--sslkey`, `--sslpassword`, `--sslrootcert`. More information on how to use such connection flags can be found [here](https://www.postgresql.org/docs/current/libpq-connect.html).
+Now, it is possible to ensure SSL connections with `PostgreSQL` databases. SSL related parameters has been added, such as `--sslcert`, `--sslkey`, `--sslpassword`, `--sslrootcert`.
+More information on how to use such connection flags can be found [here](https://www.postgresql.org/docs/current/libpq-connect.html).
 
 ```{ .sh .copy }
 dblab --host  db-postgresql-nyc3-56456-do-user-foo-0.fake.db.ondigitalocean.com --user myuser --db users --pass password --schema myschema --port 5432 --driver postgres --limit 50 --ssl require --sslrootcert ~/Downloads/foo.crt
@@ -150,10 +153,18 @@ dblab --host  db-postgresql-nyc3-56456-do-user-foo-0.fake.db.ondigitalocean.com 
 
 ### Configuration
 
-Enter previous flags every time is tedious, so `dblab` provides a couple of flags to help with it: `--config` and `--cfg-name`.
+Entering the same flags every time can be tedious, so `dblab` provides a couple of flags to help with it: `--config` and `--cfg-name`.
 
-`dblab` is going to look for a file called `.dblab.yaml`. For now, the only two places where you can drop a config file are $HOME ($HOME/.dblab.yaml) and the current directory where you run the command line tool.
-If you want to use this feature, `--config` is mandatory and `--cfg-name` may be omitted. The config file can store one or multiple database connection sections under the `database` field. `database` is an array, previously was an object only able to store a single connection section at a time. We strongly encourgae you to adopt the new format as of `v0.18.0`. `--cfg-name` takes the name of the desired database section to connect with. It can be omitted and its default values will be the first item on the array. As of `v0.21.0`, ssl connections options are supported in the config file.
+`dblab` is going to look for a file called `.dblab.yaml`.
+For now, the only two places where you can drop a config file are $HOME ($HOME/.dblab.yaml) and the current directory where you run the command line tool.
+
+If you want to use this feature, `--config` is mandatory and `--cfg-name` may be omitted.
+The config file can store one or multiple database connection sections under the `database` field.
+`database` is an array, previously was an object only able to store a single connection section at a time.
+We strongly encourgae you to adopt the new format as of `v0.18.0`.
+`--cfg-name` takes the name of the desired database section to connect with.
+It can be omitted and its default values will be the first item on the array.
+As of `v0.21.0`, SSL connections options are supported in the config file.
 
 ```sh
 # default: test
@@ -206,7 +217,10 @@ Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respe
 ## Navigation
 
 If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
-Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
+Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd>
+(or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively.)
+If you want to see the rows of a table, press <kbd>Enter</kbd>.
+To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
 The same can be achieved for the `constraints` view by pressing <kbd>Ctrl+F</kbd> to go back and forth between the `rows` and the `constraints` panels.
 
 Now, there's a menu to navigate between hidden views by just clicking on the desired options:
@@ -216,10 +230,12 @@ Now, there's a menu to navigate between hidden views by just clicking on the des
 <img src="screenshots/constraints-view.png" />
 <img src="screenshots/indexes-view.png" />
 
-As you may have noticed, navigation has already been added, so every time you query the content of a listed table, the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
+As you may have noticed, navigation has already been added, so every time you query the content of a listed table,
+the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
 Just hit the `BACK` and `NEXT` buttons to go back and forth.
 
 ### Key Bindings
+
 Key                                     | Description
 ----------------------------------------|---------------------------------------
 <kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query
@@ -243,13 +259,14 @@ Key                                     | Description
 
 ## Contribute
 
-- Fork this repository
-- Create a new feature branch for a new functionality or bugfix
-- Commit your changes
-- Execute test suite
+- Fork this repository and clone it from your fork.
+- Create a new feature branch for a new functionality or bugfix.
+- Commit your changes.
+- Execute test suite (run `./scripts/test_all.sh`.
 - Push your code and open a new pull request
-- Use [issues](https://github.com/danvergara/dblab/issues) for any questions
-- Check [wiki](https://github.com/danvergara/dblab/wiki) for extra documentation
+- Use [issues](https://github.com/danvergara/dblab/issues) for any questions.
+- Check [wiki](https://github.com/danvergara/dblab/wiki) for extra documentation.
 
 ## License
+
 The MIT License (MIT). See [LICENSE](LICENSE) file for more details.
