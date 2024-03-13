@@ -79,6 +79,71 @@ func moveCursorHorizontally(direction string) func(g *gocui.Gui, v *gocui.View) 
 	}
 }
 
+// slamCursor moves the cursor all the way in the given direction.
+// it reads the whole buffer to check the bounds of how far we can go down
+// and uses the current line contents to check how far we can go right.
+func slamCursor(direction string) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		if v != nil {
+			maxX, maxY := v.Size()
+
+			cx, cy := v.Cursor()
+			ox, oy := v.Origin()
+
+			currentLine, err := v.Line(cy)
+			if err != nil {
+				return err
+			}
+
+			var newCursorX, newCursorY int
+			var newOriginX, newOriginY int
+			switch direction {
+			case "up":
+				newCursorX = cx
+				newCursorY = 0
+				newOriginX = ox
+				newOriginY = 0
+			case "left":
+				newCursorX = 0
+				newCursorY = cy
+				newOriginY = oy
+				newOriginX = 0
+			case "down":
+				newCursorX = cx
+				newOriginX = ox
+
+				// the actual output len is consistently 2 less than the buffer lines
+				bufLines := v.BufferLines()
+				actualBufLineLen := len(bufLines) - 2
+
+				newCursorY = maxY - 1
+				if newCursorY >= actualBufLineLen {
+					newCursorY = actualBufLineLen
+				}
+				newOriginY = actualBufLineLen - newCursorY
+			case "right":
+				newCursorY = cy
+				newOriginY = oy
+
+				newCursorX = maxX - 1
+				if newCursorX >= len(currentLine) {
+					newCursorX = len(currentLine) - 1
+				}
+				newOriginX = len(currentLine) - newCursorX - 1
+			}
+
+			if err := v.SetCursor(newCursorX, newCursorY); err != nil {
+				return err
+			}
+			if err := v.SetOrigin(newOriginX, newOriginY); err != nil {
+				return err
+			}
+
+		}
+		return nil
+	}
+}
+
 // moveCursorVertically moves the cursor vertically given a direction.
 // the down position is handled in a special way to prevent the cursor keep going
 // down when there's no characters in the next lines.

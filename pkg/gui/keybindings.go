@@ -151,6 +151,16 @@ func initialKeyBindings() []keyBinding {
 		}...)
 	}
 
+	// vim motion inspired keys navigation.
+	for _, viewName := range []string{"rows", "structure", "constraints"} {
+		bindings = append(bindings, []keyBinding{
+			{view: viewName, key: '0', mod: gocui.ModNone, handler: slamCursor("left")},
+			{view: viewName, key: '$', mod: gocui.ModNone, handler: slamCursor("right")},
+			{view: viewName, key: 'G', mod: gocui.ModNone, handler: slamCursor("down")},
+			{view: viewName, key: 'g', mod: gocui.ModNone, handler: slamCursor("up")},
+		}...)
+	}
+
 	// defines the navigation on the "tables" view.
 	bindings = append(bindings, []keyBinding{
 		{view: "tables", key: 'k', mod: gocui.ModNone, handler: moveCursorVertically("up")},
