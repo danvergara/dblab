@@ -1,10 +1,10 @@
-FROM golang:1.18-bullseye AS builder
+FROM golang:1.22-bookworm AS builder
 
 WORKDIR /src/app
 
 # install system dependencies
 RUN apt-get update \
-  && apt-get -y install netcat \
+  && apt-get -y install netcat-openbsd \
   && apt-get clean
 
 COPY go.* ./
