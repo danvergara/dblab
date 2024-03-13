@@ -8,17 +8,17 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        goVer: ['1.19', '1.20']
+        goVer: ["1.22"]
     # Defines the platform for each test run.
     runs-on: ${{ matrix.os }}
     steps:
       # Checks out our code locally so we can work with the files.
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # The steps that will be run through for each version and platform combination.
       - name: Set up Go ${{ matrix.goVer }}
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.goVer }}
           cache: true
@@ -32,15 +32,15 @@ jobs:
     steps:
       # Checks out our code locally so we can work with the files.
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Installs go using a single version.
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20'
+          go-version: "1.22"
           cache: false
       - name: Run linters
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         with:
-          version: v1.53
+          version: v1.54

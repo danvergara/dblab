@@ -14,14 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - run: git fetch --force --tags
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20'
+          go-version: "1.22"
           check-latest: true
           cache: true
       - name: Set release tag env variable
@@ -38,7 +38,7 @@ jobs:
           echo ${{ env.CURRENT_VERSION }}
       - name: Run GoReleaser
         if: env.RELEASE_VERSION == env.CURRENT_VERSION
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
           args: release -f .goreleaser.yaml --clean
