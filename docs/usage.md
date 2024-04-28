@@ -1,3 +1,4 @@
+
 You can get started by using the connection flags or by using a configuration file with the connection params.
 
 ```sh
@@ -140,7 +141,11 @@ dblab --host  db-postgresql-nyc3-56456-do-user-foo-0.fake.db.ondigitalocean.com 
 Entering the parameters and flags every time you want to use it is tedious, 
 so `dblab` provides a couple of flags to help with it: `--config` and `--cfg-name`.
 
-`dblab` is going to look for a file called `.dblab.yaml`. For now, the only two places where you can drop a config file are $HOME ($HOME/.dblab.yaml) and the current directory where you run the command line tool.  
+`dblab` is going to look for a file called `.dblab.yaml`. Currently, there are three places where you can drop a config file:
+
+- $XDG_CONFIG_HOME ($XDG_CONFIG_HOME/.dblab.yaml)
+- $HOME ($HOME/.dblab.yaml)
+- . (the current directory where you run the command line tool)
 
 If you want to use this feature, `--config` is mandatory and `--cfg-name` may be omitted. The config file can store one or multiple database connection sections under the `database` field. `database` is an array, previously was an object only able to store a single connection section at a time. 
 

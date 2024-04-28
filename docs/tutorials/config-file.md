@@ -7,7 +7,7 @@ For this example we'll be using a PostgreSQL database so the driver to use would
 
 ### Single database
 
-In order to connect to a local database hosted in `0.0.0.0:5432` we can just copy and paste the following configuration to the file with name `.dblab.yaml` stored in the root of your current directory or under your $HOME path ($HOME/.dblab.yaml).
+In order to connect to a local database hosted in `0.0.0.0:5432` we can just copy and paste the following configuration to the file with name `.dblab.yaml` stored either in the root of your current directory, in your $HOME path ($HOME/.dblab.yaml) or in your $XDG_CONFIG_HOME path ($XDG_CONFIG_HOME/.dblab.yaml).
 
 ```{ .yaml .copy }
 
