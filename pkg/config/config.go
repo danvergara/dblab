@@ -69,12 +69,17 @@ func Init(configName string) (command.Options, error) {
 	var cfg Config
 	var db Database
 
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return opts, err
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return opts, err
 	}
 
-	if err := fig.Load(&cfg, fig.File(".dblab.yaml"), fig.Dirs(".", home)); err != nil {
+	if err := fig.Load(&cfg, fig.File(".dblab.yaml"), fig.Dirs(".", home, configDir)); err != nil {
 		return opts, err
 	}
 
