@@ -56,6 +56,11 @@ run-mysql: build
 ## run-mysql-socket: Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
 run-mysql-socket: build
 	./dblab --socket /var/lib/mysql/mysql.sock --user myuser --pass password --db mydb --ssl enable --port 3306 --driver mysql
+	
+.PHONY: run-postgres-socket
+## run-postgres-socket: Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
+run-postgres-socket: build
+	./dblab --socket /var/run/postgresql --user  myuser --db my_project --pass postgres --ssl disable --port 5432 --driver postgres --limit 50
 
 .PHONY: run-mysql-socket-url
 ## run-mysql-socket-url: Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
