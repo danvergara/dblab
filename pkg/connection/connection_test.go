@@ -3,12 +3,14 @@ package connection
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/drivers"
-	"github.com/stretchr/testify/assert"
 )
 
 func createTempSocketFile(t *testing.T) *os.File {
@@ -37,6 +39,34 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 		want  want
 	}{
 		// postgres
+		{
+			name: "valid socket connection with postgres with no password or user",
+			given: given{
+				opts: command.Options{
+					URL: "postgres:///db?host=/path/to/socket",
+				},
+			},
+			want: want{
+				uri: fmt.Sprintf(
+					"postgres:///db?host=%s",
+					url.QueryEscape("/path/to/socket"),
+				),
+			},
+		},
+		{
+			name: "valid socket connection with postgres",
+			given: given{
+				opts: command.Options{
+					URL: "postgres://user:password@/db?host=/path/to/socket",
+				},
+			},
+			want: want{
+				uri: fmt.Sprintf(
+					"postgres://user:password@/db?host=%s",
+					url.QueryEscape("/path/to/socket"),
+				),
+			},
+		},
 		{
 			name: "valid postgres localhost",
 			given: given{
@@ -133,7 +163,10 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			name: "valid socket connection",
 			given: given{
 				opts: command.Options{
-					URL: fmt.Sprintf("mysql://user:password@unix(%s)/dbname?charset=utf8", socketFile.Name()),
+					URL: fmt.Sprintf(
+						"mysql://user:password@unix(%s)/dbname?charset=utf8",
+						socketFile.Name(),
+					),
 				},
 			},
 			want: want{
@@ -217,6 +250,41 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 		want  want
 	}{
 		// postgres
+		{
+			name: "success - postgres socket connection without password",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.Postgres,
+					User:   "user",
+					DBName: "db",
+					Socket: "/path/to/socket",
+				},
+			},
+			want: want{
+				uri: fmt.Sprintf(
+					"postgres://user@/db?host=%s",
+					url.QueryEscape("/path/to/socket"),
+				),
+			},
+		},
+		{
+			name: "success - postgres socket connection",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.Postgres,
+					User:   "user",
+					Pass:   "password",
+					DBName: "db",
+					Socket: "/path/to/socket",
+				},
+			},
+			want: want{
+				uri: fmt.Sprintf(
+					"postgres://user:password@/db?host=%s",
+					url.QueryEscape("/path/to/socket"),
+				),
+			},
+		},
 		{
 			name: "success - localhost with no explicit ssl mode - postgres",
 			given: given{

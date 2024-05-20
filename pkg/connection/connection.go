@@ -79,6 +79,25 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 	switch opts.Driver {
 	case drivers.Postgres:
 		query := url.Values{}
+		if opts.Socket != "" {
+			query.Add("host", opts.Socket)
+
+			connDB := url.URL{
+				Scheme:   opts.Driver,
+				Path:     fmt.Sprintf("/%s", opts.DBName),
+				RawQuery: query.Encode(),
+			}
+
+			switch {
+			case opts.User != "" && opts.Pass == "":
+				connDB.User = url.User(opts.User)
+			case opts.User != "" && opts.Pass != "":
+				connDB.User = url.UserPassword(opts.User, opts.Pass)
+			}
+
+			return connDB.String(), opts, nil
+		}
+
 		if opts.SSL != "" {
 			query.Add("sslmode", opts.SSL)
 		} else {
@@ -122,10 +141,23 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 				return "", opts, ErrSocketFileDoNotExist
 			}
 
-			return fmt.Sprintf("%s:%s@unix(%s)/%s?charset=utf8", opts.User, opts.Pass, opts.Socket, opts.DBName), opts, nil
+			return fmt.Sprintf(
+				"%s:%s@unix(%s)/%s?charset=utf8",
+				opts.User,
+				opts.Pass,
+				opts.Socket,
+				opts.DBName,
+			), opts, nil
 		}
 
-		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", opts.User, opts.Pass, opts.Host, opts.Port, opts.DBName), opts, nil
+		return fmt.Sprintf(
+			"%s:%s@tcp(%s:%s)/%s",
+			opts.User,
+			opts.Pass,
+			opts.Host,
+			opts.Port,
+			opts.DBName,
+		), opts, nil
 	case drivers.SQLite:
 		if hasValidSqlite3FileExtension(opts.DBName) {
 			return opts.DBName, opts, nil
