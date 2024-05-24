@@ -5,4 +5,5 @@ const (
 	PostgreSQL string = "postgresql"
 	MySQL      string = "mysql"
 	SQLite     string = "sqlite"
+	Oracle     string = "oracle"
 )

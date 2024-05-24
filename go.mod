@@ -19,6 +19,7 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/muesli/termenv v0.12.0
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/sijms/go-ora/v2 v2.8.19
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.2
 	golang.org/x/text v0.3.7
