@@ -1,7 +1,7 @@
 package client
 
 import (
-	"fmt"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/sijms/go-ora/v2"
@@ -28,18 +28,28 @@ func (p *oracle) ShowTables() (string, []interface{}, error) {
 
 // TableStructure returns a query string to get all the relevant information of a given table.
 func (p *oracle) TableStructure(tableName string) (string, []interface{}, error) {
-	query := fmt.Sprintf("DESCRIBE %s;", tableName)
-	return query, nil, nil
+	query := sq.Select("*").
+		From("user_tab_columns").
+		Where(sq.Eq{"table_name": strings.ToUpper(tableName)}).
+		OrderBy("column_id").
+		PlaceholderFormat(sq.Colon)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return sql, args, nil
 }
 
 // Constraints returns all the constraints of a given table.
 func (p *oracle) Constraints(tableName string) (string, []interface{}, error) {
 	query := sq.Select(
-		`tc.constraint_name`,
-		`tc.constraint_type`,
+		`constraint_name`,
+		`constraint_type`,
 	).
-		From("user_constraints AS tc").
-		Where(sq.Eq{"tc.table_name": tableName}).
+		From("user_constraints").
+		Where(sq.Eq{"table_name": tableName}).
 		PlaceholderFormat(sq.Colon)
 
 	sql, args, err := query.ToSql()
