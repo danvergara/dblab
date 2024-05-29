@@ -5,7 +5,7 @@ dblab ![integration tests](https://github.com/danvergara/dblab/actions/workflows
   <img style="float: right;" src="assets/gopher-dblab.png" alt="dblab logo"/  width=200>
 </p>
 
-__Interactive client for PostgreSQL, MySQL and SQLite3.__
+__Interactive client for PostgreSQL, MySQL, SQLite3 and Oracle.__
 
 <img src="screenshots/dblab-cover.png" />
 
@@ -37,7 +37,7 @@ dblab is a fast and lightweight interactive terminal based UI application for Po
 written in Go and works on OSX, Linux and Windows machines. Main idea behind using Go for backend development
 is to utilize ability of the compiler to produce zero-dependency binaries for
 multiple platforms. dblab was created as an attempt to build very simple and portable
-application to work with local or remote PostgreSQL/MySQL/SQLite3 databases.
+application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle databases.
 
 ## Features
 
@@ -91,20 +91,27 @@ Available Commands:
   version     The version of the project
 
 Flags:
-      --cfg-name string   Database config name section
-      --config          get the connection data from a config file (default is $HOME/.dblab.yaml or the current directory)
-      --db string       Database name
-      --driver string   Database driver
-  -h, --help            help for dblab
-      --host string     Server host name or IP
-      --limit int       Size of the result set from the table content query (should be greater than zero, otherwise the app will error out) (default 100)
-      --pass string     Password for user
-      --port string     Server port
-      --schema string   Database schema (postgres only)
-      --socket string     Path to a Unix socket file
-      --ssl string      SSL mode
-  -u, --url string      Database connection string
-      --user string     Database user
+      --cfg-name string      Database config name section
+      --config               Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)
+      --db string            Database name
+      --driver string        Database driver
+  -h, --help                 help for dblab
+      --host string          Server host name or IP
+      --limit uint           Size of the result set from the table content query (should be greater than zero, otherwise the app will error out) (default 100)
+      --pass string          Password for user
+      --port string          Server port
+      --schema string        Database schema (postgres only)
+      --socket string        Path to a Unix socket file
+      --ssl string           SSL mode
+      --ssl-verify string    [enable|disable] or [true|false] enable ssl verify for the server
+      --sslcert string       This parameter specifies the file name of the client SSL certificate, replacing the default ~/.postgresql/postgresql.crt
+      --sslkey string        This parameter specifies the location for the secret key used for the client certificate. It can either specify a file name that will be used instead of the default ~/.postgresql/postgresql.key, or it can specify a key obtained from an external “engine”
+      --sslpassword string   This parameter specifies the password for the secret key specified in sslkey
+      --sslrootcert string   This parameter specifies the name of a file containing SSL certificate authority (CA) certificate(s) The default is ~/.postgresql/root.crt
+      --trace-file string    File name for trace log
+  -u, --url string           Database connection string
+      --user string          Database user
+      --wallet string        Path for auto-login oracle wallet
 
 Use "dblab [command] --help" for more information about a command.
 ```
@@ -118,6 +125,7 @@ You can start the app passing no flags or parameters, you'll be asked for connec
 ```sh
 $ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50
 $ dblab --db path/to/file.sqlite3 --driver sqlite
+$ dblab --host localhost --user system --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50
 ```
 
 Connection URL scheme is also supported:
@@ -126,6 +134,7 @@ Connection URL scheme is also supported:
 $ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
 $ dblab --url mysql://user:password@tcp(host:port)/db
 $ dblab --url file:test.db?cache=shared&mode=memory
+$ dblab --url oracle://user:password@localhost:1521/db
 ```
 
 if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
