@@ -30,6 +30,9 @@ var (
 	ErrInvalidMySQLURLFormat = errors.New(
 		"invalid url - valid format: mysql://user:password@tcp(host:port)/db",
 	)
+	ErrInvalidOracleURLFormat = errors.New(
+		"invalid url - valid format: oracle://user:pass@server/service_name",
+	)
 	// ErrInvalidURLFormat is used to notify the url is invalid.
 	ErrInvalidURLFormat = errors.New("invalid url")
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
@@ -77,7 +80,9 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		}
 
 		if strings.HasPrefix(opts.URL, "oracle:") {
-			return opts.URL, opts, nil
+			opts.Driver = drivers.Oracle
+			conn, err := formatOracleURL(opts)
+			return conn, opts, err
 		}
 
 		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidURLFormat)
@@ -97,13 +102,31 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			return "", opts, fmt.Errorf("%v : %w", err, ErrInvalidPostgresURLFormat)
 		}
 
+		urloptions := make(map[string]string)
+
+		if opts.SSL != "" {
+			urloptions["SSL"] = opts.SSL
+		}
+
+		if opts.SSLVerify != "" {
+			urloptions["SSL Verify"] = opts.SSLVerify
+		}
+
+		if opts.TraceFile != "" {
+			urloptions["TRACE FILE"] = opts.TraceFile
+		}
+
+		if opts.Wallet != "" {
+			urloptions["wallet"] = url.QueryEscape(opts.Wallet)
+		}
+
 		connStr := go_ora.BuildUrl(
 			opts.Host,
 			iPort,
 			opts.DBName,
 			opts.User,
 			opts.Pass,
-			nil,
+			urloptions,
 		)
 
 		return connStr, opts, nil
@@ -291,6 +314,31 @@ func formatMySQLURL(opts command.Options) (string, error) {
 	return uri.String(), nil
 }
 
+// formatOracleURL returns valid uri for oracle connection.
+func formatOracleURL(opts command.Options) (string, error) {
+	if !hasValidOraclePrefix(opts.URL) {
+		return "", fmt.Errorf("invalid prefix %s : %w", opts.URL, ErrInvalidOracleURLFormat)
+	}
+
+	uri, err := url.Parse(opts.URL)
+	if err != nil {
+		return "", fmt.Errorf("%v : %w", err, ErrInvalidOracleURLFormat)
+	}
+
+	result := map[string]string{}
+	for k, v := range uri.Query() {
+		result[strings.ToLower(k)] = v[0]
+	}
+
+	query := url.Values{}
+	for k, v := range result {
+		query.Add(k, v)
+	}
+	uri.RawQuery = query.Encode()
+
+	return uri.String(), nil
+}
+
 // validates if dsn pattern match with the parameter.
 func parseDSN(dsn string) (string, error) {
 	matches := dsnPattern.FindStringSubmatch(dsn)
@@ -314,6 +362,11 @@ func hasValidPostgresPrefix(rawurl string) bool {
 // hasValidMySQLPrefix checks if a given url has the driver name in it.
 func hasValidMySQLPrefix(rawurl string) bool {
 	return strings.HasPrefix(rawurl, "mysql://")
+}
+
+// hasValidOraclePrefix checks if a given url has the driver name in it.
+func hasValidOraclePrefix(rawurl string) bool {
+	return strings.HasPrefix(rawurl, "oracle://")
 }
 
 func hasValidSqlite3FileExtension(fileName string) bool {
