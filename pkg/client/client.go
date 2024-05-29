@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	_ "github.com/sijms/go-ora/v2"
 	_ "modernc.org/sqlite"
 
 	"github.com/danvergara/dblab/pkg/command"
@@ -67,6 +68,8 @@ func New(opts command.Options) (*Client, error) {
 		c.databaseQuerier = newMySQL()
 	case drivers.SQLite:
 		c.databaseQuerier = newSQLite()
+	case drivers.Oracle:
+		c.databaseQuerier = newOracle()
 	default:
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}
@@ -320,10 +323,28 @@ func (c *Client) Driver() string {
 func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 	var query string
 
-	if c.driver == "postgres" || c.driver == "postgresql" {
-		query = fmt.Sprintf("SELECT * FROM %q LIMIT %d OFFSET %d;", tableName, c.paginationManager.Limit(), c.paginationManager.Offset())
-	} else {
-		query = fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d;", tableName, c.paginationManager.Limit(), c.paginationManager.Offset())
+	switch c.driver {
+	case drivers.Postgres, drivers.PostgreSQL:
+		query = fmt.Sprintf(
+			"SELECT * FROM %q LIMIT %d OFFSET %d;",
+			tableName,
+			c.paginationManager.Limit(),
+			c.paginationManager.Offset(),
+		)
+	case drivers.Oracle:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			tableName,
+			c.paginationManager.Offset(),
+			c.paginationManager.Limit(),
+		)
+	default:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s LIMIT %d OFFSET %d;",
+			tableName,
+			c.paginationManager.Limit(),
+			c.paginationManager.Offset(),
+		)
 	}
 
 	return c.Query(query)
@@ -336,9 +357,12 @@ func (c *Client) tableCount(tableName string) (int, error) {
 		count int
 	)
 
-	if c.driver == "postgres" || c.driver == "postgresql" {
+	switch c.driver {
+	case drivers.Postgres, drivers.PostgreSQL:
 		query = fmt.Sprintf("SELECT COUNT(*) FROM %q;", tableName)
-	} else {
+	case drivers.Oracle:
+		query = fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
+	default:
 		query = fmt.Sprintf("SELECT COUNT(*) FROM %s;", tableName)
 	}
 
