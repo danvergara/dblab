@@ -213,6 +213,16 @@ database:
     driver: "postgres"
     ssl: "require"
     sslrootcert: "~/.postgresql/root.crt."
+  - name: "oracle"
+    host: "localhost"
+    port: 1521
+    db: "FREEPDB1 "
+    password: "password"
+    user: "system"
+    driver: "oracle"
+    ssl: "enable"
+    wallet: "path/to/wallet"
+    ssl-verify: true
 # should be greater than 0, otherwise the app will error out
 limit: 50
 ```
