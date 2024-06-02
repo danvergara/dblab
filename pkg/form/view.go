@@ -64,6 +64,8 @@ func sslView(m *Model) string {
 		sslModes = m.postgreSQLSSLModes
 	case drivers.MySQL:
 		sslModes = m.mySQLSSLModes
+	case drivers.Oracle:
+		sslModes = m.oracleSSLModes
 	case drivers.SQLite:
 		sslModes = m.sqliteSSLModes
 	default:
@@ -100,13 +102,21 @@ func sslConnView(m *Model) string {
 
 func sslConnViewInputs(m *Model) []string {
 	var inputs []string
-
-	if m.driver == drivers.Postgres && (m.sslMode == "require" || m.sslMode == "verify-full" || m.sslMode == "verify-ca") {
+	switch m.driver {
+	case drivers.Postgres:
+		if m.sslMode == "require" || m.sslMode == "verify-full" || m.sslMode == "verify-ca" {
+			inputs = []string{
+				m.sslCertInput.View(),
+				m.sslKeyInput.View(),
+				m.sslPasswordInput.View(),
+				m.sslRootcertInput.View(),
+			}
+		}
+	case drivers.Oracle:
 		inputs = []string{
-			m.sslCertInput.View(),
-			m.sslKeyInput.View(),
-			m.sslPasswordInput.View(),
-			m.sslRootcertInput.View(),
+			m.traceFileInput.View(),
+			m.sslVerifyInput.View(),
+			m.walletInput.View(),
 		}
 	}
 

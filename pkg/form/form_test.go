@@ -3,9 +3,10 @@ package form_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/form"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestIsEmpty(t *testing.T) {
