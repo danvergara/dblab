@@ -23,6 +23,9 @@ func TestInit(t *testing.T) {
 		sslkey      string
 		sslpassword string
 		sslrootcert string
+		traceFile   string
+		sslVerify   string
+		wallet      string
 	}
 	var tests = []struct {
 		name  string
@@ -73,6 +76,23 @@ func TestInit(t *testing.T) {
 				ssl:         "require",
 				sslrootcert: "~/.postgresql/root.crt.",
 				limit:       50,
+			},
+		},
+		{
+			name:  "oracle",
+			input: "oracle",
+			want: want{
+				host:      "localhost",
+				port:      "1521",
+				dbname:    "FREEPDB1 ",
+				user:      "system",
+				pass:      "password",
+				driver:    "oracle",
+				ssl:       "enable",
+				sslVerify: "true",
+				wallet:    "path/to/wallet",
+				traceFile: "trace.log",
+				limit:     50,
 			},
 		},
 	}
