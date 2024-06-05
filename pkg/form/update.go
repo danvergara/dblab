@@ -3,6 +3,7 @@ package form
 import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/danvergara/dblab/pkg/drivers"
 )
 
@@ -182,6 +183,10 @@ func updateSSLMode(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.postgreSQLSSLModes)-1 {
 					m.cursor++
 				}
+			case drivers.Oracle:
+				if m.cursor < len(m.oracleSSLModes)-1 {
+					m.cursor++
+				}
 			case drivers.MySQL:
 				if m.cursor < len(m.mySQLSSLModes)-1 {
 					m.cursor++
@@ -193,12 +198,14 @@ func updateSSLMode(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.sslMode = m.postgreSQLSSLModes[m.cursor]
 			case drivers.MySQL:
 				m.sslMode = m.mySQLSSLModes[m.cursor]
+			case drivers.Oracle:
+				m.sslMode = m.oracleSSLModes[m.cursor]
 			}
 
 			m.steps = 3
 			m.cursor = 0
 
-			if m.driver != drivers.Postgres || m.sslMode == "disable" {
+			if m.driver != drivers.Postgres || m.driver == drivers.Oracle || m.sslMode == "disable" {
 				return m, tea.Quit
 			}
 
@@ -269,12 +276,19 @@ func updateSSLConn(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 func sslConnInputs(m *Model) []textinput.Model {
 	var inputs []textinput.Model
 
-	if m.driver == drivers.Postgres {
+	switch m.driver {
+	case drivers.Postgres:
 		inputs = []textinput.Model{
 			m.sslCertInput,
 			m.sslKeyInput,
 			m.sslPasswordInput,
 			m.sslRootcertInput,
+		}
+	case drivers.Oracle:
+		inputs = []textinput.Model{
+			m.traceFileInput,
+			m.sslVerifyInput,
+			m.walletInput,
 		}
 	}
 
@@ -282,11 +296,20 @@ func sslConnInputs(m *Model) []textinput.Model {
 }
 
 func assignSSLConnInputValues(m *Model, inputs []textinput.Model) {
-	if m.driver == drivers.Postgres && len(inputs) == 4 {
-		m.sslCertInput = inputs[0]
-		m.sslKeyInput = inputs[1]
-		m.sslPasswordInput = inputs[2]
-		m.sslRootcertInput = inputs[3]
+	switch m.driver {
+	case drivers.Postgres:
+		if len(inputs) == 4 {
+			m.sslCertInput = inputs[0]
+			m.sslKeyInput = inputs[1]
+			m.sslPasswordInput = inputs[2]
+			m.sslRootcertInput = inputs[3]
+		}
+	case drivers.Oracle:
+		if len(inputs) == 3 {
+			m.traceFileInput = inputs[0]
+			m.sslVerifyInput = inputs[1]
+			m.walletInput = inputs[2]
+		}
 	}
 }
 
@@ -296,7 +319,8 @@ func updateSSLConnInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	if m.driver == drivers.Postgres {
+	switch m.driver {
+	case drivers.Postgres:
 		m.sslCertInput, cmd = m.sslCertInput.Update(msg)
 		cmds = append(cmds, cmd)
 
@@ -307,6 +331,15 @@ func updateSSLConnInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		m.sslRootcertInput, cmd = m.sslRootcertInput.Update(msg)
+		cmds = append(cmds, cmd)
+	case drivers.Oracle:
+		m.traceFileInput, cmd = m.traceFileInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.sslVerifyInput, cmd = m.sslVerifyInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.walletInput, cmd = m.walletInput.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 

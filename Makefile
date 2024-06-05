@@ -52,6 +52,11 @@ run: build
 run-mysql: build
 	./dblab --host localhost --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql
 
+.PHONY: run-oracle
+## run-oracle: Runs the application making a connection to the Oreacle database
+run-oracle: build
+	./dblab --host localhost --user system --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50
+
 .PHONY: run-mysql-socket
 ## run-mysql-socket: Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
 run-mysql-socket: build

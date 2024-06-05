@@ -7,10 +7,11 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/danvergara/dblab/pkg/command"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/muesli/termenv"
+
+	"github.com/danvergara/dblab/pkg/command"
 )
 
 const (
@@ -39,6 +40,11 @@ type Model struct {
 	sslPasswordInput textinput.Model
 	sslRootcertInput textinput.Model
 
+	// oracle specific.
+	traceFileInput textinput.Model
+	sslVerifyInput textinput.Model
+	walletInput    textinput.Model
+
 	// std data.
 	hostInput     textinput.Model
 	portInput     textinput.Model
@@ -51,6 +57,7 @@ type Model struct {
 	// ssl.
 	postgreSQLSSLModes []string
 	mySQLSSLModes      []string
+	oracleSSLModes     []string
 	sqliteSSLModes     []string
 	sslMode            string
 }
@@ -148,6 +155,18 @@ func (m *Model) SSLRootcert() string {
 	return m.sslRootcertInput.Value()
 }
 
+func (m *Model) SSLVerify() string {
+	return m.sslVerifyInput.Value()
+}
+
+func (m *Model) TraceFile() string {
+	return m.traceFileInput.Value()
+}
+
+func (m *Model) Wallet() string {
+	return m.walletInput.Value()
+}
+
 // Limit returns the limit input value from the user.
 func (m *Model) Limit() (uint, error) {
 	// if the user skipped the question, resort to default value
@@ -235,15 +254,28 @@ func initModel() Model {
 	sslRootCert.Placeholder = "The name of a file containing SSL certificate authority (CA) certificate(s)"
 	sslRootCert.CharLimit = 1000
 
+	sslVerify := textinput.NewModel()
+	sslVerify.Placeholder = "SSL Verify"
+	sslVerify.CharLimit = 200
+
+	traceFile := textinput.NewModel()
+	traceFile.Placeholder = "Trace file"
+	traceFile.CharLimit = 1000
+
+	wallet := textinput.NewModel()
+	wallet.Placeholder = "Path to wallet"
+	wallet.CharLimit = 1000
+
 	m := Model{
 		// the supported drivers by the client.
-		drivers: []string{"postgres", "mysql", "sqlite"},
+		drivers: []string{"postgres", "mysql", "sqlite", "oracle"},
 		// our default value.
 		driver: "postgres",
 
 		sslMode:            "disable",
 		postgreSQLSSLModes: []string{"disable", "require", "verify-full", "verify-ca"},
 		mySQLSSLModes:      []string{"true", "false", "skip-verify", "preferred"},
+		oracleSSLModes:     []string{"enable", "disable"},
 		sqliteSSLModes:     []string{},
 
 		hostInput:        host,
@@ -257,6 +289,9 @@ func initModel() Model {
 		sslKeyInput:      sslKey,
 		sslPasswordInput: sslPassword,
 		sslRootcertInput: sslRootCert,
+		sslVerifyInput:   sslVerify,
+		traceFileInput:   traceFile,
+		walletInput:      wallet,
 	}
 
 	return m
@@ -286,6 +321,9 @@ func Run() (command.Options, error) {
 		SSLKey:      m.SSLKey(),
 		SSLPassword: m.SSLPassword(),
 		SSLRootcert: m.SSLRootcert(),
+		SSLVerify:   m.SSLVerify(),
+		TraceFile:   m.TraceFile(),
+		Wallet:      m.Wallet(),
 		Limit:       limit,
 	}
 
@@ -311,6 +349,9 @@ func IsEmpty(opts command.Options) bool {
 			"SSLKey",
 			"SSLPassword",
 			"SSLRootcert",
+			"TraceFile",
+			"SSLVerify",
+			"Wallet",
 		),
 	)
 }

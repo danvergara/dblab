@@ -24,6 +24,15 @@ services:
     networks:
       - dblab
 
+  oracle:
+    image: container-registry.oracle.com/database/free:latest
+    environment:
+      ORACLE_PWD: password
+    ports:
+      - '1521:1521'
+    networks:
+      - dblab
+
   dblab:
     build:
       context: .

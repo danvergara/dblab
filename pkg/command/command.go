@@ -21,6 +21,10 @@ type Options struct {
 	SSLKey      string
 	SSLPassword string
 	SSLRootcert string
+	// oracle specific.
+	TraceFile string
+	SSLVerify string
+	Wallet    string
 }
 
 // SetDefault returns a Options struct and fills the empty

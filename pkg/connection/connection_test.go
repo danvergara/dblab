@@ -38,6 +38,18 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 		given given
 		want  want
 	}{
+		// oracle
+		{
+			name: "valid oracle url",
+			given: given{
+				opts: command.Options{
+					URL: "oracle://user:pass@server:1521/service_name",
+				},
+			},
+			want: want{
+				uri: "oracle://user:pass@server:1521/service_name",
+			},
+		},
 		// postgres
 		{
 			name: "valid socket connection with postgres with no password or user",
@@ -249,6 +261,40 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 		given given
 		want  want
 	}{
+		// oracle
+		{
+			name: "success - oracle",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.Oracle,
+					User:   "user",
+					Pass:   "password",
+					Host:   "localhost",
+					Port:   "1521",
+					DBName: "db",
+				},
+			},
+			want: want{
+				uri: "oracle://user:password@localhost:1521/db?",
+			},
+		},
+		{
+			name: "success - ssl enable - oracle",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.Oracle,
+					User:   "user",
+					Pass:   "password",
+					Host:   "localhost",
+					Port:   "1521",
+					DBName: "db",
+					SSL:    "enable",
+				},
+			},
+			want: want{
+				uri: "oracle://user:password@localhost:1521/db?SSL=enable",
+			},
+		},
 		// postgres
 		{
 			name: "success - postgres socket connection without password",

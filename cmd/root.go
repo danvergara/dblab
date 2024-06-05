@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"github.com/danvergara/gocui"
+	"github.com/spf13/cobra"
+
 	"github.com/danvergara/dblab/pkg/app"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/config"
 	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/danvergara/dblab/pkg/form"
-	"github.com/danvergara/gocui"
-	"github.com/spf13/cobra"
 )
 
 // Define all the global flags.
@@ -29,6 +30,10 @@ var (
 	sslkey      string
 	sslpassword string
 	sslrootcert string
+	// oracle specific.
+	traceFile string
+	sslVerify string
+	wallet    string
 )
 
 // NewRootCmd returns the root command.
@@ -63,6 +68,9 @@ func NewRootCmd() *cobra.Command {
 					SSLKey:      sslkey,
 					SSLPassword: sslpassword,
 					SSLRootcert: sslrootcert,
+					SSLVerify:   sslVerify,
+					TraceFile:   traceFile,
+					Wallet:      wallet,
 				}
 
 				if form.IsEmpty(opts) {
@@ -111,7 +119,8 @@ func init() {
 	// will be global for your application.
 
 	// config file flag.
-	rootCmd.PersistentFlags().BoolVarP(&cfg, "config", "", false, "Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)")
+	rootCmd.PersistentFlags().
+		BoolVarP(&cfg, "config", "", false, "Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)")
 	// cfg-name is used to indicate the name of the config section to be used to establish a
 	// connection with desired database.
 	// default: if empty, the first item of the databases options is gonna be selected.
@@ -127,7 +136,8 @@ func init() {
 	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name")
 	rootCmd.Flags().StringVarP(&schema, "schema", "", "", "Database schema (postgres only)")
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
-	rootCmd.Flags().UintVarP(&limit, "limit", "", 100, "Size of the result set from the table content query (should be greater than zero, otherwise the app will error out)")
+	rootCmd.Flags().
+		UintVarP(&limit, "limit", "", 100, "Size of the result set from the table content query (should be greater than zero, otherwise the app will error out)")
 	rootCmd.Flags().StringVarP(&socket, "socket", "", "", "Path to a Unix socket file")
 	rootCmd.Flags().StringVarP(
 		&sslcert,
@@ -143,7 +153,8 @@ func init() {
 		"",
 		"This parameter specifies the location for the secret key used for the client certificate. It can either specify a file name that will be used instead of the default ~/.postgresql/postgresql.key, or it can specify a key obtained from an external “engine”",
 	)
-	rootCmd.Flags().StringVarP(&sslpassword, "sslpassword", "", "", "This parameter specifies the password for the secret key specified in sslkey")
+	rootCmd.Flags().
+		StringVarP(&sslpassword, "sslpassword", "", "", "This parameter specifies the password for the secret key specified in sslkey")
 	rootCmd.Flags().StringVarP(
 		&sslrootcert,
 		"sslrootcert",
@@ -151,4 +162,8 @@ func init() {
 		"",
 		"This parameter specifies the name of a file containing SSL certificate authority (CA) certificate(s) The default is ~/.postgresql/root.crt",
 	)
+	rootCmd.Flags().
+		StringVarP(&sslVerify, "ssl-verify", "", "", "[enable|disable] or [true|false] enable ssl verify for the server")
+	rootCmd.Flags().StringVarP(&traceFile, "trace-file", "", "", "File name for trace log")
+	rootCmd.Flags().StringVarP(&wallet, "wallet", "", "", "Path for auto-login oracle wallet")
 }

@@ -41,12 +41,19 @@ type Database struct {
 	Password string
 	Driver   string `validate:"required"`
 	Schema   string
+
 	// SSL connection params.
-	SSL         string `default:"disable"`
+	SSL string `default:"disable"`
+
 	SSLCert     string `fig:"sslcert"`
 	SSLKey      string `fig:"sslkey"`
 	SSLPassword string `fig:"sslpassword"`
 	SSLRootcert string `fig:"sslrootcert"`
+
+	// oracle specific.
+	TraceFile string `fig:"trace"`
+	SSLVerify string `fig:"ssl-verify"`
+	Wallet    string `fig:"wallet"`
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
@@ -58,7 +65,8 @@ func New(cmd *cobra.Command) *Config {
 	cmd.PersistentFlags().StringVarP(&conf.Port, "port", "", os.Getenv("DB_PORT"), "DB port")
 	cmd.PersistentFlags().StringVarP(&conf.Host, "host", "", os.Getenv("DB_HOST"), "DB host")
 	cmd.PersistentFlags().StringVarP(&conf.DBName, "name", "", os.Getenv("DB_NAME"), "DB name")
-	cmd.PersistentFlags().StringVarP(&conf.Driver, "driver", "", os.Getenv("DB_DRIVER"), "DB driver")
+	cmd.PersistentFlags().
+		StringVarP(&conf.Driver, "driver", "", os.Getenv("DB_DRIVER"), "DB driver")
 
 	return conf
 }
@@ -111,6 +119,9 @@ func Init(configName string) (command.Options, error) {
 		SSLKey:      db.SSLKey,
 		SSLPassword: db.SSLPassword,
 		SSLRootcert: db.SSLRootcert,
+		TraceFile:   db.TraceFile,
+		SSLVerify:   db.SSLVerify,
+		Wallet:      db.Wallet,
 	}
 
 	return opts, nil
