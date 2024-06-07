@@ -131,10 +131,10 @@ $ dblab --host localhost --user system --db FREEPDB1 --pass password --port 1521
 Connection URL scheme is also supported:
 
 ```sh
-$ dblab --url postgres://user:password@host:port/database?sslmode=[mode]
-$ dblab --url mysql://user:password@tcp(host:port)/db
-$ dblab --url file:test.db?cache=shared&mode=memory
-$ dblab --url oracle://user:password@localhost:1521/db
+$ dblab --url 'postgres://user:password@host:port/database?sslmode=[mode]'
+$ dblab --url 'mysql://user:password@tcp(host:port)/db'
+$ dblab --url 'file:test.db?cache=shared&mode=memory'
+$ dblab --url 'oracle://user:password@localhost:1521/db'
 ```
 
 if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
