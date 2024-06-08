@@ -31,5 +31,5 @@ echo $GITHUB_URL
 # install/update the local binary
 curl -L -o dblab.tar.gz $GITHUB_URL
 tar xzvf dblab.tar.gz dblab
-mv -f dblab "$DIR"
+mv -f dblab "$DIR/dblab"
 rm dblab.tar.gz
