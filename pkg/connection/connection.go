@@ -37,8 +37,6 @@ var (
 	ErrInvalidURLFormat = errors.New("invalid url")
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
 	ErrInvalidDriver = errors.New("invalid driver")
-	// ErrInvalidSqlite3Extension is used to notify that the selected file is not a sqlite3 file.
-	ErrInvalidSqlite3Extension = errors.New("invalid sqlite file extension")
 	// ErrSocketFileDoNotExist indicates that the given path to the socket files leads to no file.
 	ErrSocketFileDoNotExist = errors.New("socket file does not exist")
 	// ErrInvalidSocketFile indicates that the socket file must end with .sock as suffix.
@@ -212,11 +210,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			opts.DBName,
 		), opts, nil
 	case drivers.SQLite:
-		if hasValidSqlite3FileExtension(opts.DBName) {
-			return opts.DBName, opts, nil
-		}
-
-		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidSqlite3Extension)
+		return opts.DBName, opts, nil
 	default:
 		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidDriver)
 	}
@@ -367,12 +361,6 @@ func hasValidMySQLPrefix(rawurl string) bool {
 // hasValidOraclePrefix checks if a given url has the driver name in it.
 func hasValidOraclePrefix(rawurl string) bool {
 	return strings.HasPrefix(rawurl, "oracle://")
-}
-
-func hasValidSqlite3FileExtension(fileName string) bool {
-	return strings.HasSuffix(fileName, "sqlite") || strings.HasSuffix(fileName, "db") ||
-		strings.HasSuffix(fileName, "db3") ||
-		strings.HasSuffix(fileName, "sqlite3")
 }
 
 func socketFileExists(socketFile string) bool {
