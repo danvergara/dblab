@@ -132,41 +132,78 @@ func initialKeyBindings() []keyBinding {
 	}
 
 	// output views navigation.
-	for _, viewName := range []string{"rows", "structure", "constraints"} {
+	for _, viewName := range []string{"rows", "structure", "constraints", "indexes"} {
 		bindings = append(bindings, []keyBinding{
 			{view: viewName, key: 'k', mod: gocui.ModNone, handler: moveCursorVertically("up")},
 			{view: viewName, key: 'j', mod: gocui.ModNone, handler: moveCursorVertically("down")},
-			{view: viewName, key: 'l', mod: gocui.ModNone, handler: moveCursorHorizontally("right")},
+			{
+				view:    viewName,
+				key:     'l',
+				mod:     gocui.ModNone,
+				handler: moveCursorHorizontally("right"),
+			},
 			{view: viewName, key: 'h', mod: gocui.ModNone, handler: moveCursorHorizontally("left")},
 		}...)
 	}
 
 	// arrow keys navigation.
-	for _, viewName := range []string{"rows", "structure", "constraints"} {
+	for _, viewName := range []string{"rows", "structure", "constraints", "indexes"} {
 		bindings = append(bindings, []keyBinding{
-			{view: viewName, key: gocui.KeyArrowUp, mod: gocui.ModNone, handler: moveCursorVertically("up")},
-			{view: viewName, key: gocui.KeyArrowDown, mod: gocui.ModNone, handler: moveCursorVertically("down")},
-			{view: viewName, key: gocui.KeyArrowRight, mod: gocui.ModNone, handler: moveCursorHorizontally("right")},
-			{view: viewName, key: gocui.KeyArrowLeft, mod: gocui.ModNone, handler: moveCursorHorizontally("left")},
+			{
+				view:    viewName,
+				key:     gocui.KeyArrowUp,
+				mod:     gocui.ModNone,
+				handler: moveCursorVertically("up"),
+			},
+			{
+				view:    viewName,
+				key:     gocui.KeyArrowDown,
+				mod:     gocui.ModNone,
+				handler: moveCursorVertically("down"),
+			},
+			{
+				view:    viewName,
+				key:     gocui.KeyArrowRight,
+				mod:     gocui.ModNone,
+				handler: moveCursorHorizontally("right"),
+			},
+			{
+				view:    viewName,
+				key:     gocui.KeyArrowLeft,
+				mod:     gocui.ModNone,
+				handler: moveCursorHorizontally("left"),
+			},
 		}...)
 	}
 
 	// vim motion inspired keys navigation.
-	for _, viewName := range []string{"rows", "structure", "constraints"} {
+	for _, viewName := range []string{"rows", "structure", "constraints", "indexes"} {
 		bindings = append(bindings, []keyBinding{
 			{view: viewName, key: '0', mod: gocui.ModNone, handler: slamCursor("left")},
 			{view: viewName, key: '$', mod: gocui.ModNone, handler: slamCursor("right")},
 			{view: viewName, key: 'G', mod: gocui.ModNone, handler: slamCursor("down")},
 			{view: viewName, key: 'g', mod: gocui.ModNone, handler: slamCursor("up")},
+			{view: viewName, key: gocui.KeyPgdn, mod: gocui.ModNone, handler: slamCursor("down")},
+			{view: viewName, key: gocui.KeyPgup, mod: gocui.ModNone, handler: slamCursor("up")},
 		}...)
 	}
 
 	// defines the navigation on the "tables" view.
 	bindings = append(bindings, []keyBinding{
 		{view: "tables", key: 'k', mod: gocui.ModNone, handler: moveCursorVertically("up")},
-		{view: "tables", key: gocui.KeyArrowUp, mod: gocui.ModNone, handler: moveCursorVertically("up")},
+		{
+			view:    "tables",
+			key:     gocui.KeyArrowUp,
+			mod:     gocui.ModNone,
+			handler: moveCursorVertically("up"),
+		},
 		{view: "tables", key: 'j', mod: gocui.ModNone, handler: moveCursorVertically("down")},
-		{view: "tables", key: gocui.KeyArrowDown, mod: gocui.ModNone, handler: moveCursorVertically("down")},
+		{
+			view:    "tables",
+			key:     gocui.KeyArrowDown,
+			mod:     gocui.ModNone,
+			handler: moveCursorVertically("down"),
+		},
 	}...)
 
 	return bindings
