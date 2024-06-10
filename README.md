@@ -274,10 +274,12 @@ Key                                     | Description
 <kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
 <kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
 <kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>0</kbd>                            | Move cursor to the start of the current line. Views: rows, constraints, and structure
-<kbd>$</kbd>                            | Move cursor to the end of the current line. Views: rows, constraints, and structure
-<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, and structure
-<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, and structure
+<kbd>0</kbd>                            | Move cursor to the start of the current line. Views: rows, constraints, structure and indexes
+<kbd>$</kbd>                            | Move cursor to the end of the current line. Views: rows, constraints, structure and indexes
+<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes
+<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes
+<kbd>PgUp</kbd>                         | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes
+<kbd>PgDn</kbd>                         | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes
 <kbd>Ctrl+c</kbd>                       | Quit
 
 ## Contribute
