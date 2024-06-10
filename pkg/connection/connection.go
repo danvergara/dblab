@@ -75,7 +75,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		// this options is for sqlite.
 		// For more information see https://github.com/mattn/go-sqlite3#connection-string.
 		if strings.HasPrefix(opts.URL, "file:") {
-			opts.Driver = drivers.Oracle
+			opts.Driver = drivers.SQLite
 			return opts.URL, opts, nil
 		}
 
