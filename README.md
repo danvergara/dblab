@@ -133,7 +133,7 @@ Connection URL scheme is also supported:
 ```sh
 $ dblab --url 'postgres://user:password@host:port/database?sslmode=[mode]'
 $ dblab --url 'mysql://user:password@tcp(host:port)/db'
-$ dblab --url 'file:test.db?cache=shared&mode=memory'
+$ dblab --url 'file:test.db?_pragma=foreign_keys(1)&_time_format=sqlite'
 $ dblab --url 'oracle://user:password@localhost:1521/db'
 ```
 

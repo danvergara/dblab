@@ -72,8 +72,11 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			return conn, opts, err
 		}
 
-		// this options is for sqlite.
+		// This options is for sqlite.
 		// For more information see https://github.com/mattn/go-sqlite3#connection-string.
+		// The sqlite driver is modernc.org/sqlite now, so the query params changed.
+		// mattn's driver and modernc.org's differ in the query paremeters they use to perform a connection.
+		// To know more about the connection and query paremeters see: https://pkg.go.dev/modernc.org/sqlite#Driver.Open
 		if strings.HasPrefix(opts.URL, "file:") {
 			opts.Driver = drivers.SQLite
 			return opts.URL, opts, nil
