@@ -227,6 +227,16 @@ func (c *Config) getDBConnStr(dbhost, dbname string) string {
 		)
 	case drivers.SQLite:
 		return c.DBName
+	case drivers.SQLServer:
+		return fmt.Sprintf(
+			"%s://%s:%s@%s:%s?database=%s",
+			c.Driver,
+			c.User,
+			c.Pswd,
+			dbhost,
+			c.Port,
+			dbname,
+		)
 	default:
 		return ""
 	}
@@ -249,6 +259,16 @@ func (c *Config) getSQLXConnStr(dbhost, dbname string) string {
 		return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", c.User, c.Pswd, dbhost, c.Port, dbname)
 	case drivers.SQLite:
 		return c.DBName
+	case drivers.SQLServer:
+		return fmt.Sprintf(
+			"%s://%s:%s@%s:%s?database=%s",
+			c.Driver,
+			c.User,
+			c.Pswd,
+			dbhost,
+			c.Port,
+			dbname,
+		)
 	default:
 		return ""
 	}
