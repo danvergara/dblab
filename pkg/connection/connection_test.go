@@ -542,17 +542,15 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			},
 		},
 		{
-			name: "error - wrong sqlite3 file extension",
+			name: "success - valid sqlite3 file extension",
 			given: given{
 				opts: command.Options{
 					Driver: drivers.SQLite,
-					DBName: "users.wrong",
+					DBName: "users.rsd",
 				},
 			},
 			want: want{
-				uri:      "users.wrong",
-				hasError: true,
-				err:      ErrInvalidSqlite3Extension,
+				uri: "users.rsd",
 			},
 		},
 	}
