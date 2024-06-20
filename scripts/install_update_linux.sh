@@ -24,12 +24,8 @@ GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.
 GITHUB_FILE="dblab_${GITHUB_LATEST_VERSION//v/}_${OS}_${ARCH}.tar.gz"
 GITHUB_URL="https://github.com/danvergara/dblab/releases/download/${GITHUB_LATEST_VERSION}/${GITHUB_FILE}"
 
-echo $GITHUB_FILE
-echo $GITHUB_LATEST_VERSION
-echo $GITHUB_URL
-
 # install/update the local binary
 curl -L -o dblab.tar.gz $GITHUB_URL
 tar xzvf dblab.tar.gz dblab
-mv -f dblab "$DIR"
-rm dblab.tar.gz
+install -Dm 755 dblab -t "$DIR"
+rm dblab dblab.tar.gz
