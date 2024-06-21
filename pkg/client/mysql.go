@@ -6,8 +6,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-// mysql struct is in charge of perform all the mysql related queries,
-// without the client knowing.
+// mysql struct is in charge of perform all the mysql related queries.
 type mysql struct{}
 
 // a validation to see if mysql is implementing databaseQuerier.

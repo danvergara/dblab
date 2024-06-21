@@ -2,9 +2,6 @@ package client
 
 import (
 	sq "github.com/Masterminds/squirrel"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
-	_ "modernc.org/sqlite"
 )
 
 // postgres struct is in charge of perform all the postgres related queries,
