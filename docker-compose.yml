@@ -95,24 +95,5 @@ services:
     networks:
       - dblab
 
-  dblab-mssql:
-    build:
-      context: .
-      target: builder
-    volumes:
-      - ./:/src/app:z
-    depends_on:
-      - mssql
-    environment:
-      - DB_HOST=mssql
-      - DB_USER=SA
-      - DB_PASSWORD=5@klkbN#ABC
-      - DB_NAME=msdb
-      - DB_PORT=1433
-      - DB_DRIVER=sqlserver
-    entrypoint: ["/bin/bash", "./scripts/entrypoint-mssql.dev.sh"]
-    networks:
-      - dblab
-
 networks:
   dblab:
