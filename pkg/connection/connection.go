@@ -86,6 +86,12 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			return conn, opts, err
 		}
 
+		if strings.HasPrefix(opts.URL, drivers.SQLServer) {
+			opts.Driver = drivers.SQLServer
+			conn, err := formatSQLServerURL(opts)
+			return conn, opts, err
+		}
+
 		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidURLFormat)
 	}
 
@@ -214,6 +220,33 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		), opts, nil
 	case drivers.SQLite:
 		return opts.DBName, opts, nil
+	case drivers.SQLServer:
+		query := url.Values{}
+
+		if opts.DBName != "" {
+			query.Add("database", opts.DBName)
+		}
+
+		if opts.Encrypt != "" {
+			query.Add("encrypt", opts.Encrypt)
+		}
+
+		if opts.TrustServerCertificate != "" {
+			query.Add("trustservercertificate", opts.TrustServerCertificate)
+		}
+
+		if opts.ConnectionTimeout != "" {
+			query.Add("connection+timeout", opts.ConnectionTimeout)
+		}
+
+		connDB := url.URL{
+			Scheme:   opts.Driver,
+			Host:     fmt.Sprintf("%v:%v", opts.Host, opts.Port),
+			User:     url.UserPassword(opts.User, opts.Pass),
+			RawQuery: query.Encode(),
+		}
+
+		return connDB.String(), opts, nil
 	default:
 		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidDriver)
 	}
@@ -336,6 +369,31 @@ func formatOracleURL(opts command.Options) (string, error) {
 	return uri.String(), nil
 }
 
+// formatSQLServerURL returns valid uri for sql server connection.
+func formatSQLServerURL(opts command.Options) (string, error) {
+	if !hasValidSQLServerPrefix(opts.URL) {
+		return "", fmt.Errorf("invalid prefix %s : %w", opts.URL, ErrInvalidOracleURLFormat)
+	}
+
+	uri, err := url.Parse(opts.URL)
+	if err != nil {
+		return "", fmt.Errorf("%v : %w", err, ErrInvalidOracleURLFormat)
+	}
+
+	result := map[string]string{}
+	for k, v := range uri.Query() {
+		result[strings.ToLower(k)] = v[0]
+	}
+
+	query := url.Values{}
+	for k, v := range result {
+		query.Add(k, v)
+	}
+	uri.RawQuery = query.Encode()
+
+	return uri.String(), nil
+}
+
 // validates if dsn pattern match with the parameter.
 func parseDSN(dsn string) (string, error) {
 	matches := dsnPattern.FindStringSubmatch(dsn)
@@ -364,6 +422,11 @@ func hasValidMySQLPrefix(rawurl string) bool {
 // hasValidOraclePrefix checks if a given url has the driver name in it.
 func hasValidOraclePrefix(rawurl string) bool {
 	return strings.HasPrefix(rawurl, "oracle://")
+}
+
+// hasValidSQLServerPrefix checks if a given url has the driver name in it.
+func hasValidSQLServerPrefix(rawurl string) bool {
+	return strings.HasPrefix(rawurl, "sqlserver://")
 }
 
 func socketFileExists(socketFile string) bool {
