@@ -34,6 +34,10 @@ var (
 	traceFile string
 	sslVerify string
 	wallet    string
+	// sql server.
+	encrypt                string
+	trustServerCertificate string
+	connectionTimeout      string
 )
 
 // NewRootCmd returns the root command.
@@ -53,24 +57,27 @@ func NewRootCmd() *cobra.Command {
 				}
 			} else {
 				opts = command.Options{
-					Driver:      driver,
-					URL:         url,
-					Host:        host,
-					Port:        port,
-					User:        user,
-					Pass:        pass,
-					DBName:      db,
-					Schema:      schema,
-					SSL:         ssl,
-					Limit:       limit,
-					Socket:      socket,
-					SSLCert:     sslcert,
-					SSLKey:      sslkey,
-					SSLPassword: sslpassword,
-					SSLRootcert: sslrootcert,
-					SSLVerify:   sslVerify,
-					TraceFile:   traceFile,
-					Wallet:      wallet,
+					Driver:                 driver,
+					URL:                    url,
+					Host:                   host,
+					Port:                   port,
+					User:                   user,
+					Pass:                   pass,
+					DBName:                 db,
+					Schema:                 schema,
+					SSL:                    ssl,
+					Limit:                  limit,
+					Socket:                 socket,
+					SSLCert:                sslcert,
+					SSLKey:                 sslkey,
+					SSLPassword:            sslpassword,
+					SSLRootcert:            sslrootcert,
+					SSLVerify:              sslVerify,
+					TraceFile:              traceFile,
+					Wallet:                 wallet,
+					Encrypt:                encrypt,
+					TrustServerCertificate: trustServerCertificate,
+					ConnectionTimeout:      connectionTimeout,
 				}
 
 				if form.IsEmpty(opts) {
@@ -166,4 +173,11 @@ func init() {
 		StringVarP(&sslVerify, "ssl-verify", "", "", "[enable|disable] or [true|false] enable ssl verify for the server")
 	rootCmd.Flags().StringVarP(&traceFile, "trace-file", "", "", "File name for trace log")
 	rootCmd.Flags().StringVarP(&wallet, "wallet", "", "", "Path for auto-login oracle wallet")
+
+	rootCmd.Flags().
+		StringVarP(&encrypt, "encrypt", "", "", "[strict|disable|false|true] data sent between client and server is encrypted or not")
+	rootCmd.Flags().
+		StringVarP(&trustServerCertificate, "trust-server-certificate", "", "", "[false|true] server certificate is checked or not")
+	rootCmd.Flags().
+		StringVarP(&connectionTimeout, "timeout", "", "", "in seconds (default is 0 for no timeout), set to 0 for no timeout. Recommended to set to 0 and use context to manage query and connection timeouts")
 }
