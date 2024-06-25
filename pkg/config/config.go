@@ -8,13 +8,10 @@ import (
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/mysql"    // mysql driver
-	_ "github.com/golang-migrate/migrate/v4/database/postgres" // postgres driver
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/kkyr/fig"
 	"github.com/spf13/cobra"
-	_ "modernc.org/sqlite" // sqlite driver
 
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/drivers"
@@ -33,7 +30,8 @@ type Config struct {
 }
 
 type Database struct {
-	Name     string
+	Name string `fig:"name"`
+
 	Host     string
 	Port     string
 	DB       string `validate:"required"`
@@ -54,6 +52,11 @@ type Database struct {
 	TraceFile string `fig:"trace"`
 	SSLVerify string `fig:"ssl-verify"`
 	Wallet    string `fig:"wallet"`
+
+	// sql server.
+	Encrypt                string `fig:"encrypt"`
+	TrustServerCertificate string `fig:"trust-server-certificate"`
+	ConnectionTimeout      string `fig:"connection-timeout"`
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
@@ -106,22 +109,25 @@ func Init(configName string) (command.Options, error) {
 	}
 
 	opts = command.Options{
-		Driver:      db.Driver,
-		Host:        db.Host,
-		Port:        db.Port,
-		User:        db.User,
-		Pass:        db.Password,
-		DBName:      db.DB,
-		Schema:      db.Schema,
-		Limit:       cfg.Limit,
-		SSL:         db.SSL,
-		SSLCert:     db.SSLCert,
-		SSLKey:      db.SSLKey,
-		SSLPassword: db.SSLPassword,
-		SSLRootcert: db.SSLRootcert,
-		TraceFile:   db.TraceFile,
-		SSLVerify:   db.SSLVerify,
-		Wallet:      db.Wallet,
+		Driver:                 db.Driver,
+		Host:                   db.Host,
+		Port:                   db.Port,
+		User:                   db.User,
+		Pass:                   db.Password,
+		DBName:                 db.DB,
+		Schema:                 db.Schema,
+		Limit:                  cfg.Limit,
+		SSL:                    db.SSL,
+		SSLCert:                db.SSLCert,
+		SSLKey:                 db.SSLKey,
+		SSLPassword:            db.SSLPassword,
+		SSLRootcert:            db.SSLRootcert,
+		TraceFile:              db.TraceFile,
+		SSLVerify:              db.SSLVerify,
+		Wallet:                 db.Wallet,
+		Encrypt:                db.Encrypt,
+		TrustServerCertificate: db.TrustServerCertificate,
+		ConnectionTimeout:      db.ConnectionTimeout,
 	}
 
 	return opts, nil
@@ -166,7 +172,7 @@ func (c *Config) MigrateInstance() (*migrate.Migrate, error) {
 		}
 
 		return m, nil
-	case "postgres", "mysql":
+	case drivers.Postgres, drivers.MySQL, drivers.SQLServer:
 		m, err := migrate.New("file://db/migrations", c.GetDBConnStr())
 		if err != nil {
 			fmt.Printf("migrate error: %v \n", err)
