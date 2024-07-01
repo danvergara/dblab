@@ -29,4 +29,11 @@ database:
     wallet: "path/to/wallet"
     ssl-verify: true
     trace: "trace.log"
+  - name: "sqlserver"
+    driver: "sqlserver"
+    host: "localhost"
+    port: 1433
+    db: "msdb"
+    password: "5@klkbN#ABC"
+    user: "SA"
 limit: 50

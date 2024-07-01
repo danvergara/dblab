@@ -25,6 +25,10 @@ type Options struct {
 	TraceFile string
 	SSLVerify string
 	Wallet    string
+	// sql server.
+	Encrypt                string
+	TrustServerCertificate string
+	ConnectionTimeout      string
 }
 
 // SetDefault returns a Options struct and fills the empty

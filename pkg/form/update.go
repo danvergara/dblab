@@ -187,6 +187,10 @@ func updateSSLMode(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.oracleSSLModes)-1 {
 					m.cursor++
 				}
+			case drivers.SQLServer:
+				if m.cursor < len(m.sqlServerSSLModes)-1 {
+					m.cursor++
+				}
 			case drivers.MySQL:
 				if m.cursor < len(m.mySQLSSLModes)-1 {
 					m.cursor++
@@ -200,13 +204,18 @@ func updateSSLMode(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.sslMode = m.mySQLSSLModes[m.cursor]
 			case drivers.Oracle:
 				m.sslMode = m.oracleSSLModes[m.cursor]
+			case drivers.SQLServer:
+				m.sslMode = m.sqlServerSSLModes[m.cursor]
 			}
 
 			m.steps = 3
 			m.cursor = 0
 
-			if m.driver != drivers.Postgres || m.driver == drivers.Oracle || m.sslMode == "disable" {
-				return m, tea.Quit
+			switch m.driver {
+			case drivers.Postgres, drivers.Oracle, drivers.SQLServer, drivers.MySQL:
+				if m.sslMode == "disable" || m.sslMode == "false" {
+					return m, tea.Quit
+				}
 			}
 
 			return m, nil
@@ -290,6 +299,10 @@ func sslConnInputs(m *Model) []textinput.Model {
 			m.sslVerifyInput,
 			m.walletInput,
 		}
+	case drivers.SQLServer:
+		inputs = []textinput.Model{
+			m.trustServerCertificateInput,
+		}
 	}
 
 	return inputs
@@ -309,6 +322,10 @@ func assignSSLConnInputValues(m *Model, inputs []textinput.Model) {
 			m.traceFileInput = inputs[0]
 			m.sslVerifyInput = inputs[1]
 			m.walletInput = inputs[2]
+		}
+	case drivers.SQLServer:
+		if len(inputs) == 1 {
+			m.trustServerCertificateInput = inputs[0]
 		}
 	}
 }
@@ -340,6 +357,9 @@ func updateSSLConnInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		m.walletInput, cmd = m.walletInput.Update(msg)
+		cmds = append(cmds, cmd)
+	case drivers.SQLServer:
+		m.trustServerCertificateInput, cmd = m.trustServerCertificateInput.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 

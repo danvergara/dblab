@@ -38,7 +38,19 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 		given given
 		want  want
 	}{
-		// oracle
+		// sql server.
+		{
+			name: "valid sql server url",
+			given: given{
+				opts: command.Options{
+					URL: "sqlserver://SA:myStrong(!)Password@localhost:1433?database=tempdb&encrypt=true&trustservercertificate=false&connection+timeout=30",
+				},
+			},
+			want: want{
+				uri: "sqlserver://SA:myStrong%28%21%29Password@localhost:1433?connection+timeout=30&database=tempdb&encrypt=true&trustservercertificate=false",
+			},
+		},
+		// oracle.
 		{
 			name: "valid oracle url",
 			given: given{
@@ -261,7 +273,27 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 		given given
 		want  want
 	}{
-		// oracle
+		// sql server.
+		{
+			name: "success - sql server",
+			given: given{
+				opts: command.Options{
+					Driver:                 drivers.SQLServer,
+					User:                   "SA",
+					Pass:                   "password",
+					Host:                   "localhost",
+					Port:                   "1433",
+					DBName:                 "tempdb",
+					Encrypt:                "true",
+					TrustServerCertificate: "false",
+					ConnectionTimeout:      "30",
+				},
+			},
+			want: want{
+				uri: "sqlserver://SA:password@localhost:1433?connection%2Btimeout=30&database=tempdb&encrypt=true&trustservercertificate=false",
+			},
+		},
+		// oracle.
 		{
 			name: "success - oracle",
 			given: given{

@@ -6,4 +6,5 @@ const (
 	MySQL      string = "mysql"
 	SQLite     string = "sqlite"
 	Oracle     string = "oracle"
+	SQLServer  string = "sqlserver"
 )

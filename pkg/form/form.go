@@ -12,6 +12,7 @@ import (
 	"github.com/muesli/termenv"
 
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
 const (
@@ -45,6 +46,9 @@ type Model struct {
 	sslVerifyInput textinput.Model
 	walletInput    textinput.Model
 
+	// sql server.
+	trustServerCertificateInput textinput.Model
+
 	// std data.
 	hostInput     textinput.Model
 	portInput     textinput.Model
@@ -58,6 +62,7 @@ type Model struct {
 	postgreSQLSSLModes []string
 	mySQLSSLModes      []string
 	oracleSSLModes     []string
+	sqlServerSSLModes  []string
 	sqliteSSLModes     []string
 	sslMode            string
 }
@@ -167,6 +172,10 @@ func (m *Model) Wallet() string {
 	return m.walletInput.Value()
 }
 
+func (m *Model) TrustServerCertificate() string {
+	return m.trustServerCertificateInput.Value()
+}
+
 // Limit returns the limit input value from the user.
 func (m *Model) Limit() (uint, error) {
 	// if the user skipped the question, resort to default value
@@ -266,9 +275,14 @@ func initModel() Model {
 	wallet.Placeholder = "Path to wallet"
 	wallet.CharLimit = 1000
 
+	trustServerCertificate := textinput.NewModel()
+	trustServerCertificate.Placeholder = "Server certificate is checked or not"
+	trustServerCertificate.CharLimit = 1000
+	trustServerCertificate.Focus()
+
 	m := Model{
 		// the supported drivers by the client.
-		drivers: []string{"postgres", "mysql", "sqlite", "oracle"},
+		drivers: []string{"postgres", "mysql", "sqlite", "oracle", "sqlserver"},
 		// our default value.
 		driver: "postgres",
 
@@ -276,22 +290,24 @@ func initModel() Model {
 		postgreSQLSSLModes: []string{"disable", "require", "verify-full", "verify-ca"},
 		mySQLSSLModes:      []string{"true", "false", "skip-verify", "preferred"},
 		oracleSSLModes:     []string{"enable", "disable"},
+		sqlServerSSLModes:  []string{"strict", "disable", "false", "true"},
 		sqliteSSLModes:     []string{},
 
-		hostInput:        host,
-		portInput:        port,
-		userInput:        user,
-		passwordInput:    password,
-		databaseInput:    database,
-		limitInput:       limit,
-		filePathInput:    filePath,
-		sslCertInput:     sslCert,
-		sslKeyInput:      sslKey,
-		sslPasswordInput: sslPassword,
-		sslRootcertInput: sslRootCert,
-		sslVerifyInput:   sslVerify,
-		traceFileInput:   traceFile,
-		walletInput:      wallet,
+		hostInput:                   host,
+		portInput:                   port,
+		userInput:                   user,
+		passwordInput:               password,
+		databaseInput:               database,
+		limitInput:                  limit,
+		filePathInput:               filePath,
+		sslCertInput:                sslCert,
+		sslKeyInput:                 sslKey,
+		sslPasswordInput:            sslPassword,
+		sslRootcertInput:            sslRootCert,
+		sslVerifyInput:              sslVerify,
+		traceFileInput:              traceFile,
+		walletInput:                 wallet,
+		trustServerCertificateInput: trustServerCertificate,
 	}
 
 	return m
@@ -310,21 +326,26 @@ func Run() (command.Options, error) {
 	}
 
 	opts := command.Options{
-		Driver:      m.driver,
-		Host:        m.Host(),
-		Port:        m.Port(),
-		User:        m.User(),
-		Pass:        m.Password(),
-		DBName:      m.Database(),
-		SSL:         m.SSLMode(),
-		SSLCert:     m.SSLCert(),
-		SSLKey:      m.SSLKey(),
-		SSLPassword: m.SSLPassword(),
-		SSLRootcert: m.SSLRootcert(),
-		SSLVerify:   m.SSLVerify(),
-		TraceFile:   m.TraceFile(),
-		Wallet:      m.Wallet(),
-		Limit:       limit,
+		Driver:                 m.driver,
+		Host:                   m.Host(),
+		Port:                   m.Port(),
+		User:                   m.User(),
+		Pass:                   m.Password(),
+		DBName:                 m.Database(),
+		SSL:                    m.SSLMode(),
+		SSLCert:                m.SSLCert(),
+		SSLKey:                 m.SSLKey(),
+		SSLPassword:            m.SSLPassword(),
+		SSLRootcert:            m.SSLRootcert(),
+		SSLVerify:              m.SSLVerify(),
+		TraceFile:              m.TraceFile(),
+		Wallet:                 m.Wallet(),
+		TrustServerCertificate: m.TrustServerCertificate(),
+		Limit:                  limit,
+	}
+
+	if m.driver == drivers.SQLServer {
+		opts.Encrypt = m.SSLMode()
 	}
 
 	if m.driver == "sqlite" {
@@ -352,6 +373,7 @@ func IsEmpty(opts command.Options) bool {
 			"TraceFile",
 			"SSLVerify",
 			"Wallet",
+			"TrustServerCertificate",
 		),
 	)
 }

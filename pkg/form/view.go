@@ -68,6 +68,8 @@ func sslView(m *Model) string {
 		sslModes = m.oracleSSLModes
 	case drivers.SQLite:
 		sslModes = m.sqliteSSLModes
+	case drivers.SQLServer:
+		sslModes = m.sqlServerSSLModes
 	default:
 		sslModes = m.postgreSQLSSLModes
 	}
@@ -118,6 +120,13 @@ func sslConnViewInputs(m *Model) []string {
 			m.sslVerifyInput.View(),
 			m.walletInput.View(),
 		}
+	case drivers.SQLServer:
+		if m.sslMode == "strict" || m.sslMode == "true" {
+			inputs = []string{
+				m.trustServerCertificateInput.View(),
+			}
+		}
+
 	}
 
 	return inputs

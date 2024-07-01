@@ -16,4 +16,22 @@ database:
     user: "postgres"
     schema: "public"
     driver: "postgres"
+  - name: "oracle"
+    host: "localhost"
+    port: 1521
+    db: "FREEPDB1 "
+    password: "password"
+    user: "system"
+    driver: "oracle"
+    ssl: "enable"
+    wallet: "path/to/wallet"
+    ssl-verify: true
+    trace: "trace.log"
+  - name: "sqlserver"
+    driver: "sqlserver"
+    host: "localhost"
+    port: 1433
+    db: "msdb"
+    password: "5@klkbN#ABC"
+    user: "SA"
 limit: 50

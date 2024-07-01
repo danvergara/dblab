@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	_ "github.com/microsoft/go-mssqldb"
 	_ "github.com/sijms/go-ora/v2"
 	_ "modernc.org/sqlite"
 
@@ -70,6 +71,8 @@ func New(opts command.Options) (*Client, error) {
 		c.databaseQuerier = newSQLite()
 	case drivers.Oracle:
 		c.databaseQuerier = newOracle()
+	case drivers.SQLServer:
+		c.databaseQuerier = newMSSQL()
 	default:
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}
@@ -338,6 +341,13 @@ func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
 		)
+	case drivers.SQLServer:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			tableName,
+			c.paginationManager.Offset(),
+			c.paginationManager.Limit(),
+		)
 	default:
 		query = fmt.Sprintf(
 			"SELECT * FROM %s LIMIT %d OFFSET %d;",
@@ -360,8 +370,6 @@ func (c *Client) tableCount(tableName string) (int, error) {
 	switch c.driver {
 	case drivers.Postgres, drivers.PostgreSQL:
 		query = fmt.Sprintf("SELECT COUNT(*) FROM %q;", tableName)
-	case drivers.Oracle:
-		query = fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
 	default:
 		query = fmt.Sprintf("SELECT COUNT(*) FROM %s;", tableName)
 	}
