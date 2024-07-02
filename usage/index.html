@@ -1,0 +1,1022 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3, written in Go and works on OSX, Linux and Windows machines.">
+      
+      
+      
+        <link rel="canonical" href="https://dblab.danvergara.com/usage/">
+      
+      
+        <link rel="prev" href="../tutorials/config-file/">
+      
+      
+        <link rel="next" href="../features/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
+    
+    
+      
+        <title>Usage - dblab</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/extra.css">
+    
+      <link rel="stylesheet" href="../termynal.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#available-commands" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="dblab" class="md-header__button md-logo" aria-label="dblab" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            dblab
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/danvergara/dblab" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    danvergara/dblab
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="dblab" class="md-nav__button md-logo" aria-label="dblab" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    dblab
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/danvergara/dblab" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    danvergara/dblab
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dblab
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First steps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/navigation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Navigation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/config-file/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Config File
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#available-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Available Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flags
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Navigation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Navigation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Bindings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connection Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connection Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Features
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release notes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contribute
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#available-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Available Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flags
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Navigation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Navigation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Bindings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connection Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Connection Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  <h1>Usage</h1>
+
+<p>You can get started by using the connection flags or by using a configuration file with the connection params.</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>dblab<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span><span class="w"> </span>
+</code></pre></div>
+<p>or</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>dblab<span class="w"> </span><span class="o">[</span>command<span class="o">]</span>
+</code></pre></div>
+<h3 id="available-commands">Available Commands<a class="headerlink" href="#available-commands" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"><code>help</code></th>
+<th style="text-align: center;">Help about any command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>version</code></td>
+<td style="text-align: center;">The version of the project</td>
+</tr>
+</tbody>
+</table>
+<h3 id="flags">Flags<a class="headerlink" href="#flags" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Flag</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>--cfg-name</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Database config name section</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--config</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: left;">Get the connection data from a config file (default is $HOME/.dblab.yaml or the current directory)</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--db</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Database name</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--driver</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Database driver</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>-h, --help</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: left;">help for dblab</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--host</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Server host name or IP</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--limit</code></td>
+<td style="text-align: center;"><code>int</code></td>
+<td style="text-align: left;">Size of the result set from the table content query (should be greater than zero, otherwise the app will error out) (default 100)</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--pass</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Password for user</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--port</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Server port</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--schema</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Database schema (postgres only)</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--socket</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Path to a Unix socket file</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--ssl</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">SSL mode</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>-u, --url</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Database connection string</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>--user</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td style="text-align: left;">Database user</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>dblab [command] --help</code> for more information about a command.</p>
+<h2 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">&para;</a></h2>
+<p>If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
+Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively).  </p>
+<p>If you want to see the rows of a table, press <kbd>Enter</kbd>.  </p>
+<p>To see the schema of a table, locate yourself on the <code>rows</code> panel and press <kbd>Ctrl+S</kbd> to switch to the <code>structure</code> panel, then switch <kbd>Ctrl+S</kbd> to switch back.  </p>
+<p>The same can be achieved for the <code>constraints</code> view by pressing <kbd>Ctrl+F</kbd> to go back and forth between the <code>rows</code> and the <code>constraints</code> panels.</p>
+<p>Now, there's a menu to navigate between hidden views by just clicking on the desired options:</p>
+<p><img :=":" alt="Alt Text" class="center" src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/rows-view.png" width="700" />
+<img :=":" alt="Alt Text" class="center" src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/structure-view.png" width="700" />
+<img :=":" alt="Alt Text" class="center" src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/constraints-view.png" width="700" />
+<img :=":" alt="Alt Text" class="center" src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/indexes-view.png" width="700" /></p>
+<p>As you may have noticed, navigation has already been added, so every time you query the content of a listed table, the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
+Just hit the <code>BACK</code> and <code>NEXT</code> buttons to go back and forth.</p>
+<h3 id="key-bindings">Key Bindings<a class="headerlink" href="#key-bindings" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><kbd>Ctrl+Space</kbd></td>
+<td>If the query panel is active, execute the query</td>
+</tr>
+<tr>
+<td><kbd>Enter</kbd></td>
+<td>If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+S</kbd></td>
+<td>If the rows panel is active, switch to the schema panel. The opposite is true</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+F</kbd></td>
+<td>If the rows panel is active, switch to the constraints view. The opposite is true</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+I</kbd></td>
+<td>If the rows panel is active, switch to the indexes view. The opposite is true</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+H</kbd></td>
+<td>Toggle to the panel on the left</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+J</kbd></td>
+<td>Toggle to the panel below</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+K</kbd></td>
+<td>Toggle to the panel above</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+L</kbd></td>
+<td>Toggle to the panel on the right</td>
+</tr>
+<tr>
+<td><kbd>Arrow Up</kbd></td>
+<td>Next row of the result set on the panel. Views: rows, table, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>k</kbd></td>
+<td>Next row of the result set on the panel. Views: rows, table, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>Arrow Down</kbd></td>
+<td>Previous row of the result set on the panel. Views: rows, table, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>j</kbd></td>
+<td>Previous row of the result set on the panel. Views: rows, table, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>Arrow Right</kbd></td>
+<td>Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>l</kbd></td>
+<td>Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>Arrow Left</kbd></td>
+<td>Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>h</kbd></td>
+<td>Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+c</kbd></td>
+<td>Quit</td>
+</tr>
+</tbody>
+</table>
+<h2 id="connection-examples">Connection Examples<a class="headerlink" href="#connection-examples" title="Permanent link">&para;</a></h2>
+<p>You can start the app without passing flags or parameters, so then an interactive command prompt will ask for the connection details.  </p>
+<p><img :=":" alt="Alt Text" class="center" src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/dblab-default-form.gif" width="500" /></p>
+<p>Otherwise, you can explicitly include the connection details using multiple parameters:</p>
+<p><div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--host<span class="w"> </span>localhost<span class="w"> </span>--user<span class="w"> </span>myuser<span class="w"> </span>--db<span class="w"> </span>users<span class="w"> </span>--pass<span class="w"> </span>password<span class="w"> </span>--ssl<span class="w"> </span>disable<span class="w"> </span>--port<span class="w"> </span><span class="m">5432</span><span class="w"> </span>--driver<span class="w"> </span>postgres<span class="w"> </span>--limit<span class="w"> </span><span class="m">50</span>
+</code></pre></div>
+<div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--db<span class="w"> </span>path/to/file.sqlite3<span class="w"> </span>--driver<span class="w"> </span>sqlite
+</code></pre></div></p>
+<p>Connection URL scheme is also supported:</p>
+<p><div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--url<span class="w"> </span>postgres://user:password@host:port/database?sslmode<span class="o">=[</span>mode<span class="o">]</span>
+</code></pre></div>
+<div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--url<span class="w"> </span>mysql://user:password@tcp<span class="o">(</span>host:port<span class="o">)</span>/db
+</code></pre></div>
+<div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--url<span class="w"> </span>file:test.db?cache<span class="o">=</span>shared<span class="p">&amp;</span><span class="nv">mode</span><span class="o">=</span>memory
+</code></pre></div></p>
+<p>if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is <code>public</code>.</p>
+<p><div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--host<span class="w"> </span>localhost<span class="w"> </span>--user<span class="w"> </span>myuser<span class="w"> </span>--db<span class="w"> </span>users<span class="w"> </span>--pass<span class="w"> </span>password<span class="w"> </span>--schema<span class="w"> </span>myschema<span class="w"> </span>--ssl<span class="w"> </span>disable<span class="w"> </span>--port<span class="w"> </span><span class="m">5432</span><span class="w"> </span>--driver<span class="w"> </span>postgres<span class="w"> </span>--limit<span class="w"> </span><span class="m">50</span>
+</code></pre></div>
+<div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--url<span class="w"> </span>postgres://user:password@host:port/database?sslmode<span class="o">=[</span>mode<span class="o">]</span><span class="w"> </span>--schema<span class="w"> </span>myschema
+</code></pre></div></p>
+<p>As a request made in <a href="https://github.com/danvergara/dblab/issues/125">#125</a>, support for MySQL/MariaDB sockets was integrated.</p>
+<p><div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--url<span class="w"> </span><span class="s2">&quot;mysql://user:password@unix(/path/to/socket/mysql.sock)/dbname?charset=utf8&quot;</span>
+</code></pre></div>
+<div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--socket<span class="w"> </span>/path/to/socket/mysql.sock<span class="w"> </span>--user<span class="w"> </span>user<span class="w"> </span>--db<span class="w"> </span>dbname<span class="w"> </span>--pass<span class="w"> </span>password<span class="w"> </span>--ssl<span class="w"> </span>disable<span class="w"> </span>--port<span class="w"> </span><span class="m">5432</span><span class="w"> </span>--driver<span class="w"> </span>mysql<span class="w"> </span>--limit<span class="w"> </span><span class="m">50</span>
+</code></pre></div></p>
+<p>Now, it is possible to ensure SSL connections with <code>PostgreSQL</code> databases. SSL related parameters has been added, such as <code>--sslcert</code>, <code>--sslkey</code>, <code>--sslpassword</code>, <code>--sslrootcert</code>. More information on how to use such connection flags can be found <a href="https://www.postgresql.org/docs/current/libpq-connect.html">here</a>.</p>
+<div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--host<span class="w">  </span>db-postgresql-nyc3-56456-do-user-foo-0.fake.db.ondigitalocean.com<span class="w"> </span>--user<span class="w"> </span>myuser<span class="w"> </span>--db<span class="w"> </span>users<span class="w"> </span>--pass<span class="w"> </span>password<span class="w"> </span>--schema<span class="w"> </span>myschema<span class="w"> </span>--port<span class="w"> </span><span class="m">5432</span><span class="w"> </span>--driver<span class="w"> </span>postgres<span class="w"> </span>--limit<span class="w"> </span><span class="m">50</span><span class="w"> </span>--ssl<span class="w"> </span>require<span class="w"> </span>--sslrootcert<span class="w"> </span>~/Downloads/foo.crt
+</code></pre></div>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
+<p>Entering the parameters and flags every time you want to use it is tedious, 
+so <code>dblab</code> provides a couple of flags to help with it: <code>--config</code> and <code>--cfg-name</code>.</p>
+<p><code>dblab</code> is going to look for a file called <code>.dblab.yaml</code>. Currently, there are three places where you can drop a config file:</p>
+<ul>
+<li>$XDG_CONFIG_HOME ($XDG_CONFIG_HOME/.dblab.yaml)</li>
+<li>$HOME ($HOME/.dblab.yaml)</li>
+<li>. (the current directory where you run the command line tool)</li>
+</ul>
+<p>If you want to use this feature, <code>--config</code> is mandatory and <code>--cfg-name</code> may be omitted. The config file can store one or multiple database connection sections under the <code>database</code> field. <code>database</code> is an array, previously was an object only able to store a single connection section at a time. </p>
+<p>We strongly encourage you to adopt the new format as of <code>v0.18.0</code>. <code>--cfg-name</code> takes the name of the desired database section to connect with. It can be omitted and its default values will be the first item on the array.</p>
+<p>As of <code>v0.21.0</code>, ssl connections options are supported in the config file.</p>
+<p><div class="copy highlight"><pre><span></span><code>dbladb<span class="w"> </span>--config
+</code></pre></div>
+<div class="copy highlight"><pre><span></span><code>dblab<span class="w"> </span>--config<span class="w"> </span>--cfg-name<span class="w"> </span><span class="s2">&quot;prod&quot;</span>
+</code></pre></div></p>
+<p><code>.dblab.yaml</code> example:</p>
+<div class="copy highlight"><pre><span></span><code><span class="nt">database</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;test&quot;</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432</span>
+<span class="w">    </span><span class="nt">db</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;users&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;password&quot;</span>
+<span class="w">    </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres&quot;</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres&quot;</span>
+<span class="w">    </span><span class="c1"># optional</span>
+<span class="w">    </span><span class="c1"># postgres only</span>
+<span class="w">    </span><span class="c1"># default value: public</span>
+<span class="w">    </span><span class="nt">schema</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;myschema&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;prod&quot;</span>
+<span class="w">    </span><span class="c1"># example endpoint</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mydb.123456789012.us-east-1.rds.amazonaws.com&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432</span>
+<span class="w">    </span><span class="nt">db</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;users&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;password&quot;</span>
+<span class="w">    </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres&quot;</span>
+<span class="w">    </span><span class="nt">schema</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;public&quot;</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres&quot;</span>
+<span class="w">    </span><span class="nt">ssl</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;require&quot;</span>
+<span class="w">    </span><span class="nt">sslrootcert</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;~/.postgresql/root.crt.&quot;</span>
+<span class="c1"># should be greater than 0, otherwise the app will error out</span>
+<span class="nt">limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+</code></pre></div>
+<p>Or for sqlite:</p>
+<div class="copy highlight"><pre><span></span><code><span class="nt">database</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;prod&quot;</span>
+<span class="w">    </span><span class="nt">db</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;path/to/file.sqlite3&quot;</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sqlite&quot;</span>
+</code></pre></div>
+<p>Only the <code>host</code> and <code>ssl</code> fields are optionals. <code>127.0.0.1</code> and <code>disable</code>, respectively.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
+      
+        <script src="../termynal.js"></script>
+      
+    
+  </body>
+</html>
