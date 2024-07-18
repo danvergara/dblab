@@ -67,6 +67,13 @@ func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
 
 	_, cy := v.Cursor()
 
+	ov, err := gui.g.View("rows")
+	if err != nil {
+		return err
+	}
+
+	gui.cleanOuput()
+
 	t, err := v.Line(cy)
 	if err != nil {
 		return err
@@ -74,29 +81,33 @@ func (gui *Gui) metadata(g *gocui.Gui, v *gocui.View) error {
 
 	m, err := gui.c.Metadata(t)
 	if err != nil {
-		return err
-	}
+		// Prints the error in red on the rows view.
+		red := color.New(color.FgRed)
+		boldRed := red.Add(color.Bold)
+		boldRed.Fprintf(ov, "%s\n", err)
+	} else {
+		var viewQueries = []struct {
+			name    string
+			columns []string
+			rows    [][]string
+		}{
+			{"rows", m.TableContent.Columns, m.TableContent.Rows},
+			{"structure", m.Structure.Columns, m.Structure.Rows},
+			{"constraints", m.Constraints.Columns, m.Constraints.Rows},
+			{"indexes", m.Indexes.Columns, m.Indexes.Rows},
+		}
 
-	var viewQueries = []struct {
-		name    string
-		columns []string
-		rows    [][]string
-	}{
-		{"rows", m.TableContent.Columns, m.TableContent.Rows},
-		{"structure", m.Structure.Columns, m.Structure.Rows},
-		{"constraints", m.Constraints.Columns, m.Constraints.Rows},
-		{"indexes", m.Indexes.Columns, m.Indexes.Rows},
-	}
+		for _, vq := range viewQueries {
+			if err := gui.render(v, vq.name, vq.columns, vq.rows); err != nil {
+				return err
+			}
+		}
 
-	for _, vq := range viewQueries {
-		if err := gui.render(v, vq.name, vq.columns, vq.rows); err != nil {
+		if err := gui.showIndex("index", 1, m.TotalPages); err != nil {
 			return err
 		}
 	}
 
-	if err := gui.showIndex("index", 1, m.TotalPages); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -220,4 +231,12 @@ func (gui *Gui) previousPage(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	return nil
+}
+
+func (gui *Gui) cleanOuput() {
+	outputViews := []string{"rows", "structure", "constraints", "indexes"}
+	for _, o := range outputViews {
+		ov, _ := gui.g.View(o)
+		ov.Clear()
+	}
 }
