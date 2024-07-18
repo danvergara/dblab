@@ -38,9 +38,10 @@ jobs:
           echo ${{ env.CURRENT_VERSION }}
       - name: Run GoReleaser
         if: env.RELEASE_VERSION == env.CURRENT_VERSION
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
-          version: latest
+          distribution: goreleaser
+          version: '~> v2'
           args: release -f .goreleaser.yaml --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
