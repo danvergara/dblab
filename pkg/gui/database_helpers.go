@@ -198,9 +198,6 @@ func (gui *Gui) nextPage(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	totalPages := gui.c.TotalPages()
-	if err != nil {
-		return err
-	}
 
 	if err := gui.showIndex("index", page, totalPages); err != nil {
 		return err
@@ -222,9 +219,6 @@ func (gui *Gui) previousPage(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	totalPages := gui.c.TotalPages()
-	if err != nil {
-		return err
-	}
 
 	if err := gui.showIndex("index", page, totalPages); err != nil {
 		return err
