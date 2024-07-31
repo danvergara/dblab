@@ -21,7 +21,7 @@ func TestVersionCmd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(out), "v0.25.0") {
-		t.Fatalf("expected \"%s\" got \"%s\"", "v0.25.0", string(out))
+	if !strings.Contains(string(out), "v0.26.0") {
+		t.Fatalf("expected \"%s\" got \"%s\"", "v0.26.0", string(out))
 	}
 }
