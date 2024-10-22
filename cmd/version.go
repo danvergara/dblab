@@ -1,33 +1,13 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
-	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	// Revision is taken from the vcs.revision tag in Go 1.18+.
-	Revision = "unknown"
-)
-
-func init() {
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return
-	}
-	for _, kv := range info.Settings {
-		if kv.Value == "" {
-			continue
-		}
-
-		switch kv.Key {
-		case "vcs.revision":
-			Revision = kv.Value
-		}
-	}
+func SetVersionInfo(version string) {
+	rootCmd.Version = fmt.Sprint(version)
 }
 
 // NewVersionCmd return a versionCmd instance.
@@ -38,38 +18,14 @@ func NewVersionCmd() *cobra.Command {
 		Short: "The version of the project",
 		Long: `The current version of the project.
 		This projects follows the semantic versioning standard.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			buildInfo, ok := debug.ReadBuildInfo()
-			if !ok {
-				return fmt.Errorf("unable to determine version information")
-			}
-
-			if buildInfo.Main.Version != "" {
-				fmt.Fprintln(cmd.OutOrStdout(), parseVersion(buildInfo.Main.Version))
-			} else {
-				return errors.New("version: unknown")
-			}
-
-			return nil
+		Run: func(cmd *cobra.Command, args []string) {
+			root := cmd.Root()
+			root.SetArgs([]string{"--version"})
+			_ = root.Execute()
 		},
 	}
 
 	return versionCmd
-}
-
-// parseVersion parses the version passed as a parameter.
-// If the version is equal to unknown or (devel), it shows the commit hash as a revision.
-func parseVersion(version string) string {
-	if version == "unknown" || version == "(devel)" {
-		commit := Revision
-		if len(commit) > 7 {
-			commit = commit[:7]
-		}
-
-		return fmt.Sprintf("rev: %s", commit)
-	}
-
-	return version
 }
 
 func init() {

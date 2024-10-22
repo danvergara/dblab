@@ -1,22 +1,61 @@
-/*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package main
 
-import "github.com/danvergara/dblab/cmd"
+import (
+	"fmt"
+	"runtime/debug"
+
+	"github.com/danvergara/dblab/cmd"
+)
+
+// these values are automagically populated by Goreleaser.
+var (
+	version  = "dev"
+	Revision = "unknown"
+)
+
+func init() {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+
+	for _, kv := range info.Settings {
+		switch kv.Key {
+		case "vcs.revision":
+			Revision = kv.Value
+		}
+	}
+}
 
 func main() {
+	if version == "dev" {
+		version = parseVersion()
+	} else {
+		// Goreleaser doesn't prefix with a `v`, which we expect.
+		version = "v" + version
+	}
+
+	cmd.SetVersionInfo(version)
 	cmd.Execute()
+}
+
+// parseVersion parses the version passed as a parameter.
+// If the version is equal to unknown or (devel), it shows the commit hash as a revision.
+func parseVersion() string {
+	info, _ := debug.ReadBuildInfo()
+	v := info.Main.Version
+
+	if v == "unknown" || v == "(devel)" {
+		if Revision != "unknown" && Revision != "" {
+			commit := Revision
+			if len(commit) > 7 {
+				commit = commit[:7]
+			}
+			return fmt.Sprintf("rev: %s", commit)
+		}
+	} else {
+		return v
+	}
+
+	return "unknown"
 }
