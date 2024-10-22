@@ -1,30 +1,37 @@
 package cmd
 
-/*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 import (
+	"errors"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
 
+var (
+	// Revision is taken from the vcs.revision tag in Go 1.18+.
+	Revision = "unknown"
+)
+
+func init() {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+	for _, kv := range info.Settings {
+		if kv.Value == "" {
+			continue
+		}
+
+		switch kv.Key {
+		case "vcs.revision":
+			Revision = kv.Value
+		}
+	}
+}
+
 // NewVersionCmd return a versionCmd instance.
 func NewVersionCmd() *cobra.Command {
-
 	// versionCmd represents the version command.
 	versionCmd := &cobra.Command{
 		Use:   "version",
@@ -32,12 +39,37 @@ func NewVersionCmd() *cobra.Command {
 		Long: `The current version of the project.
 		This projects follows the semantic versioning standard.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(cmd.OutOrStdout(), "v0.26.0")
+			buildInfo, ok := debug.ReadBuildInfo()
+			if !ok {
+				return fmt.Errorf("unable to determine version information")
+			}
+
+			if buildInfo.Main.Version != "" {
+				fmt.Fprintln(cmd.OutOrStdout(), parseVersion(buildInfo.Main.Version))
+			} else {
+				return errors.New("version: unknown")
+			}
+
 			return nil
 		},
 	}
 
 	return versionCmd
+}
+
+// parseVersion parses the version passed as a parameter.
+// If the version is equal to unknown or (devel), it shows the commit hash as a revision.
+func parseVersion(version string) string {
+	if version == "unknown" || version == "(devel)" {
+		commit := Revision
+		if len(commit) > 7 {
+			commit = commit[:7]
+		}
+
+		return fmt.Sprintf("rev: %s", commit)
+	}
+
+	return version
 }
 
 func init() {
