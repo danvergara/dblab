@@ -114,6 +114,7 @@ Flags:
       --trust-server-certificate string   [false|true] server certificate is checked or not
   -u, --url string                        Database connection string
       --user string                       Database user
+  -v, --version                           version for dblab
       --wallet string                     Path for auto-login oracle wallet
 
 Use "dblab [command] --help" for more information about a command.
