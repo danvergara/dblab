@@ -1,15 +1,16 @@
 package app
 
 import (
+	"github.com/danvergara/gocui"
+
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
-	"github.com/danvergara/dblab/pkg/gui"
-	"github.com/danvergara/gocui"
+	"github.com/danvergara/dblab/pkg/tui"
 )
 
 // App Struct.
 type App struct {
-	g *gui.Gui
+	t *tui.Tui
 	c *client.Client
 }
 
@@ -20,13 +21,13 @@ func New(g *gocui.Gui, opts command.Options) (*App, error) {
 		return nil, err
 	}
 
-	gcui, err := gui.New(g, c)
+	t, err := tui.New(c)
 	if err != nil {
 		return nil, err
 	}
 
 	app := App{
-		g: gcui,
+		t: t,
 		c: c,
 	}
 
@@ -35,13 +36,11 @@ func New(g *gocui.Gui, opts command.Options) (*App, error) {
 
 // Run runs the application.
 func (a *App) Run() error {
-
 	defer func() {
 		_ = a.c.DB().Close()
-		a.g.Gui().Close()
 	}()
 
-	if err := a.g.Run(); err != nil {
+	if err := a.t.Run(); err != nil {
 		return err
 	}
 

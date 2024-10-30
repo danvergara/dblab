@@ -3,8 +3,9 @@ package gui
 import (
 	"errors"
 
-	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/gocui"
+
+	"github.com/danvergara/dblab/pkg/client"
 )
 
 // Gui wraps the gocui Gui object which handles rendering and events.
@@ -15,7 +16,6 @@ type Gui struct {
 
 // New builds a new gui handler.
 func New(g *gocui.Gui, c *client.Client) (*Gui, error) {
-
 	gui := Gui{
 		g: g,
 		c: c,
