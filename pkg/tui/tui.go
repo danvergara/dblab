@@ -7,6 +7,24 @@ import (
 	"github.com/danvergara/dblab/pkg/client"
 )
 
+const (
+	// Tables' metadata pages.
+	columnsPage     = "columns"
+	structurePage   = "structure"
+	indexesPage     = "indexes"
+	constraintsPage = "constraints"
+
+	// Tables' metadata page titles.
+	columnsPageTitle     = "Columns"
+	structurePageTitle   = "Structure"
+	indexesPageTitle     = "Indexes"
+	constraintsPageTitle = "Constraints"
+
+	// Titles.
+	queriesAreaTitle = "SQL query"
+	tablesListTitle  = "tables"
+)
+
 type Tui struct {
 	app   *tview.Application
 	c     *client.Client
@@ -31,34 +49,34 @@ func New(c *client.Client) (*Tui, error) {
 
 func (t *Tui) prepare() error {
 	queries := tview.NewTextArea().SetPlaceholder("Enter your query here...")
-	queries.SetTitle("SQL query").SetBorder(true)
+	queries.SetTitle(queriesAreaTitle).SetBorder(true)
 
 	// Tables metadata.
 	structure := tview.NewTable().SetBorders(true)
-	structure.SetBorder(true).SetTitle("Structure")
+	structure.SetBorder(true).SetTitle(structurePageTitle)
 
 	columns := tview.NewTable().SetBorders(true)
-	columns.SetBorder(true).SetTitle("Columns")
+	columns.SetBorder(true).SetTitle(columnsPageTitle)
 
 	constraints := tview.NewTable().SetBorders(true)
-	constraints.SetBorder(true).SetTitle("Constraints")
+	constraints.SetBorder(true).SetTitle(constraintsPageTitle)
 
 	indexes := tview.NewTable().SetBorders(true)
-	indexes.SetBorder(true).SetTitle("Indexes")
+	indexes.SetBorder(true).SetTitle(indexesPageTitle)
 
 	tables := tview.NewList()
-	tables.ShowSecondaryText(false)
-	tables.SetDoneFunc(func() {
-		tables.Clear()
-		structure.Clear()
-	})
-	tables.SetBorder(true).SetTitle("Tables")
+	tables.ShowSecondaryText(false).
+		SetDoneFunc(func() {
+			tables.Clear()
+			structure.Clear()
+		})
+	tables.SetBorder(true).SetTitle(tablesListTitle)
 
 	tableMetadata := tview.NewPages().
-		AddPage("structure", structure, true, true).
-		AddPage("columns", columns, true, false).
-		AddPage("constraints", constraints, true, false).
-		AddPage("indexes", indexes, true, false)
+		AddPage(columnsPage, columns, true, true).
+		AddPage(structurePage, structure, true, false).
+		AddPage(constraintsPage, constraints, true, false).
+		AddPage(indexesPage, indexes, true, false)
 
 	rightFlex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -75,24 +93,45 @@ func (t *Tui) prepare() error {
 
 	tables.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
-		case tcell.KeyRight:
-			tableMetadata.SwitchToPage("structure")
-			t.app.SetFocus(tableMetadata)
+		case tcell.KeyCtrlL:
+			t.app.SetFocus(queries)
 		}
 
 		return event
 	})
 
 	tableMetadata.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		name, _ := tableMetadata.GetFrontPage()
+
 		switch event.Key() {
-		case tcell.KeyLeft:
+		case tcell.KeyCtrlH:
 			t.app.SetFocus(tables)
+		case tcell.KeyCtrlK:
+			t.app.SetFocus(queries)
 		case tcell.KeyCtrlS:
-			tableMetadata.SwitchToPage("structure")
+			if name == columnsPage {
+				tableMetadata.SwitchToPage(structurePage)
+				structure.ScrollToBeginning()
+			} else {
+				tableMetadata.SwitchToPage(columnsPage)
+				columns.ScrollToBeginning()
+			}
 		case tcell.KeyCtrlI:
-			tableMetadata.SwitchToPage("indexes")
-		case tcell.KeyCtrlF:
-			tableMetadata.SwitchToPage("constraints")
+			if name == columnsPage {
+				tableMetadata.SwitchToPage(indexesPage)
+				indexes.ScrollToBeginning()
+			} else {
+				tableMetadata.SwitchToPage(columnsPage)
+				columns.ScrollToBeginning()
+			}
+		case tcell.KeyCtrlT:
+			if name == columnsPage {
+				tableMetadata.SwitchToPage(constraintsPage)
+				constraints.ScrollToBeginning()
+			} else {
+				tableMetadata.SwitchToPage(columnsPage)
+				columns.ScrollToBeginning()
+			}
 		}
 
 		return event
@@ -100,10 +139,38 @@ func (t *Tui) prepare() error {
 
 	// When the user navigates to a table, show its columns.
 	tables.SetChangedFunc(func(i int, tableName string, st string, s rune) {
-		structure.Clear()
 		m, err := t.c.Metadata(tableName)
 		if err != nil {
 			panic(err)
+		}
+
+		columns.Clear()
+		structure.Clear()
+		indexes.Clear()
+		constraints.Clear()
+
+		columns.ScrollToBeginning()
+		structure.ScrollToBeginning()
+		indexes.ScrollToBeginning()
+		constraints.ScrollToBeginning()
+
+		tableMetadata.SwitchToPage(columnsPage)
+		for i, tc := range m.TableContent.Columns {
+			columns.SetCell(
+				0,
+				i,
+				&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorYellow},
+			)
+		}
+
+		for i, sr := range m.TableContent.Rows {
+			for j, sc := range sr {
+				if i == 0 {
+					columns.SetCell(i+1, j, &tview.TableCell{Text: sc, Color: tcell.ColorRed})
+				} else {
+					columns.SetCellSimple(i+1, j, sc)
+				}
+			}
 		}
 
 		for i, tc := range m.Structure.Columns {
@@ -159,6 +226,55 @@ func (t *Tui) prepare() error {
 				}
 			}
 		}
+
+	})
+
+	queries.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlSpace:
+			columns.Clear()
+			structure.Clear()
+			constraints.Clear()
+			indexes.Clear()
+
+			if err := t.c.ResetPagination(); err != nil {
+				panic(err)
+			}
+
+			query := queries.GetText()
+			resultSet, columnNames, err := t.c.Query(query)
+			if err != nil {
+				panic(err)
+			}
+
+			for i, tc := range columnNames {
+				columns.SetCell(
+					0,
+					i,
+					&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorYellow},
+				)
+			}
+
+			for i, sr := range resultSet {
+				for j, sc := range sr {
+					if i == 0 {
+						columns.SetCell(
+							i+1,
+							j,
+							&tview.TableCell{Text: sc, Color: tcell.ColorRed},
+						)
+					} else {
+						columns.SetCellSimple(i+1, j, sc)
+					}
+				}
+			}
+			// tableMetadata.SwitchToPage(columnsPage)
+		case tcell.KeyCtrlJ:
+			t.app.SetFocus(tableMetadata)
+		case tcell.KeyCtrlH:
+			t.app.SetFocus(tables)
+		}
+		return event
 	})
 
 	ts, err := t.showTables()
