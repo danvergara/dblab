@@ -1,8 +1,6 @@
 package app
 
 import (
-	"github.com/danvergara/gocui"
-
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/tui"
@@ -15,7 +13,7 @@ type App struct {
 }
 
 // New bootstrap a new application.
-func New(g *gocui.Gui, opts command.Options) (*App, error) {
+func New(opts command.Options) (*App, error) {
 	c, err := client.New(opts)
 	if err != nil {
 		return nil, err
