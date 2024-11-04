@@ -188,7 +188,7 @@ As of `v0.21.0`, ssl connections options are supported in the config file.
 
 ```sh
 # default: test
-$ dbladb --config
+$ dblab --config
 
 $ dblab --config --cfg-name "prod"
 ```
