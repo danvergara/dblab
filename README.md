@@ -123,7 +123,7 @@ Use "dblab [command] --help" for more information about a command.
 ## Usage
 
 You can start the app passing no flags or parameters, you'll be asked for connection data instead.
-![Alt Text](screenshots/dblab-default-form.gif)
+![dblab-demo](screenshots/dblab-demo.gif)
 
 
 ```sh
@@ -188,7 +188,7 @@ As of `v0.21.0`, ssl connections options are supported in the config file.
 
 ```sh
 # default: test
-$ dbladb --config
+$ dblab --config
 
 $ dblab --config --cfg-name "prod"
 ```
@@ -273,7 +273,7 @@ Key                                     | Description
 <kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query
 <kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel
 <kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel. The opposite is true
-<kbd>Ctrl+F</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true
+<kbd>Ctrl+T</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true
 <kbd>Ctrl+I</kbd>                       | If the rows panel is active, switch to the indexes view. The opposite is true
 <kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left
 <kbd>Ctrl+J</kbd>                       | Toggle to the panel below
