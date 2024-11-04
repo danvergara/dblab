@@ -123,7 +123,7 @@ Use "dblab [command] --help" for more information about a command.
 ## Usage
 
 You can start the app passing no flags or parameters, you'll be asked for connection data instead.
-![Alt Text](screenshots/dblab-default-form.gif)
+![dblab-demo](screenshots/dblab-demo.gif)
 
 
 ```sh
@@ -188,7 +188,7 @@ As of `v0.21.0`, ssl connections options are supported in the config file.
 
 ```sh
 # default: test
-$ dbladb --config
+$ dblab --config
 
 $ dblab --config --cfg-name "prod"
 ```
