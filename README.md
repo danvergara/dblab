@@ -123,7 +123,7 @@ Use "dblab [command] --help" for more information about a command.
 ## Usage
 
 You can start the app passing no flags or parameters, you'll be asked for connection data instead.
-![Alt Text](screenshots/dblab-default-form.gif)
+![dblab-demo](https://github.com/user-attachments/assets/4781f8c5-ebfb-424e-9701-751553684b18)
 
 
 ```sh
