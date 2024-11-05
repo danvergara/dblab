@@ -268,32 +268,26 @@ As you may have noticed, navigation has already been added, so every time you qu
 Just hit the `BACK` and `NEXT` buttons to go back and forth.
 
 ### Key Bindings
-Key                                     | Description
-----------------------------------------|---------------------------------------
-<kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query
-<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel
-<kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel. The opposite is true
-<kbd>Ctrl+T</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true
-<kbd>Ctrl+I</kbd>                       | If the rows panel is active, switch to the indexes view. The opposite is true
-<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left
-<kbd>Ctrl+J</kbd>                       | Toggle to the panel below
-<kbd>Ctrl+K</kbd>                       | Toggle to the panel above
-<kbd>Ctrl+L</kbd>                       | Toggle to the panel on the right
-<kbd>Arrow Up</kbd>                     | Next row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>k</kbd>                            | Next row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>Arrow Down</kbd>                   | Previous row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>j</kbd>                            | Previous row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>0</kbd>                            | Move cursor to the start of the current line. Views: rows, constraints, structure and indexes
-<kbd>$</kbd>                            | Move cursor to the end of the current line. Views: rows, constraints, structure and indexes
-<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes
-<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes
-<kbd>PgUp</kbd>                         | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes
-<kbd>PgDn</kbd>                         | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes
-<kbd>Ctrl+c</kbd>                       | Quit
+| Key                                     | Description                           |
+|----------------------------------------|----------------------------------------|
+|<kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query |
+|<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel |
+|<kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel. The opposite is true |
+|<kbd>Ctrl+T</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true |
+|<kbd>Ctrl+I</kbd>                       | If the rows panel is active, switch to the indexes view. The opposite is true |
+|<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left |
+|<kbd>Ctrl+J</kbd>                       | Toggle to the panel below |
+|<kbd>Ctrl+K</kbd>                       | Toggle to the panel above |
+|<kbd>Ctrl+L</kbd>                       | Toggle to the panel on the right |
+|<kbd>Arrow Up</kbd>                     | Vertical scrolling on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>k</kbd>                            | Vertical scrolling on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>Arrow Down</kbd>                   | Vertical on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>j</kbd>                            | Vertical on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>Ctrl+c</kbd>                       | Quit |
 
 ## Contribute
 
