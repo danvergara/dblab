@@ -287,6 +287,10 @@ Just hit the `BACK` and `NEXT` buttons to go back and forth.
 |<kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
 |<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
 |<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes |
+|<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes |
+|<kbd>Ctrl-F</kbd>                      | Move down by one page. Views: rows, constraints, structure and indexes |
+|<kbd>Ctrl-B</kbd>                      | Move up by one page. Views: rows, constraints, structure and indexes |
 |<kbd>Ctrl+c</kbd>                       | Quit |
 
 ## Contribute
