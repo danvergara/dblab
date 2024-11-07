@@ -112,6 +112,8 @@ func (t *Tui) setupQueries() {
 				return event
 			}
 
+			t.aw.pagination.SetText(fmt.Sprintf("%4d / %4d", 1, 1))
+
 			query := t.aw.queries.GetText()
 
 			// Call the Query method from the client and populate the content page.
@@ -318,7 +320,7 @@ func (t *Tui) setupTablesList() error {
 }
 
 func (t *Tui) setupPagination() {
-	t.aw.pagination = tview.NewTextView().SetText("1 / 10")
+	t.aw.pagination = tview.NewTextView().SetText(fmt.Sprintf("%4d / %4d", 1, 1))
 }
 
 // updateTableMetadataOnChange functions updates tables' data related views on different events.
