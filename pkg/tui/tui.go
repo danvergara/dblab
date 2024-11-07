@@ -292,6 +292,8 @@ func (t *Tui) setupTablesList() error {
 		switch event.Key() {
 		case tcell.KeyCtrlL:
 			t.app.SetFocus(t.aw.queries)
+		case tcell.KeyEnter:
+			t.updateTableMetadataOnChange("")
 		}
 
 		switch event.Rune() {
@@ -306,14 +308,6 @@ func (t *Tui) setupTablesList() error {
 		}
 
 		return event
-	})
-
-	t.aw.tables.SetFocusFunc(func() {
-		t.updateTableMetadataOnChange("")
-	})
-
-	t.aw.tables.SetChangedFunc(func(i int, tableName string, st string, s rune) {
-		t.updateTableMetadataOnChange(tableName)
 	})
 
 	return nil
