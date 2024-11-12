@@ -112,6 +112,8 @@ func (t *Tui) setupQueries() {
 				return event
 			}
 
+			t.aw.pagination.SetText(fmt.Sprintf("%4d / %4d", 1, 1))
+
 			query := t.aw.queries.GetText()
 
 			// Call the Query method from the client and populate the content page.
@@ -290,6 +292,8 @@ func (t *Tui) setupTablesList() error {
 		switch event.Key() {
 		case tcell.KeyCtrlL:
 			t.app.SetFocus(t.aw.queries)
+		case tcell.KeyEnter:
+			t.updateTableMetadataOnChange("")
 		}
 
 		switch event.Rune() {
@@ -306,19 +310,11 @@ func (t *Tui) setupTablesList() error {
 		return event
 	})
 
-	t.aw.tables.SetFocusFunc(func() {
-		t.updateTableMetadataOnChange("")
-	})
-
-	t.aw.tables.SetChangedFunc(func(i int, tableName string, st string, s rune) {
-		t.updateTableMetadataOnChange(tableName)
-	})
-
 	return nil
 }
 
 func (t *Tui) setupPagination() {
-	t.aw.pagination = tview.NewTextView().SetText("1 / 10")
+	t.aw.pagination = tview.NewTextView().SetText(fmt.Sprintf("%4d / %4d", 1, 1))
 }
 
 // updateTableMetadataOnChange functions updates tables' data related views on different events.
