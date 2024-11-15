@@ -19,6 +19,14 @@ func newSQLite() *sqlite {
 	return &s
 }
 
+func (s *sqlite) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
+	return "", nil, nil
+}
+
+func (s *sqlite) ShowDatabases() (string, []interface{}, error) {
+	return "", nil, nil
+}
+
 // ShowTables returns a query to retrieve all the tables.
 func (s *sqlite) ShowTables() (string, []interface{}, error) {
 	query := `
