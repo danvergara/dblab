@@ -285,8 +285,8 @@ func TestConstraints(t *testing.T) {
 	t.Logf("constraints content %v", r)
 
 	assert.NoError(t, err)
-	assert.Greater(t, len(r), 0)
-	assert.Greater(t, len(co), 0)
+	assert.NotEmpty(t, r)
+	assert.NotEmpty(t, co)
 }
 
 func TestIndexes(t *testing.T) {
@@ -311,8 +311,8 @@ func TestIndexes(t *testing.T) {
 	r, co, err := c.indexes("products")
 
 	assert.NoError(t, err)
-	assert.Greater(t, len(r), 0)
-	assert.Greater(t, len(co), 0)
+	assert.NotEmpty(t, r)
+	assert.NotEmpty(t, co)
 }
 
 func TestMetadata(t *testing.T) {

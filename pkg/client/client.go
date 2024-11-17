@@ -149,15 +149,22 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 	var (
 		resultSet = [][]string{}
 		db        *sqlx.DB
+		ok        bool
 	)
+
+	db = c.db
 
 	if c.activeDatabase != "" {
 		switch c.driver {
 		case drivers.Postgres, drivers.PostgreSQL, drivers.MySQL:
-			db = c.dbs[c.activeDatabase]
+			db, ok = c.dbs[c.activeDatabase]
+			if !ok {
+				return nil, nil, fmt.Errorf(
+					"connection with %s database not found",
+					c.activeDatabase,
+				)
+			}
 		}
-	} else {
-		db = c.db
 	}
 
 	// Runs the query extracting the content of the view calling the Buffer method.
@@ -193,6 +200,9 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 		}
 
 		resultSet = append(resultSet, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
 	}
 
 	return resultSet, columnNames, nil
@@ -301,6 +311,9 @@ func (c *Client) ShowTablesPerDB(database string) ([]string, error) {
 
 		tables = append(tables, table)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return tables, nil
 }
@@ -333,6 +346,9 @@ func (c *Client) ShowTables() ([]string, error) {
 
 		tables = append(tables, table)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return tables, nil
 }
@@ -364,6 +380,9 @@ func (c *Client) ShowDatabases() ([]string, error) {
 		}
 
 		databases = append(databases, database)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return databases, nil
@@ -446,9 +465,10 @@ func (c *Client) indexes(tableName string) ([][]string, []string, error) {
 func getDB(driver, connString, database string) (*sqlx.DB, error) {
 	var newConnString string
 
-	if driver == drivers.MySQL {
+	switch driver {
+	case drivers.MySQL:
 		newConnString = strings.Replace(connString, "/", fmt.Sprintf("/%s", database), 1)
-	} else {
+	default:
 		u, err := url.Parse(connString)
 		if err != nil {
 			return nil, err
@@ -460,8 +480,7 @@ func getDB(driver, connString, database string) (*sqlx.DB, error) {
 
 	db, err := sqlx.Open(driver, newConnString)
 	if err != nil {
-
-		panic(err)
+		return nil, err
 	}
 
 	return db, nil

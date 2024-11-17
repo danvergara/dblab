@@ -419,10 +419,6 @@ func (t *Tui) updateTableMetadataOnChange(tableName string) {
 
 	for i, sr := range m.TableContent.Rows {
 		for j, sc := range sr {
-			// if i == 0 {
-			// 	t.aw.content.SetCell(i+1, j, &tview.TableCell{Text: sc, Color: tcell.ColorRed})
-			// } else {
-			// }
 			t.aw.content.SetCellSimple(i+1, j, sc)
 		}
 	}
