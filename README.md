@@ -93,7 +93,7 @@ Available Commands:
 Flags:
       --cfg-name string                   Database config name section
       --config                            Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)
-      --db string                         Database name
+      --db string                         Database name (optional)
       --driver string                     Database driver
       --encrypt string                    [strict|disable|false|true] data sent between client and server is encrypted or not
   -h, --help                              help for dblab
@@ -264,8 +264,14 @@ Now, there's a menu to navigate between hidden views by just clicking on the des
 <img src="screenshots/constraints-view.png" />
 <img src="screenshots/indexes-view.png" />
 
-As you may have noticed, navigation has already been added, so every time you query the content of a listed table, the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
-Just hit the `BACK` and `NEXT` buttons to go back and forth.
+~~As you may have noticed, navigation has already been added, so every time you query the content of a listed table, the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
+Just hit the `BACK` and `NEXT` buttons to go back and forth.~~
+
+The navigation buttons were removed since they are too slow to really navigate the content of a table. The user is better off typing a `SELECT` statement with proper `OFFSET` and `LIMIT`.
+
+The `--db` flag is now optional (except for Oracle), meaning that the user will be able to see the list of databases they have access to. The regular list of tables will be replaced with a tree structure showing a list of databases and their respective list of tables, branching off each database. Due to the nature of the vast majority of DBMSs that don't allow cross-database queries, dblab has to open an independent connection for each database. The side effect of this decision, is that the user has to press `Enter` on the specific database of interest. An indicator showing the current active database will appear at the bottom-right of the screen. To change the focus, just hit enter on another database. Once a database is selected, the usual behavior of inspecting tables remains the same.
+
+<img src="screenshots/tree-view.png" />
 
 ### Key Bindings
 | Key                                     | Description                           |

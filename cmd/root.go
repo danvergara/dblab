@@ -134,7 +134,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&port, "port", "", "", "Server port")
 	rootCmd.Flags().StringVarP(&user, "user", "", "", "Database user")
 	rootCmd.Flags().StringVarP(&pass, "pass", "", "", "Password for user")
-	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name")
+	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name (optional)")
 	rootCmd.Flags().StringVarP(&schema, "schema", "", "", "Database schema (postgres only)")
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
 	rootCmd.Flags().
