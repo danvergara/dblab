@@ -20,6 +20,14 @@ func newOracle() *oracle {
 	return &o
 }
 
+func (p *oracle) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
+	return "", nil, nil
+}
+
+func (p *oracle) ShowDatabases() (string, []interface{}, error) {
+	return "", nil, nil
+}
+
 // ShowTables returns a query to retrieve all the tables.
 func (p *oracle) ShowTables() (string, []interface{}, error) {
 	query := "SELECT table_name FROM user_tables"

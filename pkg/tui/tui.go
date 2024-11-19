@@ -27,8 +27,9 @@ const (
 	errorPageTitle       = "error"
 
 	// Titles.
-	queriesAreaTitle = "SQL query"
-	tablesListTitle  = "tables"
+	queriesAreaTitle     = "SQL query"
+	tablesListTitle      = "Tables"
+	databaseCatalogTitle = "Database Catalog"
 )
 
 // Tui struct is the main struct when it comes to manage the UI.
@@ -44,22 +45,22 @@ type Tui struct {
 // This is done this way, because some widgets make refernce to others when they get focused, clicked, etc.
 // Besides, tview always returns pointers from its constructor functions.
 type AppWidgets struct {
-	queries       *tview.TextArea
-	structure     *tview.Table
-	content       *tview.Table
-	constraints   *tview.Table
-	indexes       *tview.Table
-	errorView     *tview.TextView
-	banner        *tview.TextView
-	tables        *tview.List
-	tableMetadata *tview.Pages
-	leftSideFlex  *tview.Flex
-	rightSideFlex *tview.Flex
-	mainViewFlex  *tview.Flex
-	pagination    *tview.TextView
-	prevButton    *tview.Button
-	nextButton    *tview.Button
-	appFlex       *tview.Flex
+	queries            *tview.TextArea
+	structure          *tview.Table
+	content            *tview.Table
+	constraints        *tview.Table
+	indexes            *tview.Table
+	errorView          *tview.TextView
+	banner             *tview.TextView
+	tables             *tview.List
+	tableMetadata      *tview.Pages
+	catalogPage        *tview.Pages
+	databaseCatalog    *tview.TreeView
+	leftSideFlex       *tview.Flex
+	rightSideFlex      *tview.Flex
+	mainViewFlex       *tview.Flex
+	activeDatabaseText *tview.TextView
+	appFlex            *tview.Flex
 }
 
 // New is a constructor that returns a pointer to a Tui struct.
@@ -99,21 +100,6 @@ func (t *Tui) setupQueries() {
 
 			t.aw.tableMetadata.SwitchToPage(contentPage)
 
-			// reset the pagination.
-			if err := t.c.ResetPagination(); err != nil {
-				// This is the way errors get handled and this pattern repeats multiple times accross the board.
-				// Clear the error view.
-				t.aw.errorView.Clear()
-				// Print the error message on the error view.
-				errorMsg := fmt.Sprintf("[red]%s", err.Error())
-				fmt.Fprintln(t.aw.errorView, errorMsg)
-				// Switch to the error view.
-				t.aw.tableMetadata.SwitchToPage(errorPage)
-				return event
-			}
-
-			t.aw.pagination.SetText(fmt.Sprintf("%4d / %4d", 1, 1))
-
 			query := t.aw.queries.GetText()
 
 			// Call the Query method from the client and populate the content page.
@@ -150,6 +136,8 @@ func (t *Tui) setupQueries() {
 				}
 			}
 
+			t.aw.content.ScrollToBeginning()
+
 			// Update the table list if the tables get updated somehow.
 			switch {
 			case strings.Contains(strings.ToLower(query), "alter table"):
@@ -181,7 +169,8 @@ func (t *Tui) setupQueries() {
 			t.app.SetFocus(t.aw.tableMetadata)
 		case tcell.KeyCtrlH:
 			// switch to the list of tables page if Ctrl+H gets pressed.
-			t.app.SetFocus(t.aw.tables)
+			t.app.SetFocus(t.aw.catalogPage)
+			return nil
 		}
 		return event
 	})
@@ -217,7 +206,7 @@ func (t *Tui) setupTablesMetadata() {
 
 		switch event.Key() {
 		case tcell.KeyCtrlH:
-			t.app.SetFocus(t.aw.tables)
+			t.app.SetFocus(t.aw.catalogPage)
 		case tcell.KeyCtrlK:
 			t.app.SetFocus(t.aw.queries)
 		case tcell.KeyCtrlS:
@@ -261,60 +250,133 @@ func (t *Tui) setupBanner() {
 	fmt.Fprintln(t.aw.banner, coloredBannerContent)
 }
 
-// setupTablesList function sets up the table list page.
-func (t *Tui) setupTablesList() error {
+// setupDatabaseCatalog function sets up the database catalog.
+func (t *Tui) setupDatabaseCatalog() error {
+	root := tview.NewTreeNode("db")
+	t.aw.databaseCatalog = tview.NewTreeView().SetRoot(root).SetCurrentNode(root)
+
 	t.aw.tables = tview.NewList()
 	t.aw.tables.ShowSecondaryText(false).
 		SetDoneFunc(func() {
 			t.aw.tables.Clear()
 			t.aw.structure.Clear()
 		})
-	t.aw.tables.SetBorder(true).SetTitle(tablesListTitle).SetBorderColor(tcell.ColorPurple)
+
+	t.aw.catalogPage = tview.NewPages().
+		AddPage(tablesListTitle, t.aw.tables, true, !t.c.ShowDataCatalog()).
+		AddPage(databaseCatalogTitle, t.aw.databaseCatalog, true, t.c.ShowDataCatalog())
+
+	t.aw.catalogPage.SetBorder(true).SetBorderColor(tcell.ColorPurple)
+
+	if t.c.ShowDataCatalog() {
+		t.aw.catalogPage.SetTitle(databaseCatalogTitle)
+	} else {
+		t.aw.catalogPage.SetTitle(tablesListTitle)
+	}
 
 	// Get the list of thables available for the current user.
-	ts, err := t.c.ShowTables()
-	if err != nil {
-		return err
-	}
-
-	t.aw.tables.Clear()
-
-	for _, ta := range ts {
-		t.aw.tables.AddItem(ta, "", 0, nil)
-	}
-
-	// Trigger the initial selection.
-	t.aw.tables.SetCurrentItem(0)
-
-	// Default list navigation is done by the arrow keys, but this callback adds another one: using the 'j' and 'k'.
-	// Similar to Vim.
-	t.aw.tables.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyCtrlL:
-			t.app.SetFocus(t.aw.queries)
-		case tcell.KeyEnter:
-			t.updateTableMetadataOnChange("")
+	if t.c.ShowDataCatalog() {
+		dbs, err := t.c.ShowDatabases()
+		if err != nil {
+			return err
 		}
 
-		switch event.Rune() {
-		// Use 'j' to move down.
-		case 'j':
-			t.aw.tables.SetCurrentItem(t.aw.tables.GetCurrentItem() + 1)
-			return nil
-			// Use 'k' to move up.
-		case 'k':
-			t.aw.tables.SetCurrentItem(t.aw.tables.GetCurrentItem() - 1)
-			return nil
+		for _, db := range dbs {
+			node := tview.NewTreeNode(db).
+				SetReference("database").
+				SetSelectable(true)
+			root.AddChild(node)
 		}
 
-		return event
-	})
+		t.aw.databaseCatalog.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyCtrlL:
+				t.app.SetFocus(t.aw.queries)
+			}
+			return event
+		})
+
+		t.aw.databaseCatalog.SetSelectedFunc(func(node *tview.TreeNode) {
+			reference := node.GetReference()
+			if reference == nil {
+				// Selecting the root node does nothing.
+				return
+			}
+
+			kind := reference.(string)
+
+			switch kind {
+			case "table":
+				t.updateTableMetadataOnChange(node.GetText())
+			case "database":
+				children := node.GetChildren()
+
+				databaseName := node.GetText()
+				t.c.SetActiveDatabase(databaseName)
+
+				t.aw.activeDatabaseText.SetText(
+					fmt.Sprintf("[purple]Active database: [orange]%s", databaseName),
+				)
+
+				if len(children) == 0 {
+					tables, err := t.c.ShowTablesPerDB(databaseName)
+					if err != nil {
+						return
+					}
+
+					for _, t := range tables {
+						node.AddChild(
+							tview.NewTreeNode(t).SetReference("table").SetSelectable(true),
+						)
+					}
+				} else {
+					// Collapse if visible, expand if collapsed.
+					node.SetExpanded(!node.IsExpanded())
+				}
+			}
+		})
+
+	} else {
+		ts, err := t.c.ShowTables()
+		if err != nil {
+			return err
+		}
+
+		t.aw.tables.Clear()
+
+		for _, ta := range ts {
+			t.aw.tables.AddItem(ta, "", 0, nil)
+		}
+
+		// Trigger the initial selection.
+		t.aw.tables.SetCurrentItem(0)
+
+		// Default list navigation is done by the arrow keys, but this callback adds another one: using the 'j' and 'k'.
+		// Similar to Vim.
+		t.aw.tables.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyCtrlL:
+				t.app.SetFocus(t.aw.queries)
+			case tcell.KeyEnter:
+				t.updateTableMetadataOnChange("")
+			}
+
+			switch event.Rune() {
+			// Use 'j' to move down.
+			case 'j':
+				t.aw.tables.SetCurrentItem(t.aw.tables.GetCurrentItem() + 1)
+				return nil
+				// Use 'k' to move up.
+			case 'k':
+				t.aw.tables.SetCurrentItem(t.aw.tables.GetCurrentItem() - 1)
+				return nil
+			}
+
+			return event
+		})
+	}
 
 	return nil
-}
-
-func (t *Tui) setupPagination() {
-	t.aw.pagination = tview.NewTextView().SetText(fmt.Sprintf("%4d / %4d", 1, 1))
 }
 
 // updateTableMetadataOnChange functions updates tables' data related views on different events.
@@ -351,17 +413,13 @@ func (t *Tui) updateTableMetadataOnChange(tableName string) {
 		t.aw.content.SetCell(
 			0,
 			i,
-			&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorYellow},
+			&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorOrange},
 		)
 	}
 
 	for i, sr := range m.TableContent.Rows {
 		for j, sc := range sr {
-			if i == 0 {
-				t.aw.content.SetCell(i+1, j, &tview.TableCell{Text: sc, Color: tcell.ColorRed})
-			} else {
-				t.aw.content.SetCellSimple(i+1, j, sc)
-			}
+			t.aw.content.SetCellSimple(i+1, j, sc)
 		}
 	}
 
@@ -419,8 +477,10 @@ func (t *Tui) updateTableMetadataOnChange(tableName string) {
 		}
 	}
 
-	// Update the paginantion text view.
-	t.aw.pagination.SetText(fmt.Sprintf("%4d / %4d", 1, m.TotalPages))
+	t.aw.content.ScrollToBeginning()
+	t.aw.structure.ScrollToBeginning()
+	t.aw.indexes.ScrollToBeginning()
+	t.aw.constraints.ScrollToBeginning()
 }
 
 // setUpFlexBoxes function sets up the flex boxes needed to compose the app.
@@ -428,7 +488,7 @@ func (t *Tui) setUpFlexBoxes() {
 	t.aw.leftSideFlex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(t.aw.banner, 0, 1, false).
-		AddItem(t.aw.tables, 0, 5, true)
+		AddItem(t.aw.catalogPage, 0, 5, true)
 
 	t.aw.rightSideFlex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -439,13 +499,6 @@ func (t *Tui) setUpFlexBoxes() {
 	t.aw.mainViewFlex = tview.NewFlex().
 		AddItem(t.aw.leftSideFlex, 0, 1, true).AddItem(t.aw.rightSideFlex, 0, 4, false)
 
-	buttonFlex := tview.NewFlex().
-		SetDirection(tview.FlexColumn).
-		AddItem(t.aw.prevButton, 10, 1, false).
-		AddItem(nil, 2, 0, false).
-		AddItem(t.aw.pagination, 15, 1, false).
-		AddItem(t.aw.nextButton, 10, 1, false)
-
 	helpInfo := tview.NewTextView().SetDynamicColors(true)
 	helpStr := fmt.Sprintf(
 		"[green]%s",
@@ -453,13 +506,15 @@ func (t *Tui) setUpFlexBoxes() {
 	)
 	fmt.Fprintln(helpInfo, helpStr)
 
+	t.aw.activeDatabaseText = tview.NewTextView().SetDynamicColors(true)
+
 	footer := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(
 			tview.NewFlex().
 				SetDirection(tview.FlexColumn).
-				AddItem(buttonFlex, 0, 1, false).
-				AddItem(helpInfo, 0, 4, false),
+				AddItem(helpInfo, 0, 4, false).
+				AddItem(t.aw.activeDatabaseText, 0, 1, false),
 			1, 1, false,
 		)
 
@@ -469,85 +524,16 @@ func (t *Tui) setUpFlexBoxes() {
 		AddItem(footer, 0, 1, false)
 }
 
-// setUpButtons functions denfines the button used to move to the previous or the next page on the database's content table.
-func (t *Tui) setUpButtons() {
-	t.aw.prevButton = tview.NewButton("<").SetSelectedFunc(func() {
-		t.app.SetFocus(t.aw.tables)
-
-		currentTable, page, err := t.c.PreviousPage()
-		if err != nil {
-			return
-		}
-
-		t.aw.content.Clear()
-
-		totalPages := t.c.TotalPages()
-		t.aw.pagination.SetText(fmt.Sprintf("%4d / %4d", page, totalPages))
-
-		for i, tc := range currentTable.Columns {
-			t.aw.content.SetCell(
-				0,
-				i,
-				&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorYellow},
-			)
-		}
-
-		for i, sr := range currentTable.Rows {
-			for j, sc := range sr {
-				if i == 0 {
-					t.aw.content.SetCell(i+1, j, &tview.TableCell{Text: sc, Color: tcell.ColorRed})
-				} else {
-					t.aw.content.SetCellSimple(i+1, j, sc)
-				}
-			}
-		}
-	})
-
-	t.aw.nextButton = tview.NewButton(">").SetSelectedFunc(func() {
-		t.app.SetFocus(t.aw.tables)
-
-		currentTable, page, err := t.c.NextPage()
-		if err != nil {
-			return
-		}
-
-		t.aw.content.Clear()
-
-		totalPages := t.c.TotalPages()
-		t.aw.pagination.SetText(fmt.Sprintf("%4d / %4d", page, totalPages))
-
-		for i, tc := range currentTable.Columns {
-			t.aw.content.SetCell(
-				0,
-				i,
-				&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorYellow},
-			)
-		}
-
-		for i, sr := range currentTable.Rows {
-			for j, sc := range sr {
-				if i == 0 {
-					t.aw.content.SetCell(i+1, j, &tview.TableCell{Text: sc, Color: tcell.ColorRed})
-				} else {
-					t.aw.content.SetCellSimple(i+1, j, sc)
-				}
-			}
-		}
-	})
-}
-
 func (t *Tui) prepare() error {
 	t.setupQueries()
 	t.setupTablesMetadata()
 	t.setupBanner()
-	if err := t.setupTablesList(); err != nil {
+	if err := t.setupDatabaseCatalog(); err != nil {
 		return err
 	}
-	t.setUpButtons()
-	t.setupPagination()
 	t.setUpFlexBoxes()
 
-	t.app.SetRoot(t.aw.appFlex, true).EnableMouse(true).SetFocus(t.aw.tables)
+	t.app.SetRoot(t.aw.appFlex, true).EnableMouse(true).SetFocus(t.aw.queries)
 
 	return nil
 }

@@ -22,6 +22,50 @@ func newPostgres(schema string) *postgres {
 	return &p
 }
 
+func (p *postgres) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
+	var (
+		query string
+		err   error
+		args  []interface{}
+	)
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err = psql.Select("table_name").
+		From("information_schema.tables").
+		Where(sq.Eq{"table_type": "BASE TABLE"}).
+		Where(
+			sq.And{
+				sq.Eq{"table_schema": "public"},
+				sq.Eq{"table_type": "BASE TABLE"},
+			},
+		).
+		OrderBy("table_name").
+		ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return query, args, nil
+}
+
+func (p *postgres) ShowDatabases() (string, []interface{}, error) {
+	var (
+		query string
+		err   error
+		args  []interface{}
+	)
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err = psql.Select("datname").
+		From("pg_database").
+		Where(sq.Eq{"datistemplate": "false"}).
+		OrderBy("datname").
+		ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return query, args, nil
+}
+
 // ShowTables returns a query to retrieve all the tables under a specific schema.
 func (p *postgres) ShowTables() (string, []interface{}, error) {
 	var (

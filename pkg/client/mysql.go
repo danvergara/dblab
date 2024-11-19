@@ -18,6 +18,14 @@ func newMySQL() *mysql {
 	return &m
 }
 
+func (m *mysql) ShowTablesPerDB(database string) (string, []interface{}, error) {
+	return fmt.Sprintf("SHOW TABLES FROM %s;", database), nil, nil
+}
+
+func (m *mysql) ShowDatabases() (string, []interface{}, error) {
+	return "SHOW DATABASES;", nil, nil
+}
+
 // ShowTables returns a query to retrieve all the tables.
 func (m *mysql) ShowTables() (string, []interface{}, error) {
 	query := "SHOW TABLES;"

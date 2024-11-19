@@ -39,7 +39,15 @@ func TestMain(m *testing.M) {
 func generateURL(driver string) string {
 	switch driver {
 	case drivers.Postgres:
-		return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", driver, user, password, host, port, name)
+		return fmt.Sprintf(
+			"%s://%s:%s@%s:%s/%s?sslmode=disable",
+			driver,
+			user,
+			password,
+			host,
+			port,
+			name,
+		)
 	case drivers.MySQL:
 		return fmt.Sprintf("%s://%s:%s@tcp(%s:%s)/%s", driver, user, password, host, port, name)
 	case drivers.SQLite:
@@ -193,9 +201,34 @@ func TestShowTables(t *testing.T) {
 		Limit:  100,
 	}
 
-	c, _ := New(opts)
+	c, err := New(opts)
+	assert.NoError(t, err)
 
 	tables, err := c.ShowTables()
+
+	assert.NoError(t, err)
+	assert.Len(t, tables, 4)
+}
+
+func TestShowTablesPerDB(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	opts := command.Options{
+		Driver: driver,
+		User:   user,
+		Pass:   password,
+		Host:   host,
+		Port:   port,
+		Schema: schema,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, _ := New(opts)
+
+	tables, err := c.ShowTablesPerDB(name)
 
 	assert.Len(t, tables, 4)
 	assert.NoError(t, err)
@@ -222,10 +255,9 @@ func TestTableStructure(t *testing.T) {
 
 	r, co, err := c.tableStructure("products")
 
+	assert.NoError(t, err)
 	assert.Len(t, r, 3)
 	assert.Len(t, co, 8)
-
-	assert.NoError(t, err)
 }
 
 func TestConstraints(t *testing.T) {
@@ -253,8 +285,8 @@ func TestConstraints(t *testing.T) {
 	t.Logf("constraints content %v", r)
 
 	assert.NoError(t, err)
-	assert.Greater(t, len(r), 0)
-	assert.Greater(t, len(co), 0)
+	assert.NotEmpty(t, r)
+	assert.NotEmpty(t, co)
 }
 
 func TestIndexes(t *testing.T) {
@@ -279,33 +311,8 @@ func TestIndexes(t *testing.T) {
 	r, co, err := c.indexes("products")
 
 	assert.NoError(t, err)
-	assert.Greater(t, len(r), 0)
-	assert.Greater(t, len(co), 0)
-}
-
-func TestCountTable(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping short mode")
-	}
-
-	opts := command.Options{
-		Driver: driver,
-		User:   user,
-		Pass:   password,
-		Host:   host,
-		Port:   port,
-		DBName: name,
-		Schema: schema,
-		SSL:    "disable",
-		Limit:  100,
-	}
-
-	c, _ := New(opts)
-
-	count, err := c.tableCount("products")
-
-	assert.Equal(t, count, 100)
-	assert.NoError(t, err)
+	assert.NotEmpty(t, r)
+	assert.NotEmpty(t, co)
 }
 
 func TestMetadata(t *testing.T) {
@@ -332,9 +339,6 @@ func TestMetadata(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 
-	// Total count.
-	assert.Equal(t, m.TotalPages, 1)
-
 	// indexes.
 	assert.Greater(t, len(m.Indexes.Rows), 0)
 	assert.Greater(t, len(m.Indexes.Columns), 0)
@@ -350,31 +354,4 @@ func TestMetadata(t *testing.T) {
 	// table content.
 	assert.Len(t, m.TableContent.Rows, int(opts.Limit))
 	assert.Len(t, m.TableContent.Columns, 3)
-}
-
-func TestTotalPages(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping short mode")
-	}
-
-	opts := command.Options{
-		Driver: driver,
-		User:   user,
-		Pass:   password,
-		Host:   host,
-		Port:   port,
-		DBName: name,
-		Schema: schema,
-		SSL:    "disable",
-		Limit:  100,
-	}
-
-	c, _ := New(opts)
-
-	_, err := c.Metadata("products")
-
-	assert.NoError(t, err)
-
-	// Total count.
-	assert.Equal(t, c.TotalPages(), 1)
 }
