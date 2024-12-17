@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  ssh:
+    image: rastasheep/ubuntu-sshd:latest
+    container_name: test-ssh
+    ports:
+      - "2222:22"
+    environment:
+      - ROOT_PASSWORD=root
+    networks:
+      - private-network
+      - public-network
+
+  db:
+    image: postgres:15
+    container_name: test-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=users
+    networks:
+      - private-network
+
+networks:
+  private-network:
+    internal: true  # Makes this network inaccessible from outside Docker
+  public-network:
