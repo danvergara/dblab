@@ -151,6 +151,21 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 		},
 		// mysql
 		{
+			name: "valid mysql localhost via ssh",
+			given: given{
+				opts: command.Options{
+					SSHHost: "example.com",
+					SSHPort: "22",
+					SSHUser: "ssh-user",
+					SSHPass: "ssh-pass",
+					URL:     "mysql://user:password@mysql+tcp(localhost:3306)/db",
+				},
+			},
+			want: want{
+				uri: "user:password@mysql+tcp(localhost:3306)/db",
+			},
+		},
+		{
 			name: "valid mysql localhost",
 			given: given{
 				opts: command.Options{
@@ -453,6 +468,26 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 		},
 		// mysql
 		{
+			name: "success - localhost - mysql - via ssh",
+			given: given{
+				opts: command.Options{
+					Driver:  drivers.MySQL,
+					SSHHost: "example.com",
+					SSHPort: "22",
+					SSHUser: "ssh-user",
+					SSHPass: "ssh-pass",
+					User:    "user",
+					Pass:    "password",
+					Host:    "localhost",
+					Port:    "3306",
+					DBName:  "db",
+				},
+			},
+			want: want{
+				uri: "user:password@mysql+tcp(localhost:3306)/db",
+			},
+		},
+		{
 			name: "success - localhost - mysql",
 			given: given{
 				opts: command.Options{
@@ -742,6 +777,17 @@ func TestFormatMySQLURL(t *testing.T) {
 		given given
 		want  want
 	}{
+		{
+			name: "valid mysql localhost",
+			given: given{
+				opts: command.Options{
+					URL: "mysql://user:password@mysql+tcp(localhost:3306)/db",
+				},
+			},
+			want: want{
+				uri: "user:password@mysql+tcp(localhost:3306)/db",
+			},
+		},
 		{
 			name: "valid mysql localhost",
 			given: given{
