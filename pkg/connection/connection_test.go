@@ -92,6 +92,21 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 			},
 		},
 		{
+			name: "valid postgres localhost via ssh",
+			given: given{
+				opts: command.Options{
+					SSHHost: "example.com",
+					SSHPort: "22",
+					SSHUser: "ssh-user",
+					SSHPass: "ssh-pass",
+					URL:     "postgres://user:password@localhost:5432/db?sslmode=disable",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?sslmode=disable",
+			},
+		},
+		{
 			name: "valid postgres localhost",
 			given: given{
 				opts: command.Options{
@@ -378,6 +393,27 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				),
 			},
 		},
+
+		{
+			name: "success - localhost - postgres - via ssh",
+			given: given{
+				opts: command.Options{
+					Driver:  drivers.Postgres,
+					SSHHost: "example.com",
+					SSHPort: "22",
+					SSHUser: "ssh-user",
+					SSHPass: "ssh-pass",
+					User:    "user",
+					Pass:    "password",
+					Host:    "localhost",
+					Port:    "5432",
+					DBName:  "db",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?sslmode=disable",
+			},
+		},
 		{
 			name: "success - localhost with no explicit ssl mode - postgres",
 			given: given{
@@ -464,6 +500,26 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 			},
 			want: want{
 				uri: "postgres://user:password@your-amazonaws-uri.com:5432/db",
+			},
+		},
+		{
+			name: "success - postgres - via ssh",
+			given: given{
+				opts: command.Options{
+					Driver:  drivers.Postgres,
+					SSHHost: "example.com",
+					SSHPort: "22",
+					SSHUser: "ssh-user",
+					SSHPass: "ssh-pass",
+					User:    "user",
+					Pass:    "password",
+					Host:    "localhost",
+					Port:    "5432",
+					DBName:  "db",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?sslmode=disable",
 			},
 		},
 		// mysql

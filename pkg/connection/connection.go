@@ -58,7 +58,12 @@ func init() {
 func BuildConnectionFromOpts(opts command.Options) (string, command.Options, error) {
 	if opts.URL != "" {
 		if strings.HasPrefix(opts.URL, drivers.Postgres) {
-			opts.Driver = drivers.Postgres
+			if opts.SSHHost != "" {
+				opts.Driver = drivers.PostgresSSH
+			} else {
+
+				opts.Driver = drivers.Postgres
+			}
 
 			conn, err := formatPostgresURL(opts)
 
@@ -189,6 +194,10 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			User:     url.UserPassword(opts.User, opts.Pass),
 			Path:     fmt.Sprintf("/%s", opts.DBName),
 			RawQuery: query.Encode(),
+		}
+
+		if opts.SSHHost != "" {
+			opts.Driver = drivers.PostgresSSH
 		}
 
 		return connDB.String(), opts, nil
