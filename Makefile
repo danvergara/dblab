@@ -115,7 +115,6 @@ run-mysql-url: build
 ## run-mysql-url-ssh: Runs the app passing the url as parameter through a ssh tunnel providing the url as parameter
 run-mysql-url-ssh: build
 	./dblab --url "mysql://myuser:5@klkbN#ABC@mysql+tcp(mysql:3306)/mydb" --driver mysql --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
-	# ./dblab --host mysql --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-config
 ## run-config: Runs the client using the config file.

@@ -29,7 +29,7 @@ var (
 	sslkey      string
 	sslpassword string
 	sslrootcert string
-	// SSH.
+	// SSH Tunnel.
 	sshHost          string
 	sshPort          string
 	sshUser          string

@@ -25,6 +25,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
     - [Automated installation/update](#automated-installationupdate)
 - [Help Command](#help)
 - [Usage](#usage)
+    - [SSH Tunnel](#ssh-tunnel)
     - [Configuration](#configuration)
 - [Navigation](#navigation)
     - [Key Bindings](#key-bindings)
@@ -103,6 +104,12 @@ Flags:
       --port string                       Server port
       --schema string                     Database schema (postgres only)
       --socket string                     Path to a Unix socket file
+      --ssh-host string                   SSH Server Hostname/IP
+      --ssh-key string                    File with private key for SSH authentication
+      --ssh-key-pass string               Supports connections with protected private keys with passphrase
+      --ssh-pass string                   SSH Password (Empty string for no password)
+      --ssh-port string                   SSH Port
+      --ssh-user string                   SSH User
       --ssl string                        SSL mode
       --ssl-verify string                 [enable|disable] or [true|false] enable ssl verify for the server
       --sslcert string                    This parameter specifies the file name of the client SSL certificate, replacing the default ~/.postgresql/postgresql.crt
@@ -168,6 +175,59 @@ Now, it is possible to ensure SSL connections with `PostgreSQL` databases. SSL r
 
 ```{ .sh .copy }
 dblab --host  db-postgresql-nyc3-56456-do-user-foo-0.fake.db.ondigitalocean.com --user myuser --db users --pass password --schema myschema --port 5432 --driver postgres --limit 50 --ssl require --sslrootcert ~/Downloads/foo.crt
+```
+
+### SSH Tunnel
+
+Now, it's possible to connect to Postgres or MySQL (more to come later) databases on a server via SSH using password or a ssh key files.
+
+To do so, 6 new flags has been added to the dblab command:
+
+| Flag                 | Description                                                       |
+|----------------------|-------------------------------------------------------------------|
+|  --ssh-host          |  SSH Server Hostname/IP                                           |
+|  --ssh-port          |  SSH Port                                                         |
+|  --ssh-user          |  SSH User                                                         |
+|  --ssh-pass          |  SSH Password (Empty string for no password)                      |
+|  --ssh-key           |  File with private key for SSH authentication                     |
+|  --ssh-key-pass      | Passphrase for protected private key files                        |
+
+#### Examples
+
+Postgres connection via ssh tunnel using password:
+
+```{ .sh .copy }
+dblab --host localhost --user postgres --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host example.com --ssh-port 22 --ssh-user root --ssh-pass root
+```
+
+Postgres connection via ssh tunnel using ssh private key file:
+
+```{ .sh .copy }
+dblab --host localhost --user postgres --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host example.com --ssh-port 22 --ssh-user root --ssh-key my_ssh_key --ssh-key-pass password
+```
+
+Postgres connection using the url parameter via ssh tunnel using password:
+
+```{ .sh .copy }
+dblab --url postgres://postgres:password@localhost:5432/users?sslmode=disable --schema public --ssh-host example.com --ssh-port 22 --ssh-user root --ssh-pass root
+```
+
+MySQL connection via ssh tunnel using password:
+
+```{ .sh .copy }
+dblab --host localhost --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql --limit 50 --ssh-host example.com --ssh-port 22 --ssh-user root --ssh-pass root
+```
+
+MySQL connection via ssh tunnel using ssh private key file:
+
+```{ .sh .copy }
+dblab --host localhost --user postgres --pass password --ssl enable --port 3306 --driver mysql --limit 50 --ssh-host example.com --ssh-port 22 --ssh-user root --ssh-key my_ssh_key --ssh-key-pass passphrase
+```
+
+MySQL connection using the url parameter via ssh tunnel using password:
+
+```{ .sh .copy }
+dblab --url "mysql://myuser:5@klkbN#ABC@mysql+tcp(localhost:3306)/mydb" --driver mysql --ssh-host example.com --ssh-port 22 --ssh-user root --ssh-pass root
 ```
 
 ### Configuration
@@ -236,6 +296,18 @@ database:
     db: "msdb"
     password: "5@klkbN#ABC"
     user: "SA"
+  - name: "ssh-tunnel"
+    host: "localhost"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    schema: "public"
+    driver: "postgres"
+    ssh-host: "example.com"
+    ssh-port: 22
+    ssh-user: "ssh-user"
+    ssh-pass: "password"
 # should be greater than 0, otherwise the app will error out
 limit: 50
 ```
