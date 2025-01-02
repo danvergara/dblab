@@ -36,4 +36,16 @@ database:
     db: "msdb"
     password: "5@klkbN#ABC"
     user: "SA"
+  - name: "ssh-tunnel"
+    host: "localhost"
+    port: 5432
+    db: "users"
+    password: "password"
+    user: "postgres"
+    schema: "public"
+    driver: "postgres"
+    ssh-host: "example.com"
+    ssh-port: 22
+    ssh-user: "ssh-user"
+    ssh-pass: "password"
 limit: 50

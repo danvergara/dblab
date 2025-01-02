@@ -40,6 +40,14 @@ type Database struct {
 	Driver   string `validate:"required"`
 	Schema   string
 
+	// SSH Tunnel.
+	SSHHost          string
+	SSHPort          string
+	SSHUser          string
+	SSHPass          string
+	SSHKeyFile       string
+	SSHKeyPassphrase string
+
 	// SSL connection params.
 	SSL string `default:"disable"`
 
@@ -128,6 +136,12 @@ func Init(configName string) (command.Options, error) {
 		Encrypt:                db.Encrypt,
 		TrustServerCertificate: db.TrustServerCertificate,
 		ConnectionTimeout:      db.ConnectionTimeout,
+		SSHHost:                db.SSHHost,
+		SSHPort:                db.SSHPort,
+		SSHUser:                db.SSHUser,
+		SSHPass:                db.SSHPass,
+		SSHKeyFile:             db.SSHKeyFile,
+		SSHKeyPassphrase:       db.SSHKeyPassphrase,
 	}
 
 	return opts, nil
