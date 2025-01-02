@@ -41,11 +41,25 @@ build:
 run: build
 	./dblab --host localhost --user postgres --db users --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50
 
+.PHONY: run-ssh
+## run-ssh: Runs the application through a ssh tunnel
+run-ssh: build
+	./dblab --host postgres --user postgres --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+
+.PHONY: run-ssh-key
+## run-ssh-key: Runs the application through a ssh tunnel
+run-ssh-key: build
+	./dblab --host postgres --user postgres --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-key my_ssh_key
+
 .PHONY: run-mysql
 ## run-mysql: Runs the application with a connection to mysql
 run-mysql: build
 	./dblab --host localhost --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql
 
+.PHONY: run-mysql-ssh
+## run-mysql-ssh: Runs the application through a ssh tunnel
+run-mysql-ssh: build
+	./dblab --host mysql --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-mysql-socket
 ## run-mysql-socket: Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
@@ -87,10 +101,21 @@ run-sqlite3-url: build
 run-url: build
 	./dblab --url postgres://postgres:password@localhost:5432/users?sslmode=disable
 
+.PHONY: run-url-ssh
+## run-url-ssh: Runs the application through a ssh tunnel providing the url as parameter
+run-url-ssh: build
+	./dblab --url postgres://postgres:password@postgres:5432/users?sslmode=disable --schema public --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+
 .PHONY: run-mysql-url
 ## run-mysql-url: Runs the app passing the url as parameter
 run-mysql-url: build
-	./dblab --url "mysql://myuser:5@klkbN#ABC@tcp(localhost:3306)/mydb"
+	./dblab --url "mysql://myuser:5@klkbN#ABC@tcp(localhost:3306)/mydb" 
+
+.PHONY: run-mysql-url-ssh
+## run-mysql-url-ssh: Runs the app passing the url as parameter through a ssh tunnel providing the url as parameter
+run-mysql-url-ssh: build
+	./dblab --url "mysql://myuser:5@klkbN#ABC@mysql+tcp(mysql:3306)/mydb" --driver mysql --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+	# ./dblab --host mysql --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-config
 ## run-config: Runs the client using the config file.
@@ -102,10 +127,20 @@ run-config: build
 up:
 	docker compose up --build -d
 
+.PHONY: run-ssh
+## run-ssh: Runs all the containers listed in the docker-compose.ssh.yml file to test the ssh tunnel
+run-ssh:
+	docker compose -f docker-compose.ssh.yml up -d
+
 .PHONY: down
 ## down: Shut down all the containers listed in the docker-compose.yml file
 down:
 	docker compose down
+
+.PHONY: stop-ssh
+## stop-ssh: Shut down all the containers listed in the docker-compose.ssh.yml file
+stop-ssh:
+	docker compose -f docker-compose.ssh.yml down
 
 .PHONY: form
 ## form: Runs the application with no arguments
