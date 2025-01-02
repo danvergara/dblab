@@ -21,7 +21,7 @@ type Options struct {
 	SSHPort          string
 	SSHUser          string
 	SSHPass          string
-	SSHKey           string
+	SSHKeyFile       string
 	SSHKeyPassphrase string
 	// SSL connection params.
 	SSLCert     string

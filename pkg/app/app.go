@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/sshdb"
 	"github.com/danvergara/dblab/pkg/tui"
 )
 
@@ -14,6 +15,27 @@ type App struct {
 
 // New bootstrap a new application.
 func New(opts command.Options) (*App, error) {
+	var sshConfig *sshdb.SSHConfig
+
+	if opts.SSHHost != "" {
+		sshConfig = sshdb.New(
+			sshdb.WithDBDriver(opts.Driver),
+			sshdb.WithSShHost(opts.SSHHost),
+			sshdb.WithSShPort(opts.SSHPort),
+			sshdb.WithSSHUser(opts.SSHUser),
+			sshdb.WithPass(opts.SSHPass),
+			sshdb.WithSSHKeyFile(opts.SSHKeyFile),
+			sshdb.WithSSHKeyPass(opts.SSHKeyPassphrase),
+			sshdb.WithDBDURL(opts.URL),
+		)
+
+		if err := sshConfig.SSHTunnel(); err != nil {
+			return nil, err
+		}
+
+		defer sshConfig.Close()
+	}
+
 	c, err := client.New(opts)
 	if err != nil {
 		return nil, err

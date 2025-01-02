@@ -29,6 +29,13 @@ var (
 	sslkey      string
 	sslpassword string
 	sslrootcert string
+	// SSH.
+	sshHost          string
+	sshPort          string
+	sshUser          string
+	sshPass          string
+	sshKey           string
+	sshKeyPassphrase string
 	// oracle specific.
 	traceFile string
 	sslVerify string
@@ -77,6 +84,12 @@ func NewRootCmd() *cobra.Command {
 					Encrypt:                encrypt,
 					TrustServerCertificate: trustServerCertificate,
 					ConnectionTimeout:      connectionTimeout,
+					SSHHost:                sshHost,
+					SSHPort:                sshPort,
+					SSHUser:                sshUser,
+					SSHPass:                sshPass,
+					SSHKeyFile:             sshKey,
+					SSHKeyPassphrase:       sshKeyPassphrase,
 				}
 
 				if form.IsEmpty(opts) {
@@ -174,4 +187,16 @@ func init() {
 		StringVarP(&trustServerCertificate, "trust-server-certificate", "", "", "[false|true] server certificate is checked or not")
 	rootCmd.Flags().
 		StringVarP(&connectionTimeout, "timeout", "", "", "in seconds (default is 0 for no timeout), set to 0 for no timeout. Recommended to set to 0 and use context to manage query and connection timeouts")
+	rootCmd.Flags().StringVarP(&sshHost, "ssh-host", "", "", "SSH Server Hostname/IP")
+	rootCmd.Flags().StringVarP(&sshPort, "ssh-port", "", "", "SSH Port")
+	rootCmd.Flags().StringVarP(&sshUser, "ssh-user", "", "", "SSH User")
+	rootCmd.Flags().
+		StringVarP(&sshPass, "ssh-pass", "", "", "SSH Password (Empty string for no password)")
+	rootCmd.Flags().
+		StringVarP(&sshKey, "ssh-key", "", "", "File with private key for SSH authentication")
+	rootCmd.Flags().
+		StringVarP(&sshKeyPassphrase, "ssh-key-pass", "", "", "Supports connections with protected private keys with passphrase")
+
+	// rootCmd.Flags().
+	// 	StringVarP(&sshKeyAlgo, "ssh-key-algo", "", "", "Publick Key Algorithm")
 }
