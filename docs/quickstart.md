@@ -2,7 +2,7 @@
 
 You can start the app without passing flags or parameters, so then an interactive command prompt will ask for the connection details.  
 
-![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/dblab-default-form.gif){ width="500" : .center }
+![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/dblab-demo.gif){ width="500" : .center }
 
 Otherwise, you can explicitly include the connection details using multiple parameters:
 
