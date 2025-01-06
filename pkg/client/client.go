@@ -289,7 +289,7 @@ func (c *Client) ShowTablesPerDB(database string) ([]string, error) {
 	}
 
 	switch c.driver {
-	case drivers.PostgreSQL, drivers.Postgres, drivers.MySQL:
+	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
 		db, ok = c.dbs[database]
 		if !ok {
 			return nil, fmt.Errorf("connection with %s database not found", database)
