@@ -1,10 +1,6 @@
 One of the main features of dblab is to be a simple but very useful UI to interact with your database.  
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/full-ui.png){ width="700" : .center }  
 
-In the top right you can find a tab menu were you can navigate through the different panels using:
-
-![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/tab-menu.png){ width="500" : .center }  
-
 - <kbd>Ctrl+I</kbd> to move from Rows to Indexes and backwards.
 - <kbd>Ctrl+F</kbd> to move from Rows to Constraints and backwards.
 - <kbd>Ctrl+S</kbd> to move from Rows to Structure and backwards.
