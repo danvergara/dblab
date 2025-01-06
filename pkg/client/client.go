@@ -71,7 +71,7 @@ func New(opts command.Options) (*Client, error) {
 
 	// This is where an implementation of databaseQuerier is getting picked up.
 	switch c.driver {
-	case drivers.Postgres, drivers.PostgreSQL:
+	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
 		c.databaseQuerier = newPostgres(c.schema)
 	case drivers.MySQL:
 		c.databaseQuerier = newMySQL()
@@ -87,7 +87,7 @@ func New(opts command.Options) (*Client, error) {
 
 	if opts.DBName == "" {
 		switch c.driver {
-		case drivers.PostgreSQL, drivers.Postgres, drivers.MySQL:
+		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
 			c.showDataCatalog = true
 			dbs, err := c.ShowDatabases()
 			if err != nil {
@@ -106,7 +106,7 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	switch c.driver {
-	case drivers.PostgreSQL, drivers.Postgres:
+	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
 		if _, err = db.Exec(fmt.Sprintf("set search_path='%s'", c.schema)); err != nil {
 			return nil, err
 		}
@@ -156,7 +156,7 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 
 	if c.activeDatabase != "" {
 		switch c.driver {
-		case drivers.Postgres, drivers.PostgreSQL, drivers.MySQL:
+		case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH, drivers.MySQL:
 			db, ok = c.dbs[c.activeDatabase]
 			if !ok {
 				return nil, nil, fmt.Errorf(
@@ -393,7 +393,7 @@ func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 	var query string
 
 	switch c.driver {
-	case drivers.Postgres, drivers.PostgreSQL:
+	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
 		query = fmt.Sprintf(
 			"SELECT * FROM %q LIMIT %d OFFSET %d;",
 			tableName,

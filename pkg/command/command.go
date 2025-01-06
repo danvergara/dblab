@@ -16,6 +16,13 @@ type Options struct {
 	Limit  uint
 	Socket string
 	SSL    string
+	// SSH.
+	SSHHost          string
+	SSHPort          string
+	SSHUser          string
+	SSHPass          string
+	SSHKeyFile       string
+	SSHKeyPassphrase string
 	// SSL connection params.
 	SSLCert     string
 	SSLKey      string

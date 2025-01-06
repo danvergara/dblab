@@ -30,3 +30,6 @@ dblab
 assets/.DS_Store
 
 .DS_Store
+
+# sshdb pkg testing
+pkg/sshdb/testdata/known_hosts

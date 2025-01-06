@@ -26,6 +26,10 @@ func TestInit(t *testing.T) {
 		traceFile   string
 		sslVerify   string
 		wallet      string
+		sshHost     string
+		sshPort     string
+		sshUser     string
+		sshPass     string
 	}
 	var tests = []struct {
 		name  string
@@ -76,6 +80,25 @@ func TestInit(t *testing.T) {
 				ssl:         "require",
 				sslrootcert: "~/.postgresql/root.crt.",
 				limit:       50,
+			},
+		},
+		{
+			name:  "ssh tunnel",
+			input: "ssh-tunnel",
+			want: want{
+				host:    "localhost",
+				port:    "5432",
+				dbname:  "users",
+				user:    "postgres",
+				pass:    "password",
+				driver:  "postgres",
+				schema:  "public",
+				ssl:     "disable",
+				sshHost: "example.com",
+				sshPort: "22",
+				sshUser: "ssh-user",
+				sshPass: "password",
+				limit:   50,
 			},
 		},
 		{

@@ -30,6 +30,7 @@ var (
 	ErrInvalidMySQLURLFormat = errors.New(
 		"invalid url - valid format: mysql://user:password@tcp(host:port)/db",
 	)
+	// ErrInvalidOracleURLFormat is the error used to notify the user that the oracle url is invalid.
 	ErrInvalidOracleURLFormat = errors.New(
 		"invalid url - valid format: oracle://user:pass@server/service_name",
 	)
@@ -57,7 +58,12 @@ func init() {
 func BuildConnectionFromOpts(opts command.Options) (string, command.Options, error) {
 	if opts.URL != "" {
 		if strings.HasPrefix(opts.URL, drivers.Postgres) {
-			opts.Driver = drivers.Postgres
+			if opts.SSHHost != "" {
+				opts.Driver = drivers.PostgresSSH
+			} else {
+
+				opts.Driver = drivers.Postgres
+			}
 
 			conn, err := formatPostgresURL(opts)
 
@@ -190,8 +196,14 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			RawQuery: query.Encode(),
 		}
 
+		if opts.SSHHost != "" {
+			opts.Driver = drivers.PostgresSSH
+		}
+
 		return connDB.String(), opts, nil
 	case drivers.MySQL:
+		var netParam = "tcp"
+
 		if opts.Socket != "" {
 			if !validSocketFile(opts.Socket) {
 				return "", opts, ErrInvalidSocketFile
@@ -210,10 +222,15 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			), opts, nil
 		}
 
+		if opts.SSHHost != "" {
+			netParam = "mysql+tcp"
+		}
+
 		return fmt.Sprintf(
-			"%s:%s@tcp(%s:%s)/%s",
+			"%s:%s@%s(%s:%s)/%s",
 			opts.User,
 			opts.Pass,
+			netParam,
 			opts.Host,
 			opts.Port,
 			opts.DBName,
