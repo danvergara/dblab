@@ -47,7 +47,7 @@ run-ssh: build
 	./dblab --host postgres --user postgres --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-ssh-key
-## run-ssh-key: Runs the application through a ssh tunnel
+## run-ssh-key: Runs the application through a ssh tunnel using a private key file
 run-ssh-key: build
 	./dblab --host postgres --user postgres --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-key my_ssh_key
 
@@ -126,9 +126,9 @@ run-config: build
 up:
 	docker compose up --build -d
 
-.PHONY: run-ssh
-## run-ssh: Runs all the containers listed in the docker-compose.ssh.yml file to test the ssh tunnel
-run-ssh:
+.PHONY: up-ssh
+## up-ssh: Runs all the containers listed in the docker-compose.ssh.yml file to test the ssh tunnel
+up-ssh:
 	docker compose -f docker-compose.ssh.yml up -d
 
 .PHONY: down

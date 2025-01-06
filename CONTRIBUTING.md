@@ -75,19 +75,61 @@ Run the integration test with make too, but make sure the database containers ar
 make int-test
 ```
 
-This runs the tests. You can check all the options with `help` command.
+## SSH Tunnel
+
+There is an special compose file that spins up an ssh server, to test the ssh tunnel and work with it. The compose file also provides postgres and mysql containers but they are not exposed to the localhost. The sshd server is the intermediary between the client and those containers.
+
+Run the command below to spin up the ssh server and the databases containers behind it.
+
+```bash
+make up-ssh
+```
+
+To connect to the databases, the make file provides a new series of targets addding the ssh related parameters:
+
+```bash
+make run-ssh
+```
+
+The command above, is the equivalent of this command:
+
+```bash
+dblab --host postgres --user postgres --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+```
+
+You can check all the options with `help` command.
 
 ```bash
 Usage:
-test           Runs the tests
-unit-test      Runs the tests with the short flag
-int-test       Runs the integration tests
-linter         Runs the colangci-lint command
-test-all       Runs the integration testing bash script with different database docker image versions
-docker-build   Builds de Docker image
-build          Builds the Go program
-run            Runs the application
-up             Runs all the containers listed in the docker-compose.yml file
-down           Shut down all the containers listed in the docker-compose.yml file
-help           Prints this help message
+  test                   Runs the tests
+  unit-test              Runs the tests with the short flag
+  int-test               Runs the integration tests
+  linter                 Runs the golangci-lint command
+  test-all               Runs the integration testing bash script with different database docker image versions
+  docker-build           Builds de Docker image
+  build                  Builds the Go program
+  run                    Runs the application
+  run-ssh                Runs the application through a ssh tunnel
+  run-ssh-key            Runs the application through a ssh tunnel using a private key file
+  run-mysql              Runs the application with a connection to mysql
+  run-mysql-ssh          Runs the application through a ssh tunnel
+  run-mysql-socket       Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
+  run-postgres-socket    Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
+  run-oracle             Runs the application making a connection to the Oracle database
+  run-sql-server         Runs the application making a connection to the SQL Server database
+  run-mysql-socket-url   Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
+  run-sqlite3            Runs the application with a connection to sqlite3
+  run-sqlite3-url        Runs the application with a connection string to sqlite3
+  run-url                Runs the app passing the url as parameter
+  run-url-ssh            Runs the application through a ssh tunnel providing the url as parameter
+  run-mysql-url          Runs the app passing the url as parameter
+  run-mysql-url-ssh      Runs the app passing the url as parameter through a ssh tunnel providing the url as parameter
+  run-config             Runs the client using the config file.
+  up                     Runs all the containers listed in the docker-compose.yml file
+  up-ssh                 Runs all the containers listed in the docker-compose.ssh.yml file to test the ssh tunnel
+  down                   Shut down all the containers listed in the docker-compose.yml file
+  stop-ssh               Shut down all the containers listed in the docker-compose.ssh.yml file
+  form                   Runs the application with no arguments
+  create                 Creates golang-migrate migration files
+  help                   Prints this help message
 ```
