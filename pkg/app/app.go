@@ -9,16 +9,17 @@ import (
 
 // App Struct.
 type App struct {
-	t *tui.Tui
-	c *client.Client
+	t  *tui.Tui
+	c  *client.Client
+	sc *sshdb.SSHConfig
 }
 
 // New bootstrap a new application.
 func New(opts command.Options) (*App, error) {
-	var sshConfig *sshdb.SSHConfig
+	var sc *sshdb.SSHConfig
 
 	if opts.SSHHost != "" {
-		sshConfig = sshdb.New(
+		sc = sshdb.New(
 			sshdb.WithDBDriver(opts.Driver),
 			sshdb.WithSShHost(opts.SSHHost),
 			sshdb.WithSShPort(opts.SSHPort),
@@ -29,11 +30,9 @@ func New(opts command.Options) (*App, error) {
 			sshdb.WithDBDURL(opts.URL),
 		)
 
-		if err := sshConfig.SSHTunnel(); err != nil {
+		if err := sc.SSHTunnel(); err != nil {
 			return nil, err
 		}
-
-		defer sshConfig.Close()
 	}
 
 	c, err := client.New(opts)
@@ -47,8 +46,9 @@ func New(opts command.Options) (*App, error) {
 	}
 
 	app := App{
-		t: t,
-		c: c,
+		c:  c,
+		t:  t,
+		sc: sc,
 	}
 
 	return &app, nil
@@ -57,6 +57,10 @@ func New(opts command.Options) (*App, error) {
 // Run runs the application.
 func (a *App) Run() error {
 	defer func() {
+		if a.sc != nil {
+			_ = a.sc.Close()
+		}
+
 		_ = a.c.DB().Close()
 	}()
 
