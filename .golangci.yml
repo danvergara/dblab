@@ -1,16 +1,31 @@
-# Options for analysis running.
-run:
-  timeout: 5m
-  skip-dirs:
-    - .git
+version: "2"
 linters:
-   enable:
-    - revive
+  enable:
     - godot
+    - revive
+  settings:
+    revive:
+      rules:
+        - name: blank-imports
+          severity: warning
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
     - gofmt
-linters-settings:
-  revive:
-    rules:
-      - name: blank-imports
-        severity: warning
-        disabled: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
