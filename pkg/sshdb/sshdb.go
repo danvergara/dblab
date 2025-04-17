@@ -99,19 +99,19 @@ type PostgresViaSSHDialer struct {
 	client *ssh.Client
 }
 
-func (self *PostgresViaSSHDialer) Open(s string) (_ driver.Conn, err error) {
-	return pq.DialOpen(self, s)
+func (sd *PostgresViaSSHDialer) Open(s string) (_ driver.Conn, err error) {
+	return pq.DialOpen(sd, s)
 }
 
-func (self *PostgresViaSSHDialer) Dial(network, address string) (net.Conn, error) {
-	return self.client.Dial(network, address)
+func (sd *PostgresViaSSHDialer) Dial(network, address string) (net.Conn, error) {
+	return sd.client.Dial(network, address)
 }
 
-func (self *PostgresViaSSHDialer) DialTimeout(
+func (sd *PostgresViaSSHDialer) DialTimeout(
 	network, address string,
 	timeout time.Duration,
 ) (net.Conn, error) {
-	return self.client.Dial(network, address)
+	return sd.client.Dial(network, address)
 }
 
 // MySQLViaSSHDialer used to register the database connection via the ssh tunnel.

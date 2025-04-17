@@ -1,6 +1,6 @@
 module github.com/danvergara/dblab
 
-go 1.22
+go 1.24.2
 
 require (
 	github.com/Masterminds/squirrel v1.5.3
@@ -22,6 +22,7 @@ require (
 	github.com/sijms/go-ora/v2 v2.8.19
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.8.4
+	golang.org/x/crypto v0.18.0
 	modernc.org/sqlite v1.22.1
 )
 
@@ -61,7 +62,6 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
