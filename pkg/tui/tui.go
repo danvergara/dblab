@@ -9,6 +9,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/danvergara/dblab/pkg/client"
+	"github.com/danvergara/dblab/pkg/command"
 )
 
 const (
@@ -36,9 +37,27 @@ const (
 // It is composed by a pointer to a tview application and the database client responsible for making queries to the database.
 // Tha last field is a AppWidgets instance, so every widget can be accessed through the Tui's reference.
 type Tui struct {
-	app *tview.Application
-	c   *client.Client
-	aw  AppWidgets
+	app      *tview.Application
+	c        *client.Client
+	aw       AppWidgets
+	bindings *command.TUIKeyBindings
+}
+
+// Option is a functional option type that allows us to configure the Tui object.
+type Option func(*Tui)
+
+// WithClient adds and optional database client to the Tui.
+func WithClient(c *client.Client) Option {
+	return func(t *Tui) {
+		t.c = c
+	}
+}
+
+// WithKeyBinding sets a TUIKeyBindings to the Tui struct.
+func WithKeyBinding(kb *command.TUIKeyBindings) Option {
+	return func(t *Tui) {
+		t.bindings = kb
+	}
 }
 
 // AppWidgets struct holds the widgets needed to run the app and manage the multiple behaviors supported.
@@ -66,20 +85,23 @@ type AppWidgets struct {
 // New is a constructor that returns a pointer to a Tui struct.
 // The functions starts the app, initializes an AppWidgets and runs the prepare function,
 // responsible for setting up the whole app and its multiple behaviors.
-func New(c *client.Client) (*Tui, error) {
+func New(options ...Option) (*Tui, error) {
+	t := &Tui{}
+
+	for _, opt := range options {
+		opt(t)
+	}
+
 	app := tview.NewApplication()
 
-	t := Tui{
-		app: app,
-		c:   c,
-		aw:  AppWidgets{},
-	}
+	t.app = app
+	t.aw = AppWidgets{}
 
 	if err := t.prepare(); err != nil {
 		return nil, err
 	}
 
-	return &t, nil
+	return t, nil
 }
 
 // setupQueries function sets up the queries text area, the widget responsible for receiving the text input from the user,
@@ -90,8 +112,8 @@ func (t *Tui) setupQueries() {
 
 	t.aw.queries.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
-		// Runs the query when Ctrl+Space is pressed.
-		case tcell.KeyCtrlSpace:
+		// Runs the query when the designated Key to run queries gets pressed.
+		case t.bindings.RunQuery:
 			// Clears the views and switches to the content table so the user can see the result set.
 			t.aw.content.Clear()
 			t.aw.structure.Clear()
@@ -164,11 +186,11 @@ func (t *Tui) setupQueries() {
 
 				t.aw.tables.SetCurrentItem(0)
 			}
-		case tcell.KeyCtrlJ:
-			// switch to the tableMetadata page if Ctrl+J gets pressed.
+		case t.bindings.Navigation.Down:
+			// switch to the tableMetadata page if designated Navigation Down Key gets pressed.
 			t.app.SetFocus(t.aw.tableMetadata)
-		case tcell.KeyCtrlH:
-			// switch to the list of tables page if Ctrl+H gets pressed.
+		case t.bindings.Navigation.Left:
+			// switch to the list of tables page if designated Navigation Left Key gets pressed.
 			t.app.SetFocus(t.aw.catalogPage)
 			return nil
 		case tcell.KeyCtrlD:
@@ -207,11 +229,11 @@ func (t *Tui) setupTablesMetadata() {
 		name, _ := t.aw.tableMetadata.GetFrontPage()
 
 		switch event.Key() {
-		case tcell.KeyCtrlH:
+		case t.bindings.Navigation.Left:
 			t.app.SetFocus(t.aw.catalogPage)
-		case tcell.KeyCtrlK:
+		case t.bindings.Navigation.Up:
 			t.app.SetFocus(t.aw.queries)
-		case tcell.KeyCtrlS:
+		case t.bindings.Navigation.Structure:
 			if name == contentPage {
 				t.aw.tableMetadata.SwitchToPage(structurePage)
 				t.aw.structure.ScrollToBeginning()
@@ -219,7 +241,7 @@ func (t *Tui) setupTablesMetadata() {
 				t.aw.tableMetadata.SwitchToPage(contentPage)
 				t.aw.content.ScrollToBeginning()
 			}
-		case tcell.KeyCtrlI:
+		case t.bindings.Navigation.Indexes:
 			if name == contentPage {
 				t.aw.tableMetadata.SwitchToPage(indexesPage)
 				t.aw.indexes.ScrollToBeginning()
@@ -227,7 +249,7 @@ func (t *Tui) setupTablesMetadata() {
 				t.aw.tableMetadata.SwitchToPage(contentPage)
 				t.aw.content.ScrollToBeginning()
 			}
-		case tcell.KeyCtrlT:
+		case t.bindings.Navigation.Constraints:
 			if name == contentPage {
 				t.aw.tableMetadata.SwitchToPage(constraintsPage)
 				t.aw.constraints.ScrollToBeginning()
@@ -292,7 +314,7 @@ func (t *Tui) setupDatabaseCatalog() error {
 
 		t.aw.databaseCatalog.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Key() {
-			case tcell.KeyCtrlL:
+			case t.bindings.Navigation.Right:
 				t.app.SetFocus(t.aw.queries)
 			}
 			return event
@@ -357,7 +379,7 @@ func (t *Tui) setupDatabaseCatalog() error {
 		// Similar to Vim.
 		t.aw.tables.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Key() {
-			case tcell.KeyCtrlL:
+			case t.bindings.Navigation.Right:
 				t.app.SetFocus(t.aw.queries)
 			case tcell.KeyEnter:
 				t.updateTableMetadataOnChange("")

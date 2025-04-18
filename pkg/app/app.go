@@ -40,7 +40,7 @@ func New(opts command.Options) (*App, error) {
 		return nil, err
 	}
 
-	t, err := tui.New(c)
+	t, err := tui.New(tui.WithClient(c), tui.WithKeyBinding(&opts.TUIKeyBindings))
 	if err != nil {
 		return nil, err
 	}
