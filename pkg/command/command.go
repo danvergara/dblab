@@ -1,6 +1,10 @@
 package command
 
-import "os"
+import (
+	"os"
+
+	"github.com/gdamore/tcell/v2"
+)
 
 // Options is a struct that stores the provided commands by the user.
 type Options struct {
@@ -36,6 +40,23 @@ type Options struct {
 	Encrypt                string
 	TrustServerCertificate string
 	ConnectionTimeout      string
+	// TUI keybidings.
+	TUIKeyBindings TUIKeyBindings
+}
+
+type TUIKeyBindings struct {
+	RunQuery   tcell.Key
+	Navigation TUINavgationBindgins
+}
+
+type TUINavgationBindgins struct {
+	Up          tcell.Key
+	Down        tcell.Key
+	Left        tcell.Key
+	Right       tcell.Key
+	Structure   tcell.Key
+	Indexes     tcell.Key
+	Constraints tcell.Key
 }
 
 // SetDefault returns a Options struct and fills the empty
