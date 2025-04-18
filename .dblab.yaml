@@ -35,3 +35,13 @@ database:
     password: "5@klkbN#ABC"
     user: "SA"
 limit: 50
+keybindings:
+  run-query: 'Ctrl-Space'
+  navigation:
+    up: 'Ctrl-K'
+    down: 'Ctrl-J'
+    left: 'Ctrl-H'
+    right: 'Ctrl-L'
+    structure: 'Ctrl-S'
+    indexes: 'Ctrl-I'
+    constraints: 'Ctrl-T'
