@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/danvergara/dblab/pkg/app"
@@ -29,6 +30,7 @@ var (
 	sslkey      string
 	sslpassword string
 	sslrootcert string
+
 	// SSH Tunnel.
 	sshHost          string
 	sshPort          string
@@ -36,10 +38,12 @@ var (
 	sshPass          string
 	sshKey           string
 	sshKeyPassphrase string
+
 	// oracle specific.
 	traceFile string
 	sslVerify string
 	wallet    string
+
 	// sql server.
 	encrypt                string
 	trustServerCertificate string
@@ -90,6 +94,18 @@ func NewRootCmd() *cobra.Command {
 					SSHPass:                sshPass,
 					SSHKeyFile:             sshKey,
 					SSHKeyPassphrase:       sshKeyPassphrase,
+					TUIKeyBindings: command.TUIKeyBindings{
+						RunQuery: tcell.KeyCtrlSpace,
+						Navigation: command.TUINavgationBindgins{
+							Up:          tcell.KeyCtrlK,
+							Down:        tcell.KeyCtrlJ,
+							Left:        tcell.KeyCtrlH,
+							Right:       tcell.KeyCtrlL,
+							Structure:   tcell.KeyCtrlS,
+							Indexes:     tcell.KeyCtrlI,
+							Constraints: tcell.KeyCtrlT,
+						},
+					},
 				}
 
 				if form.IsEmpty(opts) {
