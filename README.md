@@ -56,13 +56,6 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 It works with Linux, too.
 
 ```
-$ brew install danvergara/tools/dblab
-```
-
-Or
-
-```
-$ brew tap danvergara/tools
 $ brew install dblab
 ```
 
