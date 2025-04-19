@@ -212,72 +212,87 @@ func colorFg(val, color string) string {
 }
 
 func initModel() Model {
-	host := textinput.NewModel()
+	host := textinput.New()
 	host.Placeholder = "Host"
 	host.PromptStyle = focusedStyle
 	host.TextStyle = focusedStyle
 	host.CharLimit = 200
+	host.Width = 20
 	host.Focus()
 
-	port := textinput.NewModel()
+	port := textinput.New()
 	port.Placeholder = "Port"
 	port.CharLimit = 200
+	port.Width = 20
 
-	user := textinput.NewModel()
+	user := textinput.New()
 	user.Placeholder = "Username"
 	user.CharLimit = 200
+	user.Width = 20
 
-	password := textinput.NewModel()
+	password := textinput.New()
 	password.Placeholder = "Password"
 	password.EchoMode = textinput.EchoPassword
 	password.EchoCharacter = '*'
 	password.CharLimit = 200
+	password.Width = 20
 
-	database := textinput.NewModel()
+	database := textinput.New()
 	database.Placeholder = "Database"
 	database.CharLimit = 200
+	database.Width = 20
 
-	limit := textinput.NewModel()
+	limit := textinput.New()
 	limit.Placeholder = "Limit"
 	limit.CharLimit = 200
+	limit.Width = 20
 
-	filePath := textinput.NewModel()
+	filePath := textinput.New()
 	filePath.Placeholder = "File Path"
 	filePath.CharLimit = 1000
+	filePath.Width = 20
 	filePath.Focus()
 
-	sslCert := textinput.NewModel()
+	sslCert := textinput.New()
 	sslCert.Placeholder = "Client SSL certificate"
 	sslCert.CharLimit = 1000
+	sslCert.Width = 20
 	sslCert.Focus()
 
-	sslKey := textinput.NewModel()
+	sslKey := textinput.New()
 	sslKey.Placeholder = "The location for the secret key used for the client certificate"
 	sslKey.CharLimit = 1000
+	sslKey.Width = 20
 
-	sslPassword := textinput.NewModel()
+	sslPassword := textinput.New()
 	sslPassword.Placeholder = "The password for the secret key"
 	sslPassword.CharLimit = 1000
+	sslPassword.Width = 20
 
-	sslRootCert := textinput.NewModel()
+	sslRootCert := textinput.New()
 	sslRootCert.Placeholder = "The name of a file containing SSL certificate authority (CA) certificate(s)"
 	sslRootCert.CharLimit = 1000
+	sslRootCert.Width = 20
 
-	sslVerify := textinput.NewModel()
+	sslVerify := textinput.New()
 	sslVerify.Placeholder = "SSL Verify"
 	sslVerify.CharLimit = 200
+	sslVerify.Width = 20
 
-	traceFile := textinput.NewModel()
+	traceFile := textinput.New()
 	traceFile.Placeholder = "Trace file"
 	traceFile.CharLimit = 1000
+	traceFile.Width = 20
 
-	wallet := textinput.NewModel()
+	wallet := textinput.New()
 	wallet.Placeholder = "Path to wallet"
 	wallet.CharLimit = 1000
+	wallet.Width = 20
 
-	trustServerCertificate := textinput.NewModel()
+	trustServerCertificate := textinput.New()
 	trustServerCertificate.Placeholder = "Server certificate is checked or not"
 	trustServerCertificate.CharLimit = 1000
+	trustServerCertificate.Width = 20
 	trustServerCertificate.Focus()
 
 	m := Model{
@@ -316,7 +331,7 @@ func initModel() Model {
 // Run runs the menus programs to introduced the required data to connect with a database.
 func Run() (command.Options, error) {
 	m := initModel()
-	if err := tea.NewProgram(&m).Start(); err != nil {
+	if _, err := tea.NewProgram(&m).Run(); err != nil {
 		return command.Options{}, err
 	}
 
