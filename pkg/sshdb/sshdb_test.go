@@ -74,8 +74,8 @@ func mockSSHServer(t *testing.T, privateKeyPath, authorizedKeyPath string) (net.
 
 func TestSSHKeyFileAuthentication(t *testing.T) {
 	var (
-		privateKeyPath    string = "testdata/test_host_key"
-		authorizedKeyPath string = "testdata/test_client_key.pub"
+		privateKeyPath    = "testdata/test_host_key"
+		authorizedKeyPath = "testdata/test_client_key.pub"
 	)
 
 	t.Cleanup(func() {
