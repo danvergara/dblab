@@ -73,8 +73,14 @@ func mockSSHServer(t *testing.T, privateKeyPath, authorizedKeyPath string) (net.
 }
 
 func TestSSHKeyFileAuthentication(t *testing.T) {
-	privateKeyPath := "testdata/test_host_key"
-	authorizedKeyPath := "testdata/test_client_key.pub"
+	var (
+		privateKeyPath    string = "testdata/test_host_key"
+		authorizedKeyPath string = "testdata/test_client_key.pub"
+	)
+
+	t.Cleanup(func() {
+		os.Remove("testdata/known_hosts")
+	})
 
 	// Start the mock server
 	listener, err := mockSSHServer(t, privateKeyPath, authorizedKeyPath)
