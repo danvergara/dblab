@@ -46,10 +46,10 @@ type Options struct {
 
 type TUIKeyBindings struct {
 	RunQuery   tcell.Key
-	Navigation TUINavgationBindgins
+	Navigation TUINavigationBindgins
 }
 
-type TUINavgationBindgins struct {
+type TUINavigationBindgins struct {
 	Up          tcell.Key
 	Down        tcell.Key
 	Left        tcell.Key

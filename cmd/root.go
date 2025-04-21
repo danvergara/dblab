@@ -96,7 +96,7 @@ func NewRootCmd() *cobra.Command {
 					SSHKeyPassphrase:       sshKeyPassphrase,
 					TUIKeyBindings: command.TUIKeyBindings{
 						RunQuery: tcell.KeyCtrlSpace,
-						Navigation: command.TUINavgationBindgins{
+						Navigation: command.TUINavigationBindgins{
 							Up:          tcell.KeyCtrlK,
 							Down:        tcell.KeyCtrlJ,
 							Left:        tcell.KeyCtrlH,

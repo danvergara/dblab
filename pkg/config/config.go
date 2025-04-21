@@ -177,7 +177,7 @@ func Init(configName string) (command.Options, error) {
 		SSHKeyPassphrase:       db.SSHKeyPassphrase,
 		TUIKeyBindings: command.TUIKeyBindings{
 			RunQuery: tcell.Key(swapedKeyNames[cfg.KeyBindings.RunQuery]),
-			Navigation: command.TUINavgationBindgins{
+			Navigation: command.TUINavigationBindgins{
 				Up:          tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Up]),
 				Down:        tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Down]),
 				Left:        tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Left]),
