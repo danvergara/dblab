@@ -676,6 +676,19 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 				uri: "users.rsd",
 			},
 		},
+		// duckdb
+		{
+			name: "success - duckdb file extension",
+			given: given{
+				opts: command.Options{
+					Driver: drivers.DuckDB,
+					DBName: "users.db",
+				},
+			},
+			want: want{
+				uri: "users.db",
+			},
+		},
 	}
 
 	for _, tc := range cases {
