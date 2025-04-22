@@ -8,6 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	_ "github.com/marcboeker/go-duckdb/v2"
 	_ "github.com/microsoft/go-mssqldb"
 	_ "github.com/sijms/go-ora/v2"
 	_ "modernc.org/sqlite"
@@ -81,6 +82,8 @@ func New(opts command.Options) (*Client, error) {
 		c.databaseQuerier = newOracle()
 	case drivers.SQLServer:
 		c.databaseQuerier = newMSSQL()
+	case drivers.DuckDB:
+		c.databaseQuerier = newDuckDB()
 	default:
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}
