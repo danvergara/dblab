@@ -64,6 +64,7 @@ type Model struct {
 	oracleSSLModes     []string
 	sqlServerSSLModes  []string
 	sqliteSSLModes     []string
+	duckdbSSLModes     []string
 	sslMode            string
 }
 
@@ -297,7 +298,7 @@ func initModel() Model {
 
 	m := Model{
 		// the supported drivers by the client.
-		drivers: []string{"postgres", "mysql", "sqlite", "oracle", "sqlserver"},
+		drivers: []string{"postgres", "mysql", "sqlite", "oracle", "sqlserver", "duckdb"},
 		// our default value.
 		driver: "postgres",
 
@@ -307,6 +308,7 @@ func initModel() Model {
 		oracleSSLModes:     []string{"enable", "disable"},
 		sqlServerSSLModes:  []string{"strict", "disable", "false", "true"},
 		sqliteSSLModes:     []string{},
+		duckdbSSLModes:     []string{},
 
 		hostInput:                   host,
 		portInput:                   port,
@@ -363,8 +365,12 @@ func Run() (command.Options, error) {
 		opts.Encrypt = m.SSLMode()
 	}
 
-	if m.driver == "sqlite" {
+	if m.driver == drivers.SQLite {
 		opts.URL = fmt.Sprintf("file:%s", m.FilePath())
+	}
+
+	if m.driver == drivers.DuckDB {
+		opts.URL = fmt.Sprintf("duckdb:%s", m.FilePath())
 	}
 
 	return opts, nil
