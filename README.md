@@ -348,7 +348,8 @@ The `--db` flag is now optional (except for Oracle), meaning that the user will 
 ### Key Bindings
 | Key                                     | Description                           |
 |----------------------------------------|----------------------------------------|
-|<kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query |
+|<kbd>Ctrl+Space</kbd>                   | If the query editor is active, execute the query |
+|<kbd>Ctrl+D</kbd>                       | Cleans the whole text from the query editor, when the editor is selected |
 |<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel |
 |<kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel. The opposite is true |
 |<kbd>Ctrl+T</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true |
