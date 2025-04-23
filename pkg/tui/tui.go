@@ -171,6 +171,8 @@ func (t *Tui) setupQueries() {
 			// switch to the list of tables page if Ctrl+H gets pressed.
 			t.app.SetFocus(t.aw.catalogPage)
 			return nil
+		case tcell.KeyCtrlD:
+			t.aw.queries.SetText("", true)
 		}
 		return event
 	})
