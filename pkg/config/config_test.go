@@ -11,34 +11,35 @@ import (
 
 func TestInit(t *testing.T) {
 	type want struct {
-		host                  string
-		port                  string
-		dbname                string
-		user                  string
-		pass                  string
-		driver                string
-		schema                string
-		limit                 uint
-		ssl                   string
-		sslcert               string
-		sslkey                string
-		sslpassword           string
-		sslrootcert           string
-		traceFile             string
-		sslVerify             string
-		wallet                string
-		sshHost               string
-		sshPort               string
-		sshUser               string
-		sshPass               string
-		runQuery              int16
-		navigationUp          int16
-		navigationDown        int16
-		navigationRight       int16
-		navigationLeft        int16
-		navigationStructure   int16
-		navigationIndexes     int16
-		navigationConstraints int16
+		host            string
+		port            string
+		dbname          string
+		user            string
+		pass            string
+		driver          string
+		schema          string
+		limit           uint
+		ssl             string
+		sslcert         string
+		sslkey          string
+		sslpassword     string
+		sslrootcert     string
+		traceFile       string
+		sslVerify       string
+		wallet          string
+		sshHost         string
+		sshPort         string
+		sshUser         string
+		sshPass         string
+		runQuery        int16
+		navigationUp    int16
+		navigationDown  int16
+		navigationRight int16
+		navigationLeft  int16
+		structure       int16
+		indexes         int16
+		constraints     int16
+		clearEditor     int16
 	}
 	var tests = []struct {
 		name  string
@@ -49,122 +50,127 @@ func TestInit(t *testing.T) {
 			name:  "empty config name",
 			input: "",
 			want: want{
-				host:                  "localhost",
-				port:                  "5432",
-				dbname:                "users",
-				user:                  "postgres",
-				pass:                  "password",
-				driver:                "postgres",
-				schema:                "public",
-				ssl:                   "disable",
-				limit:                 50,
-				runQuery:              int16(tcell.KeyCtrlSpace),
-				navigationUp:          int16(tcell.KeyCtrlK),
-				navigationDown:        int16(tcell.KeyCtrlJ),
-				navigationLeft:        int16(tcell.KeyCtrlH),
-				navigationRight:       int16(tcell.KeyCtrlL),
-				navigationStructure:   int16(tcell.KeyCtrlS),
-				navigationIndexes:     int16(tcell.KeyCtrlI),
-				navigationConstraints: int16(tcell.KeyCtrlT),
+				host:            "localhost",
+				port:            "5432",
+				dbname:          "users",
+				user:            "postgres",
+				pass:            "password",
+				driver:          "postgres",
+				schema:          "public",
+				ssl:             "disable",
+				limit:           50,
+				runQuery:        int16(tcell.KeyCtrlSpace),
+				navigationUp:    int16(tcell.KeyCtrlK),
+				navigationDown:  int16(tcell.KeyCtrlJ),
+				navigationLeft:  int16(tcell.KeyCtrlH),
+				navigationRight: int16(tcell.KeyCtrlL),
+				structure:       int16(tcell.KeyCtrlS),
+				indexes:         int16(tcell.KeyCtrlI),
+				constraints:     int16(tcell.KeyCtrlT),
+				clearEditor:     int16(tcell.KeyCtrlD),
 			},
 		},
 		{
 			name:  "test config",
 			input: "test",
 			want: want{
-				host:                  "localhost",
-				port:                  "5432",
-				dbname:                "users",
-				user:                  "postgres",
-				pass:                  "password",
-				driver:                "postgres",
-				schema:                "public",
-				ssl:                   "disable",
-				limit:                 50,
-				runQuery:              int16(tcell.KeyCtrlSpace),
-				navigationUp:          int16(tcell.KeyCtrlK),
-				navigationDown:        int16(tcell.KeyCtrlJ),
-				navigationLeft:        int16(tcell.KeyCtrlH),
-				navigationRight:       int16(tcell.KeyCtrlL),
-				navigationStructure:   int16(tcell.KeyCtrlS),
-				navigationIndexes:     int16(tcell.KeyCtrlI),
-				navigationConstraints: int16(tcell.KeyCtrlT),
+				host:            "localhost",
+				port:            "5432",
+				dbname:          "users",
+				user:            "postgres",
+				pass:            "password",
+				driver:          "postgres",
+				schema:          "public",
+				ssl:             "disable",
+				limit:           50,
+				runQuery:        int16(tcell.KeyCtrlSpace),
+				navigationUp:    int16(tcell.KeyCtrlK),
+				navigationDown:  int16(tcell.KeyCtrlJ),
+				navigationLeft:  int16(tcell.KeyCtrlH),
+				navigationRight: int16(tcell.KeyCtrlL),
+				structure:       int16(tcell.KeyCtrlS),
+				indexes:         int16(tcell.KeyCtrlI),
+				constraints:     int16(tcell.KeyCtrlT),
+				clearEditor:     int16(tcell.KeyCtrlD),
 			},
 		},
 		{
 			name:  "production config",
 			input: "prod",
 			want: want{
-				host:                  "mydb.123456789012.us-east-1.rds.amazonaws.com",
-				port:                  "5432",
-				dbname:                "users",
-				user:                  "postgres",
-				pass:                  "password",
-				driver:                "postgres",
-				schema:                "public",
-				ssl:                   "require",
-				sslrootcert:           "~/.postgresql/root.crt.",
-				limit:                 50,
-				runQuery:              int16(tcell.KeyCtrlSpace),
-				navigationUp:          int16(tcell.KeyCtrlK),
-				navigationDown:        int16(tcell.KeyCtrlJ),
-				navigationLeft:        int16(tcell.KeyCtrlH),
-				navigationRight:       int16(tcell.KeyCtrlL),
-				navigationStructure:   int16(tcell.KeyCtrlS),
-				navigationIndexes:     int16(tcell.KeyCtrlI),
-				navigationConstraints: int16(tcell.KeyCtrlT),
+				host:            "mydb.123456789012.us-east-1.rds.amazonaws.com",
+				port:            "5432",
+				dbname:          "users",
+				user:            "postgres",
+				pass:            "password",
+				driver:          "postgres",
+				schema:          "public",
+				ssl:             "require",
+				sslrootcert:     "~/.postgresql/root.crt.",
+				limit:           50,
+				runQuery:        int16(tcell.KeyCtrlSpace),
+				navigationUp:    int16(tcell.KeyCtrlK),
+				navigationDown:  int16(tcell.KeyCtrlJ),
+				navigationLeft:  int16(tcell.KeyCtrlH),
+				navigationRight: int16(tcell.KeyCtrlL),
+				structure:       int16(tcell.KeyCtrlS),
+				indexes:         int16(tcell.KeyCtrlI),
+				constraints:     int16(tcell.KeyCtrlT),
+				clearEditor:     int16(tcell.KeyCtrlD),
 			},
 		},
 		{
 			name:  "ssh tunnel",
 			input: "ssh-tunnel",
 			want: want{
-				host:                  "localhost",
-				port:                  "5432",
-				dbname:                "users",
-				user:                  "postgres",
-				pass:                  "password",
-				driver:                "postgres",
-				schema:                "public",
-				ssl:                   "disable",
-				sshHost:               "example.com",
-				sshPort:               "22",
-				sshUser:               "ssh-user",
-				sshPass:               "password",
-				limit:                 50,
-				runQuery:              int16(tcell.KeyCtrlSpace),
-				navigationUp:          int16(tcell.KeyCtrlK),
-				navigationDown:        int16(tcell.KeyCtrlJ),
-				navigationLeft:        int16(tcell.KeyCtrlH),
-				navigationRight:       int16(tcell.KeyCtrlL),
-				navigationStructure:   int16(tcell.KeyCtrlS),
-				navigationIndexes:     int16(tcell.KeyCtrlI),
-				navigationConstraints: int16(tcell.KeyCtrlT),
+				host:            "localhost",
+				port:            "5432",
+				dbname:          "users",
+				user:            "postgres",
+				pass:            "password",
+				driver:          "postgres",
+				schema:          "public",
+				ssl:             "disable",
+				sshHost:         "example.com",
+				sshPort:         "22",
+				sshUser:         "ssh-user",
+				sshPass:         "password",
+				limit:           50,
+				runQuery:        int16(tcell.KeyCtrlSpace),
+				navigationUp:    int16(tcell.KeyCtrlK),
+				navigationDown:  int16(tcell.KeyCtrlJ),
+				navigationLeft:  int16(tcell.KeyCtrlH),
+				navigationRight: int16(tcell.KeyCtrlL),
+				structure:       int16(tcell.KeyCtrlS),
+				indexes:         int16(tcell.KeyCtrlI),
+				constraints:     int16(tcell.KeyCtrlT),
+				clearEditor:     int16(tcell.KeyCtrlD),
 			},
 		},
 		{
 			name:  "oracle",
 			input: "oracle",
 			want: want{
-				host:                  "localhost",
-				port:                  "1521",
-				dbname:                "FREEPDB1 ",
-				user:                  "system",
-				pass:                  "password",
-				driver:                "oracle",
-				ssl:                   "enable",
-				sslVerify:             "true",
-				wallet:                "path/to/wallet",
-				traceFile:             "trace.log",
-				limit:                 50,
-				runQuery:              int16(tcell.KeyCtrlSpace),
-				navigationUp:          int16(tcell.KeyCtrlK),
-				navigationDown:        int16(tcell.KeyCtrlJ),
-				navigationLeft:        int16(tcell.KeyCtrlH),
-				navigationRight:       int16(tcell.KeyCtrlL),
-				navigationStructure:   int16(tcell.KeyCtrlS),
-				navigationIndexes:     int16(tcell.KeyCtrlI),
-				navigationConstraints: int16(tcell.KeyCtrlT),
+				host:            "localhost",
+				port:            "1521",
+				dbname:          "FREEPDB1 ",
+				user:            "system",
+				pass:            "password",
+				driver:          "oracle",
+				ssl:             "enable",
+				sslVerify:       "true",
+				wallet:          "path/to/wallet",
+				traceFile:       "trace.log",
+				limit:           50,
+				runQuery:        int16(tcell.KeyCtrlSpace),
+				navigationUp:    int16(tcell.KeyCtrlK),
+				navigationDown:  int16(tcell.KeyCtrlJ),
+				navigationLeft:  int16(tcell.KeyCtrlH),
+				navigationRight: int16(tcell.KeyCtrlL),
+				structure:       int16(tcell.KeyCtrlS),
+				indexes:         int16(tcell.KeyCtrlI),
+				constraints:     int16(tcell.KeyCtrlT),
+				clearEditor:     int16(tcell.KeyCtrlD),
 			},
 		},
 	}
@@ -198,18 +204,23 @@ func TestInit(t *testing.T) {
 			assert.Equal(t, tcell.Key(tt.want.navigationLeft), opts.TUIKeyBindings.Navigation.Left)
 			assert.Equal(
 				t,
-				tcell.Key(tt.want.navigationConstraints),
-				opts.TUIKeyBindings.Navigation.Constraints,
+				tcell.Key(tt.want.constraints),
+				opts.TUIKeyBindings.Constraints,
 			)
 			assert.Equal(
 				t,
-				tcell.Key(tt.want.navigationIndexes),
-				opts.TUIKeyBindings.Navigation.Indexes,
+				tcell.Key(tt.want.indexes),
+				opts.TUIKeyBindings.Indexes,
 			)
 			assert.Equal(
 				t,
-				tcell.Key(tt.want.navigationStructure),
-				opts.TUIKeyBindings.Navigation.Structure,
+				tcell.Key(tt.want.structure),
+				opts.TUIKeyBindings.Structure,
+			)
+			assert.Equal(
+				t,
+				tcell.Key(tt.want.clearEditor),
+				opts.TUIKeyBindings.ClearEditor,
 			)
 		})
 	}

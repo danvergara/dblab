@@ -70,18 +70,19 @@ type Database struct {
 }
 
 type KeyBindings struct {
-	RunQuery   string `fig:"run-query" default:"Ctrl-Space"`
-	Navigation NavigationBindgins
+	RunQuery    string `fig:"run-query"    default:"Ctrl-Space"`
+	Structure   string `fig:"structure"    default:"Ctrl-S"`
+	Indexes     string `fig:"indexes"      default:"Ctrl-I"`
+	Constraints string `fig:"constraints"  default:"Ctrl-T"`
+	ClearEditor string `fig:"clear-editor" default:"Ctrl-D"`
+	Navigation  NavigationBindgins
 }
 
 type NavigationBindgins struct {
-	Up          string `fig:"up"          default:"Ctrl-K"`
-	Down        string `fig:"down"        default:"Ctrl-J"`
-	Left        string `fig:"left"        default:"Ctrl-H"`
-	Right       string `fig:"right"       default:"Ctrl-L"`
-	Structure   string `fig:"structure"   default:"Ctrl-S"`
-	Indexes     string `fig:"indexes"     default:"Ctrl-I"`
-	Constraints string `fig:"constraints" default:"Ctrl-T"`
+	Up    string `fig:"up"    default:"Ctrl-K"`
+	Down  string `fig:"down"  default:"Ctrl-J"`
+	Left  string `fig:"left"  default:"Ctrl-H"`
+	Right string `fig:"right" default:"Ctrl-L"`
 }
 
 // swapKeyNames swap keys and values of the tcell.KeyNames map.
@@ -176,15 +177,16 @@ func Init(configName string) (command.Options, error) {
 		SSHKeyFile:             db.SSHKeyFile,
 		SSHKeyPassphrase:       db.SSHKeyPassphrase,
 		TUIKeyBindings: command.TUIKeyBindings{
-			RunQuery: tcell.Key(swapedKeyNames[cfg.KeyBindings.RunQuery]),
+			RunQuery:    tcell.Key(swapedKeyNames[cfg.KeyBindings.RunQuery]),
+			Structure:   tcell.Key(swapedKeyNames[cfg.KeyBindings.Structure]),
+			Constraints: tcell.Key(swapedKeyNames[cfg.KeyBindings.Constraints]),
+			Indexes:     tcell.Key(swapedKeyNames[cfg.KeyBindings.Indexes]),
+			ClearEditor: tcell.Key(swapedKeyNames[cfg.KeyBindings.ClearEditor]),
 			Navigation: command.TUINavigationBindgins{
-				Up:          tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Up]),
-				Down:        tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Down]),
-				Left:        tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Left]),
-				Right:       tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Right]),
-				Structure:   tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Structure]),
-				Constraints: tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Constraints]),
-				Indexes:     tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Indexes]),
+				Up:    tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Up]),
+				Down:  tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Down]),
+				Left:  tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Left]),
+				Right: tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Right]),
 			},
 		},
 	}

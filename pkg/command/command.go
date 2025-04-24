@@ -45,18 +45,19 @@ type Options struct {
 }
 
 type TUIKeyBindings struct {
-	RunQuery   tcell.Key
-	Navigation TUINavigationBindgins
-}
-
-type TUINavigationBindgins struct {
-	Up          tcell.Key
-	Down        tcell.Key
-	Left        tcell.Key
-	Right       tcell.Key
+	RunQuery    tcell.Key
 	Structure   tcell.Key
 	Indexes     tcell.Key
 	Constraints tcell.Key
+	ClearEditor tcell.Key
+	Navigation  TUINavigationBindgins
+}
+
+type TUINavigationBindgins struct {
+	Up    tcell.Key
+	Down  tcell.Key
+	Left  tcell.Key
+	Right tcell.Key
 }
 
 // SetDefault returns a Options struct and fills the empty

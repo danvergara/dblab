@@ -193,7 +193,7 @@ func (t *Tui) setupQueries() {
 			// switch to the list of tables page if designated Navigation Left Key gets pressed.
 			t.app.SetFocus(t.aw.catalogPage)
 			return nil
-		case tcell.KeyCtrlD:
+		case t.bindings.ClearEditor:
 			t.aw.queries.SetText("", true)
 		}
 		return event
@@ -233,7 +233,7 @@ func (t *Tui) setupTablesMetadata() {
 			t.app.SetFocus(t.aw.catalogPage)
 		case t.bindings.Navigation.Up:
 			t.app.SetFocus(t.aw.queries)
-		case t.bindings.Navigation.Structure:
+		case t.bindings.Structure:
 			if name == contentPage {
 				t.aw.tableMetadata.SwitchToPage(structurePage)
 				t.aw.structure.ScrollToBeginning()
@@ -241,7 +241,7 @@ func (t *Tui) setupTablesMetadata() {
 				t.aw.tableMetadata.SwitchToPage(contentPage)
 				t.aw.content.ScrollToBeginning()
 			}
-		case t.bindings.Navigation.Indexes:
+		case t.bindings.Indexes:
 			if name == contentPage {
 				t.aw.tableMetadata.SwitchToPage(indexesPage)
 				t.aw.indexes.ScrollToBeginning()
@@ -249,7 +249,7 @@ func (t *Tui) setupTablesMetadata() {
 				t.aw.tableMetadata.SwitchToPage(contentPage)
 				t.aw.content.ScrollToBeginning()
 			}
-		case t.bindings.Navigation.Constraints:
+		case t.bindings.Constraints:
 			if name == contentPage {
 				t.aw.tableMetadata.SwitchToPage(constraintsPage)
 				t.aw.constraints.ScrollToBeginning()
