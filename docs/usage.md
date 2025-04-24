@@ -265,7 +265,12 @@ dbladb --config
 dblab --config --cfg-name "prod"
 ```
 
-`.dblab.yaml` example:
+#### Key bindings configuration
+
+Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. See the example to see the full list of the key bindings subject to change. The file shows the default values. The list of the available key bindings belongs to the [tcell](https://github.com/gdamore/tcell) library. Specifically, see the [KeyNames map](https://github.com/gdamore/tcell/blob/781586687ddb57c9d44727dc9320340c4d049b11/key.go#L83), for an accurate reference.
+
+
+#### .dblab.yaml example
 
 ```{ .yaml .copy } 
 database:
@@ -322,6 +327,17 @@ database:
     ssh-pass: "password"
 # should be greater than 0, otherwise the app will error out
 limit: 50
+keybindings:
+  run-query: 'Ctrl-Space'
+  structure: 'Ctrl-S'
+  indexes: 'Ctrl-I'
+  constraints: 'Ctrl-T'
+  clear-editor: 'Ctrl-D'
+  navigation:
+    up: 'Ctrl-K'
+    down: 'Ctrl-J'
+    left: 'Ctrl-H'
+    right: 'Ctrl-L'
 ```
 
 Or for sqlite:
