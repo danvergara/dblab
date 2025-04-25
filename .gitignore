@@ -18,6 +18,10 @@ dist/
 # SQLite Database
 db/dblab.db
 
+# DuckDB Database
+db/duckdb.db
+db/duckdb.db*
+
 # build folder
 dblab-build
 
