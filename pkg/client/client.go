@@ -193,10 +193,14 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 		s := make([]string, len(cols))
 		for i, v := range cols {
 			switch v.(type) {
-			case string, rune, []byte:
+			case string, []byte:
 				s[i] = fmt.Sprintf("%s", v)
 			case nil:
 				s[i] = fmt.Sprint(v)
+			case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+				s[i] = fmt.Sprintf("%d", v)
+			case float32, float64:
+				s[i] = fmt.Sprintf("%f", v)
 			default:
 				s[i] = fmt.Sprintf("%v", v)
 			}
