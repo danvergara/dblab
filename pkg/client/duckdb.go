@@ -41,7 +41,7 @@ func (d *duckdb) TableStructure(tableName string) (string, []interface{}, error)
 func (d *duckdb) Constraints(tableName string) (string, []interface{}, error) {
 	query := sq.Select("*").
 		From("information_schema.table_constraints").
-		Where(sq.Eq{"tableName": tableName})
+		Where(sq.Eq{"table_name": tableName})
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -52,7 +52,14 @@ func (d *duckdb) Constraints(tableName string) (string, []interface{}, error) {
 }
 
 func (d *duckdb) Indexes(tableName string) (string, []interface{}, error) {
-	query := fmt.Sprintf(`PRAGMA index_list(%s);`, tableName)
+	query := sq.Select("*").
+		From("sqlite_master").
+		Where(sq.And{sq.Eq{"type": "index"}, sq.Eq{"tbl_name": tableName}})
 
-	return query, nil, nil
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return sql, args, err
 }
