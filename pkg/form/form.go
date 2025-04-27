@@ -389,6 +389,7 @@ func IsEmpty(opts command.Options) bool {
 			"SSLVerify",
 			"Wallet",
 			"TrustServerCertificate",
+			"TUIKeyBindings",
 		),
 	)
 }

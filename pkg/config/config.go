@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/file"
@@ -19,14 +20,15 @@ import (
 
 // Config struct is used to store the db connection data.
 type Config struct {
-	Database []Database
-	User     string
-	Pswd     string
-	Host     string
-	Port     string
-	DBName   string
-	Driver   string
-	Limit    uint `fig:"limit" default:"100"`
+	Database    []Database
+	User        string
+	Pswd        string
+	Host        string
+	Port        string
+	DBName      string
+	Driver      string
+	Limit       uint `fig:"limit" default:"100"`
+	KeyBindings KeyBindings
 }
 
 type Database struct {
@@ -65,6 +67,33 @@ type Database struct {
 	Encrypt                string `fig:"encrypt"`
 	TrustServerCertificate string `fig:"trust-server-certificate"`
 	ConnectionTimeout      string `fig:"connection-timeout"`
+}
+
+type KeyBindings struct {
+	RunQuery    string `fig:"run-query"    default:"Ctrl-Space"`
+	Structure   string `fig:"structure"    default:"Ctrl-S"`
+	Indexes     string `fig:"indexes"      default:"Ctrl-I"`
+	Constraints string `fig:"constraints"  default:"Ctrl-T"`
+	ClearEditor string `fig:"clear-editor" default:"Ctrl-D"`
+	Navigation  NavigationBindgins
+}
+
+type NavigationBindgins struct {
+	Up    string `fig:"up"    default:"Ctrl-K"`
+	Down  string `fig:"down"  default:"Ctrl-J"`
+	Left  string `fig:"left"  default:"Ctrl-H"`
+	Right string `fig:"right" default:"Ctrl-L"`
+}
+
+// swapKeyNames swap keys and values of the tcell.KeyNames map.
+func swapKeyNames[K comparable, V comparable](m map[K]V) map[V]K {
+	reversed := make(map[V]K, len(m))
+
+	for k, v := range m {
+		reversed[v] = k
+	}
+
+	return reversed
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
@@ -116,6 +145,11 @@ func Init(configName string) (command.Options, error) {
 		db = cfg.Database[0]
 	}
 
+	swapedKeyNames := swapKeyNames(tcell.KeyNames)
+	// This entry is missing in the tcell.KeyNames.
+	swapedKeyNames["Ctrl-H"] = tcell.KeyCtrlH
+	swapedKeyNames["Ctrl-I"] = tcell.KeyCtrlI
+
 	opts = command.Options{
 		Driver:                 db.Driver,
 		Host:                   db.Host,
@@ -142,6 +176,19 @@ func Init(configName string) (command.Options, error) {
 		SSHPass:                db.SSHPass,
 		SSHKeyFile:             db.SSHKeyFile,
 		SSHKeyPassphrase:       db.SSHKeyPassphrase,
+		TUIKeyBindings: command.TUIKeyBindings{
+			RunQuery:    tcell.Key(swapedKeyNames[cfg.KeyBindings.RunQuery]),
+			Structure:   tcell.Key(swapedKeyNames[cfg.KeyBindings.Structure]),
+			Constraints: tcell.Key(swapedKeyNames[cfg.KeyBindings.Constraints]),
+			Indexes:     tcell.Key(swapedKeyNames[cfg.KeyBindings.Indexes]),
+			ClearEditor: tcell.Key(swapedKeyNames[cfg.KeyBindings.ClearEditor]),
+			Navigation: command.TUINavigationBindgins{
+				Up:    tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Up]),
+				Down:  tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Down]),
+				Left:  tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Left]),
+				Right: tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Right]),
+			},
+		},
 	}
 
 	return opts, nil

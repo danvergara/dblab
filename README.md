@@ -27,6 +27,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
 - [Usage](#usage)
     - [SSH Tunnel](#ssh-tunnel)
     - [Configuration](#configuration)
+        - [Key bindings configuration](#key-bindings-configuration) 
 - [Navigation](#navigation)
     - [Key Bindings](#key-bindings)
 - [Contribute](#contribute)
@@ -253,7 +254,11 @@ $ dblab --config
 $ dblab --config --cfg-name "prod"
 ```
 
-`.dblab.yaml` example:
+#### Key bindings configuration
+
+Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. See the example to see the full list of the key bindings subject to change. The file shows the default values. The list of the available key bindings belongs to the [tcell](https://github.com/gdamore/tcell) library. Specifically, see the [KeyNames map](https://github.com/gdamore/tcell/blob/781586687ddb57c9d44727dc9320340c4d049b11/key.go#L83), for an accurate reference.
+
+#### .dblab.yaml example
 
 ```yaml
 database:
@@ -310,6 +315,17 @@ database:
     ssh-pass: "password"
 # should be greater than 0, otherwise the app will error out
 limit: 50
+keybindings:
+  run-query: 'Ctrl-Space'
+  structure: 'Ctrl-S'
+  indexes: 'Ctrl-I'
+  constraints: 'Ctrl-T'
+  clear-editor: 'Ctrl-D'
+  navigation:
+    up: 'Ctrl-K'
+    down: 'Ctrl-J'
+    left: 'Ctrl-H'
+    right: 'Ctrl-L'
 ```
 
 Or for sqlite:
@@ -324,6 +340,8 @@ database:
 Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respectively.
 
 ## Navigation
+
+The key bindings are now configurable, see [Key bindings configuration](#key-bindings-configuration) to learn how to replace existing key bindings. It's worth noting that key bindings are only configurable through the configuration file, there is no flags to do so. If you don't replace them through the configuration file, the information below remains the same, otherwise, just replace the new key binding with the existing information for the default one.
 
 If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
 Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
