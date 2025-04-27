@@ -139,6 +139,7 @@ $ dblab --host localhost --user myuser --db users --pass password --ssl disable 
 $ dblab --db path/to/file.sqlite3 --driver sqlite
 $ dblab --host localhost --user system --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50
 $ dblab --host localhost --user SA --db msdb --pass '5@klkbN#ABC' --port 1433 --driver sqlserver --limit 50
+# If you want to operate on in-memory execution, omit the --db flag, for DuckDB
 $ dblab --db db/duckdb.db --driver duckdb
 ```
 
@@ -150,6 +151,7 @@ $ dblab --url 'mysql://user:password@tcp(host:port)/db'
 $ dblab --url 'file:test.db?_pragma=foreign_keys(1)&_time_format=sqlite'
 $ dblab --url 'oracle://user:password@localhost:1521/db'
 $ dblab --url 'sqlserver://SA:myStrong(!)Password@localhost:1433?database=tempdb&encrypt=true&trustservercertificate=false&connection+timeout=30'
+# --url flag does not support in-memory database for DuckDB. Use the --driver flag, as shown above, to do so
 $ dblab --url 'duckb:db/dblab.db' 
 ```
 
