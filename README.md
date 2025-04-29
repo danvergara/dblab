@@ -5,7 +5,7 @@ dblab ![integration tests](https://github.com/danvergara/dblab/actions/workflows
   <img style="float: right;" src="assets/gopher-dblab.png" alt="dblab logo"/  width=200>
 </p>
 
-__Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
+__Interactive client for PostgreSQL, MySQL, SQLite3, Oracle, SQL Server and DuckDB.__
 
 <img src="screenshots/dblab-cover.png" />
 
@@ -35,11 +35,11 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
 
 ## Overview
 
-dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3,
+dblab is a fast and lightweight interactive terminal based UI application for Database Management Systems,
 written in Go and works on OSX, Linux and Windows machines. Main idea behind using Go for backend development
 is to utilize ability of the compiler to produce zero-dependency binaries for
 multiple platforms. dblab was created as an attempt to build very simple and portable
-application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Server databases.
+application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Server/Duckdb databases.
 
 ## Features
 
@@ -82,7 +82,7 @@ curl https://raw.githubusercontent.com/danvergara/dblab/master/scripts/install_u
 ## Help
 
 ```
-dblab is a terminal UI based interactive database client for Postgres, MySQL and SQLite3.
+dblab is a terminal UI based interactive database client for multiple Database Management Systems.
 
 Usage:
   dblab [flags]
@@ -139,6 +139,8 @@ $ dblab --host localhost --user myuser --db users --pass password --ssl disable 
 $ dblab --db path/to/file.sqlite3 --driver sqlite
 $ dblab --host localhost --user system --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50
 $ dblab --host localhost --user SA --db msdb --pass '5@klkbN#ABC' --port 1433 --driver sqlserver --limit 50
+# If you want to operate on in-memory execution, omit the --db flag, for DuckDB
+$ dblab --db db/duckdb.db --driver duckdb
 ```
 
 Connection URL scheme is also supported:
@@ -149,6 +151,8 @@ $ dblab --url 'mysql://user:password@tcp(host:port)/db'
 $ dblab --url 'file:test.db?_pragma=foreign_keys(1)&_time_format=sqlite'
 $ dblab --url 'oracle://user:password@localhost:1521/db'
 $ dblab --url 'sqlserver://SA:myStrong(!)Password@localhost:1433?database=tempdb&encrypt=true&trustservercertificate=false&connection+timeout=30'
+# --url flag does not support in-memory database for DuckDB. Use the --driver flag, as shown above, to do so
+$ dblab --url 'duckb:db/dblab.db' 
 ```
 
 if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.

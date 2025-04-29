@@ -52,7 +52,7 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.steps = 2
 				m.cursor = 0
 
-				if m.driver == drivers.SQLite {
+				if m.driver == drivers.SQLite || m.driver == drivers.DuckDB {
 					return m, tea.Quit
 				}
 
@@ -98,7 +98,7 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 func stdInputs(m *Model) []textinput.Model {
 	var inputs []textinput.Model
 
-	if m.driver == drivers.SQLite {
+	if m.driver == drivers.SQLite || m.driver == drivers.DuckDB {
 		inputs = []textinput.Model{
 			m.filePathInput,
 		}
@@ -118,7 +118,7 @@ func stdInputs(m *Model) []textinput.Model {
 }
 
 func assignStdInputValues(m *Model, inputs []textinput.Model) {
-	if m.driver == drivers.SQLite && len(inputs) == 2 {
+	if (m.driver == drivers.SQLite || m.driver == drivers.DuckDB) && len(inputs) == 2 {
 		m.filePathInput = inputs[0]
 		m.limitInput = inputs[1]
 	} else if len(inputs) == 6 {
@@ -139,7 +139,7 @@ func updateInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	if m.driver == drivers.SQLite {
+	if m.driver == drivers.SQLite || m.driver == drivers.DuckDB {
 		m.filePathInput, cmd = m.filePathInput.Update(msg)
 		cmds = append(cmds, cmd)
 	} else {

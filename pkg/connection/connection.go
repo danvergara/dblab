@@ -86,6 +86,12 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			return opts.URL, opts, nil
 		}
 
+		if strings.HasPrefix(opts.URL, "duckdb:") {
+			opts.Driver = drivers.DuckDB
+			conn, err := formatDuckDBURL(opts)
+			return conn, opts, err
+		}
+
 		if strings.HasPrefix(opts.URL, "oracle:") {
 			opts.Driver = drivers.Oracle
 			conn, err := formatOracleURL(opts)
@@ -236,6 +242,8 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			opts.DBName,
 		), opts, nil
 	case drivers.SQLite:
+		return opts.DBName, opts, nil
+	case drivers.DuckDB:
 		return opts.DBName, opts, nil
 	case drivers.SQLServer:
 		query := url.Values{}
@@ -409,6 +417,11 @@ func formatSQLServerURL(opts command.Options) (string, error) {
 	uri.RawQuery = query.Encode()
 
 	return uri.String(), nil
+}
+
+func formatDuckDBURL(opts command.Options) (string, error) {
+	opts.URL = strings.ReplaceAll(opts.URL, "duckdb:", "")
+	return opts.URL, nil
 }
 
 // validates if dsn pattern match with the parameter.

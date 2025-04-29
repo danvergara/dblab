@@ -8,4 +8,5 @@ const (
 	SQLite      string = "sqlite"
 	Oracle      string = "oracle"
 	SQLServer   string = "sqlserver"
+	DuckDB      string = "duckdb"
 )

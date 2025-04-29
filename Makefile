@@ -33,7 +33,6 @@ docker-build:
 .PHONY: build
 ## build: Builds the Go program
 build:
-	CGO_ENABLED=0 \
 	go build -o dblab .
 
 .PHONY: run
@@ -91,6 +90,11 @@ run-mysql-socket-url: build
 run-sqlite3: build
 	./dblab --db db/dblab.db --driver sqlite
 
+.PHONY: run-duckdb
+## run-duckdb: Runs the application with a connection to duckdb 
+run-duckdb: build
+	./dblab --db db/duckdb.db --driver duckdb
+
 .PHONY: run-sqlite3-url
 ## run-sqlite3-url: Runs the application with a connection string to sqlite3
 run-sqlite3-url: build
@@ -115,6 +119,11 @@ run-mysql-url: build
 ## run-mysql-url-ssh: Runs the app passing the url as parameter through a ssh tunnel providing the url as parameter
 run-mysql-url-ssh: build
 	./dblab --url "mysql://myuser:5@klkbN#ABC@mysql+tcp(mysql:3306)/mydb" --driver mysql --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+
+.PHONY: run-duckdb-url
+## run-duckdb-url: Runs the application with a connection string to duckdb
+run-duckdb-url: build
+	./dblab --url 'duckb:db/dblab.db'
 
 .PHONY: run-config
 ## run-config: Runs the client using the config file.

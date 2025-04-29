@@ -37,7 +37,7 @@ func standardView(m *Model) string {
 func viewInputs(m *Model) []string {
 	var inputs []string
 
-	if m.driver == drivers.SQLite {
+	if m.driver == drivers.SQLite || m.driver == drivers.DuckDB {
 		inputs = []string{
 			m.filePathInput.View(),
 			m.limitInput.View(),
@@ -70,6 +70,8 @@ func sslView(m *Model) string {
 		sslModes = m.sqliteSSLModes
 	case drivers.SQLServer:
 		sslModes = m.sqlServerSSLModes
+	case drivers.DuckDB:
+		sslModes = m.duckdbSSLModes
 	default:
 		sslModes = m.postgreSQLSSLModes
 	}
