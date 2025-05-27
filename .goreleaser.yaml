@@ -25,6 +25,29 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+    overrides:
+      - goos: linux
+        goarch: arm64
+        env:
+          - CC=aarch64-linux-gnu-gcc
+          - CXX=aarch64-linux-gnu-g++
+      - goos: linux
+        goarch: amd64
+        env:
+          - CC=gcc
+      - goos: windows
+        goarch: amd64
+        env:
+          - CC=x86_64-w64-mingw32-gcc
+          - CXX=x86_64-w64-mingw32-g++
+      - goos: darwin
+        goarch: arm64
+        env:
+          - CC=o64-clang
+      - goos: darwin
+        goarch: amd64
+        env:
+          - CC=o64-clang
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:
