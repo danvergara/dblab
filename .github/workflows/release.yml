@@ -24,6 +24,10 @@ jobs:
             gcc-aarch64-linux-gnu \
             gcc-mingw-w64-x86-64 \
             libc6-dev-i386
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: latest
       - run: git fetch --force --tags
       - name: Set up Go
         uses: actions/setup-go@v5
