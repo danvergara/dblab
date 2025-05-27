@@ -17,6 +17,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install cross-compilation tools
+        run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          gcc-aarch64-linux-gnu \
+          gcc-mingw-w64-x86-64 \
+          libc6-dev-i386
       - run: git fetch --force --tags
       - name: Set up Go
         uses: actions/setup-go@v5
