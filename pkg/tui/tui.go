@@ -151,10 +151,10 @@ func (t *Tui) setupQueries() {
 						t.aw.content.SetCell(
 							i+1,
 							j,
-							&tview.TableCell{Text: sc, Color: tcell.ColorRed},
+							tview.NewTableCell(sc).SetTextColor(tcell.ColorRed),
 						)
 					} else {
-						t.aw.content.SetCellSimple(i+1, j, sc)
+						t.aw.content.SetCell(i+1, j, tview.NewTableCell(sc).SetMaxWidth(0))
 					}
 				}
 			}
@@ -514,7 +514,9 @@ func (t *Tui) updateTableMetadataOnChange(tableName string) {
 		}
 	}
 
+	t.app.SetFocus(t.aw.content)
 	t.aw.content.ScrollToBeginning()
+	t.aw.content.Select(0, 0)
 	t.aw.structure.ScrollToBeginning()
 	t.aw.indexes.ScrollToBeginning()
 	t.aw.constraints.ScrollToBeginning()
