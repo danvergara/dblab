@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -207,6 +208,18 @@ func (t *Tui) setupTablesMetadata() {
 
 	t.aw.content = tview.NewTable().SetBorders(true)
 	t.aw.content.SetBorder(true).SetTitle(contentPageTitle)
+	t.aw.content.SetSelectable(true, true)
+	t.aw.content.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEnter:
+			row, col := t.aw.content.GetSelection()
+			cell := t.aw.content.GetCell(row, col)
+			if cell != nil {
+				clipboard.WriteAll(cell.Text)
+			}
+		}
+		return event
+	})
 
 	t.aw.constraints = tview.NewTable().SetBorders(true)
 	t.aw.constraints.SetBorder(true).SetTitle(constraintsPageTitle)
