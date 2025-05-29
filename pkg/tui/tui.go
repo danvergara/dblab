@@ -141,7 +141,9 @@ func (t *Tui) setupQueries() {
 				t.aw.content.SetCell(
 					0,
 					i,
-					&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorYellow},
+					tview.NewTableCell(tc).
+						SetAlign(tview.AlignCenter).
+						SetTextColor(tcell.ColorYellow),
 				)
 			}
 
@@ -160,6 +162,8 @@ func (t *Tui) setupQueries() {
 			}
 
 			t.aw.content.ScrollToBeginning()
+			t.aw.content.Select(0, 0)
+			t.app.SetFocus(t.aw.content)
 
 			// Update the table list if the tables get updated somehow.
 			switch {
