@@ -207,10 +207,10 @@ func (t *Tui) setupQueries() {
 
 // setupTablesMetadata sets up all the table's data related text views and the tableMetadata page.
 func (t *Tui) setupTablesMetadata() {
-	t.aw.structure = tview.NewTable().SetBorders(true)
+	t.aw.structure = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.structure.SetBorder(true).SetTitle(structurePageTitle)
 
-	t.aw.content = tview.NewTable().SetBorders(true)
+	t.aw.content = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.content.SetBorder(true).SetTitle(contentPageTitle)
 	t.aw.content.SetSelectable(true, true)
 	t.aw.content.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -219,16 +219,17 @@ func (t *Tui) setupTablesMetadata() {
 			row, col := t.aw.content.GetSelection()
 			cell := t.aw.content.GetCell(row, col)
 			if cell != nil {
-				clipboard.WriteAll(cell.Text)
+				_ = clipboard.WriteAll(cell.Text)
 			}
 		}
+
 		return event
 	})
 
-	t.aw.constraints = tview.NewTable().SetBorders(true)
+	t.aw.constraints = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.constraints.SetBorder(true).SetTitle(constraintsPageTitle)
 
-	t.aw.indexes = tview.NewTable().SetBorders(true)
+	t.aw.indexes = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.indexes.SetBorder(true).SetTitle(indexesPageTitle)
 
 	t.aw.errorView = tview.NewTextView().SetDynamicColors(true)
