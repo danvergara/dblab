@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -140,7 +141,9 @@ func (t *Tui) setupQueries() {
 				t.aw.content.SetCell(
 					0,
 					i,
-					&tview.TableCell{Text: tc, Align: tview.AlignCenter, Color: tcell.ColorYellow},
+					tview.NewTableCell(tc).
+						SetAlign(tview.AlignCenter).
+						SetTextColor(tcell.ColorYellow),
 				)
 			}
 
@@ -150,15 +153,17 @@ func (t *Tui) setupQueries() {
 						t.aw.content.SetCell(
 							i+1,
 							j,
-							&tview.TableCell{Text: sc, Color: tcell.ColorRed},
+							tview.NewTableCell(sc).SetTextColor(tcell.ColorRed),
 						)
 					} else {
-						t.aw.content.SetCellSimple(i+1, j, sc)
+						t.aw.content.SetCell(i+1, j, tview.NewTableCell(sc).SetMaxWidth(0))
 					}
 				}
 			}
 
 			t.aw.content.ScrollToBeginning()
+			t.aw.content.Select(0, 0)
+			t.app.SetFocus(t.aw.content)
 
 			// Update the table list if the tables get updated somehow.
 			switch {
@@ -202,16 +207,29 @@ func (t *Tui) setupQueries() {
 
 // setupTablesMetadata sets up all the table's data related text views and the tableMetadata page.
 func (t *Tui) setupTablesMetadata() {
-	t.aw.structure = tview.NewTable().SetBorders(true)
+	t.aw.structure = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.structure.SetBorder(true).SetTitle(structurePageTitle)
 
-	t.aw.content = tview.NewTable().SetBorders(true)
+	t.aw.content = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.content.SetBorder(true).SetTitle(contentPageTitle)
+	t.aw.content.SetSelectable(true, true)
+	t.aw.content.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEnter:
+			row, col := t.aw.content.GetSelection()
+			cell := t.aw.content.GetCell(row, col)
+			if cell != nil {
+				_ = clipboard.WriteAll(cell.Text)
+			}
+		}
 
-	t.aw.constraints = tview.NewTable().SetBorders(true)
+		return event
+	})
+
+	t.aw.constraints = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.constraints.SetBorder(true).SetTitle(constraintsPageTitle)
 
-	t.aw.indexes = tview.NewTable().SetBorders(true)
+	t.aw.indexes = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.indexes.SetBorder(true).SetTitle(indexesPageTitle)
 
 	t.aw.errorView = tview.NewTextView().SetDynamicColors(true)
@@ -501,7 +519,9 @@ func (t *Tui) updateTableMetadataOnChange(tableName string) {
 		}
 	}
 
+	t.app.SetFocus(t.aw.content)
 	t.aw.content.ScrollToBeginning()
+	t.aw.content.Select(0, 0)
 	t.aw.structure.ScrollToBeginning()
 	t.aw.indexes.ScrollToBeginning()
 	t.aw.constraints.ScrollToBeginning()
