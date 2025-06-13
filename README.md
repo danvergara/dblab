@@ -363,6 +363,8 @@ The `--db` flag is now optional (except for Oracle), meaning that the user will 
 
 <img src="screenshots/tree-view.png" />
 
+At the time to navigate queries' resultsets, the cell will be highlighted, so the user can know which table cell is on. This is important because you can press the `Enter` key on a cell of interest to copy its content.
+
 ### Key Bindings
 | Key                                     | Description                           |
 |----------------------------------------|----------------------------------------|
@@ -386,8 +388,9 @@ The `--db` flag is now optional (except for Oracle), meaning that the user will 
 |<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
 |<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes |
 |<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes |
-|<kbd>Ctrl-F</kbd>                      | Move down by one page. Views: rows, constraints, structure and indexes |
-|<kbd>Ctrl-B</kbd>                      | Move up by one page. Views: rows, constraints, structure and indexes |
+|<kbd>Ctrl-F</kbd>                       | Move down by one page. Views: rows, constraints, structure and indexes |
+|<kbd>Ctrl-B</kbd>                       | Move up by one page. Views: rows, constraints, structure and indexes |
+|<kbd>Enter</kbd>                        | Press the Enter key on a resultset table cell to copy the content |
 |<kbd>Ctrl+c</kbd>                       | Quit |
 
 ## Contribute
