@@ -38,7 +38,7 @@ changelog:
       - '^docs:'
       - '^test:'
 
-brews:
+homebrew_casks:
     # Name template of the recipe
   - name: dblab
 
@@ -53,9 +53,9 @@ brews:
       name: danvergara
       email: daniel.omar.vergara@gmail.com
 
-    # Folder inside the repository to put the formula.
-    # Default is the root folder.
-    directory: Formula
+    # Directory inside the repository to put the cask.
+    # Default: Casks
+    directory: Casks
 
     # Your app's homepage.
     # Default is empty.
@@ -63,7 +63,7 @@ brews:
 
     # Your app's description.
     # Default is empty.
-    description: "Interactive client for PostgreSQL and MySQL"
+    description: "Interactive client for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server"
 
     # SPDX identifier of your app's license.
     # Default is empty.
