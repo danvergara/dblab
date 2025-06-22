@@ -45,13 +45,6 @@ There will be a single binary capable to deal with all supported clients.
 It works with Linux too.
 
 ```{ .sh .copy }
-brew install danvergara/tools/dblab
-```
-
-Or
-
-```{ .sh .copy }
-brew tap danvergara/tools
 brew install dblab
 ```
 
