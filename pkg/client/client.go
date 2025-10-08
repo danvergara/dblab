@@ -107,7 +107,7 @@ func New(opts command.Options) (*Client, error) {
 
 	switch c.driver {
 	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
-		if _, err = db.Exec("set search_path= $1", c.schema); err != nil {
+		if _, err = db.Exec(fmt.Sprintf("set search_path='%s'", c.schema)); err != nil {
 			return nil, err
 		}
 	case drivers.Oracle:
