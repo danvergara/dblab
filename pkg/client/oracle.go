@@ -30,17 +30,23 @@ func (p *oracle) ShowDatabases() (string, []interface{}, error) {
 
 // ShowTables returns a query to retrieve all the tables.
 func (p *oracle) ShowTables() (string, []interface{}, error) {
-	query := "SELECT table_name FROM user_tables"
+	query := "SELECT OWNER || '.' || TABLE_NAME FROM ALL_TABLES"
 	return query, nil, nil
 }
 
 // TableStructure returns a query string to get all the relevant information of a given table.
 func (p *oracle) TableStructure(tableName string) (string, []interface{}, error) {
+	owner, table := splitOracleTableName(tableName)
+
 	query := sq.Select("*").
-		From("user_tab_columns").
-		Where(sq.Eq{"table_name": strings.ToUpper(tableName)}).
-		OrderBy("column_id").
+		From("ALL_TAB_COLUMNS").
+		Where(sq.Eq{"TABLE_NAME": table}).
+		OrderBy("COLUMN_ID").
 		PlaceholderFormat(sq.Colon)
+
+	if owner != "" {
+		query = query.Where(sq.Eq{"OWNER": owner})
+	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -52,13 +58,19 @@ func (p *oracle) TableStructure(tableName string) (string, []interface{}, error)
 
 // Constraints returns all the constraints of a given table.
 func (p *oracle) Constraints(tableName string) (string, []interface{}, error) {
+	owner, table := splitOracleTableName(tableName)
+
 	query := sq.Select(
-		`constraint_name`,
-		`constraint_type`,
+		`CONSTRAINT_NAME`,
+		`CONSTRAINT_TYPE`,
 	).
-		From("user_constraints").
-		Where(sq.Eq{"table_name": tableName}).
+		From("ALL_CONSTRAINTS").
+		Where(sq.Eq{"TABLE_NAME": table}).
 		PlaceholderFormat(sq.Colon)
+
+	if owner != "" {
+		query = query.Where(sq.Eq{"OWNER": owner})
+	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -70,14 +82,30 @@ func (p *oracle) Constraints(tableName string) (string, []interface{}, error) {
 
 // Indexes returns the indexes of a table.
 func (p *oracle) Indexes(tableName string) (string, []interface{}, error) {
-	sql, args, err := sq.Select("*").
-		From("all_indexes").
-		Where(sq.Eq{"table_name": tableName}).
-		PlaceholderFormat(sq.Colon).
-		ToSql()
+	owner, table := splitOracleTableName(tableName)
+
+	query := sq.Select("*").
+		From("ALL_INDEXES").
+		Where(sq.Eq{"TABLE_NAME": table}).
+		PlaceholderFormat(sq.Colon)
+
+	if owner != "" {
+		query = query.Where(sq.Eq{"OWNER": owner})
+	}
+
+	sql, args, err := query.ToSql()
 	if err != nil {
 		return "", nil, err
 	}
 
 	return sql, args, err
+}
+
+// splitOracleTableName splits a table name into owner (schema) and table.
+func splitOracleTableName(fullName string) (string, string) {
+	parts := strings.Split(fullName, ".")
+	if len(parts) == 2 {
+		return strings.ToUpper(parts[0]), strings.ToUpper(parts[1])
+	}
+	return "", strings.ToUpper(fullName)
 }
