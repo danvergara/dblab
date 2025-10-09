@@ -38,13 +38,13 @@ func (o *oracle) ShowDatabases() (string, []interface{}, error) {
 func (o *oracle) ShowTables() (string, []interface{}, error) {
 	var query sq.SelectBuilder
 
+	query = sq.Select("TABLE_NAME").
+		From("USER_TABLES")
+
 	if o.schema != "" {
 		query = sq.Select("TABLE_NAME").
 			From("ALL_TABLES").
 			Where(sq.Eq{"OWNER": strings.ToUpper(o.schema)})
-	} else {
-		query = sq.Select("TABLE_NAME").
-			From("USER_TABLES")
 	}
 
 	sql, args, err := query.OrderBy("1").PlaceholderFormat(sq.Colon).ToSql()
@@ -59,14 +59,14 @@ func (o *oracle) ShowTables() (string, []interface{}, error) {
 func (o *oracle) TableStructure(tableName string) (string, []interface{}, error) {
 	var query sq.SelectBuilder
 
+	query = sq.Select("*").
+		From("USER_TAB_COLUMNS").
+		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
+
 	if o.schema != "" {
 		query = sq.Select("*").
 			From("ALL_TAB_COLUMNS").
 			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName), "OWNER": strings.ToUpper(o.schema)})
-	} else {
-		query = sq.Select("*").
-			From("USER_TAB_COLUMNS").
-			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
 	}
 
 	sql, args, err := query.OrderBy("1").PlaceholderFormat(sq.Colon).ToSql()
@@ -81,6 +81,13 @@ func (o *oracle) TableStructure(tableName string) (string, []interface{}, error)
 func (o *oracle) Constraints(tableName string) (string, []interface{}, error) {
 	var query sq.SelectBuilder
 
+	query = sq.Select(
+		`CONSTRAINT_NAME`,
+		`CONSTRAINT_TYPE`,
+	).
+		From("USER_CONSTRAINTS").
+		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
+
 	if o.schema != "" {
 		query = sq.Select(
 			`CONSTRAINT_NAME`,
@@ -88,13 +95,6 @@ func (o *oracle) Constraints(tableName string) (string, []interface{}, error) {
 		).
 			From("ALL_CONSTRAINTS").
 			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName), "OWNER": strings.ToUpper(o.schema)})
-	} else {
-		query = sq.Select(
-			`CONSTRAINT_NAME`,
-			`CONSTRAINT_TYPE`,
-		).
-			From("USER_CONSTRAINTS").
-			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
 	}
 
 	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()
@@ -109,14 +109,14 @@ func (o *oracle) Constraints(tableName string) (string, []interface{}, error) {
 func (o *oracle) Indexes(tableName string) (string, []interface{}, error) {
 	var query sq.SelectBuilder
 
+	query = sq.Select("*").
+		From("USER_INDEXES").
+		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
+
 	if o.schema != "" {
 		query = sq.Select("*").
 			From("ALL_INDEXES").
 			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName), "OWNER": strings.ToUpper(o.schema)})
-	} else {
-		query = sq.Select("*").
-			From("USER_INDEXES").
-			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
 	}
 
 	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()
