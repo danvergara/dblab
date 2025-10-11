@@ -34,6 +34,7 @@ jobs:
           go test -v -count=1 ./...
         env:
           DB_DRIVER: postgres
+          DB_USER: postgres
 
       # Runs go test ./... against mysql container
       - name: Test MySQL
