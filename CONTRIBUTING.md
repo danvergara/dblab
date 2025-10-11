@@ -62,7 +62,7 @@ make test
 
 To run tests against MySQL:
 ```bash
-make test DB_DRIVER=mysql
+make test DB_DRIVER=mysql DB_USER=user
 ```
 
 ## SSH Tunnel
@@ -91,7 +91,7 @@ You can check all the options with `help` command.
 
 ```bash
 Usage:
-  test                   Runs tests for a given driver. E.g. make test DB_DRIVER=mysql
+  test                   Runs tests for a given driver. E.g. make test DB_DRIVER=mysql DB_USER=user
   unit-test              Runs the tests with the short flag
   linter                 Runs the golangci-lint command
   docker-build           Builds de Docker image
