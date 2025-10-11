@@ -435,6 +435,6 @@ func (suite *ClientTestSuite) TestMetadata() {
 	suite.Len(m.TableContent.Columns, 3)
 }
 
-func TestCleitnTestSuite(t *testing.T) {
+func TestClietnTestSuite(t *testing.T) {
 	suite.Run(t, new(ClientTestSuite))
 }
