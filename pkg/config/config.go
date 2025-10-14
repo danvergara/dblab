@@ -46,12 +46,12 @@ type Database struct {
 	Schema   string
 
 	// SSH Tunnel.
-	SSHHost          string
-	SSHPort          string
-	SSHUser          string
-	SSHPass          string
-	SSHKeyFile       string
-	SSHKeyPassphrase string
+	SSHHost          string `fig:"ssh-host"`
+	SSHPort          string `fig:"ssh-port"`
+	SSHUser          string `fig:"ssh-user"`
+	SSHPass          string `fig:"ssh-pass"`
+	SSHKeyFile       string `fig:"ssh-key-file"`
+	SSHKeyPassphrase string `fig:"ssh-key-pass"`
 
 	// SSL connection params.
 	SSL string `default:"disable"`
