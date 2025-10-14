@@ -338,6 +338,20 @@ database:
     ssh-port: 22
     ssh-user: "ssh-user"
     ssh-pass: "password"
+  - name: "realistic-ssh-example"
+    host: "rds-endpoint.region.rds.amazonaws.com"
+    port: 5432
+    db: "database_name"
+    user: "db_user"
+    password: "password"
+    schema: "schema_name"
+    driver: "postgres"
+    ssl: "require"
+    ssh-host: "bastion.host.ip"
+    ssh-port: 22
+    ssh-user: "ec2-user"
+    ssh-key-file: "/path/to/ssh/key.pem"
+    ssh-key-pass: "hiuwiewnc092"
 # should be greater than 0, otherwise the app will error out
 limit: 50
 keybindings:
