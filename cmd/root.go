@@ -48,6 +48,9 @@ var (
 	encrypt                string
 	trustServerCertificate string
 	connectionTimeout      string
+
+	// keybindings.
+	keybindings bool
 )
 
 // NewRootCmd returns the root command.
@@ -152,6 +155,11 @@ func init() {
 	// config file flag.
 	rootCmd.PersistentFlags().
 		BoolVarP(&cfg, "config", "", false, "Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)")
+
+	// keybindings flag.
+	rootCmd.PersistentFlags().
+		BoolVarP(&keybindings, "keybindings", "k", false, "Get the keybindings configuration from the config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)")
+
 	// cfg-name is used to indicate the name of the config section to be used to establish a
 	// connection with desired database.
 	// default: if empty, the first item of the databases options is gonna be selected.
