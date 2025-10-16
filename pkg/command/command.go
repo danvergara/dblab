@@ -44,6 +44,11 @@ type Options struct {
 	TUIKeyBindings TUIKeyBindings
 }
 
+// UpdateKeybindings method updates the TUIKeyBindings field, since the keybidings configuration parted ways with the connection configuration.
+func (o *Options) UpdateKeybindings(k TUIKeyBindings) {
+	o.TUIKeyBindings = k
+}
+
 type TUIKeyBindings struct {
 	RunQuery    tcell.Key
 	Structure   tcell.Key
