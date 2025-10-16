@@ -41,38 +41,28 @@ git push --set-upstream fork your-branch-name
 
 ## Running the tests
 
-### Setting up the environment
+The integration tests use [testcontainers-go](https://golang.testcontainers.org/) to automatically manage database containers. The only prerequisite is having Docker installed and running on your system.
 
-First of all, the repository includes a docker-compose file and a makefile. The docker file declares 4 services: a postgres container, a mysql one, a dblab container that runs migrations and seeds on the postgres container and other one that does the same for the mysql container. The makefile is used to automate some task. To spin up all the containers type:
+### Unit Tests
 
-```bash
-make up
-```
-
-Then, you'll have 2 containers up and running in your system for every kind of database supported by dblab.
-
-Run dblab opening a connection with the postgres container.
-
-```bash
-make run
-```
-
-You can do the same with the mysql container by running:
-
-```bash
-make run-mysql
-```
-
-Run the unit test suite with make.
+To run the unit tests, which do not require Docker, execute the following command:
 
 ```bash
 make unit-test
 ```
 
-Run the integration test with make too, but make sure the database containers are up and running.
+### Integration Tests
 
+To run the integration tests against a specific database, use the `test` target and pass the `DB_DRIVER` variable.
+
+To run tests against PostgreSQL (the default):
 ```bash
-make int-test
+make test
+```
+
+To run tests against MySQL:
+```bash
+make test DB_DRIVER=mysql DB_USER=user
 ```
 
 ## SSH Tunnel
@@ -101,11 +91,9 @@ You can check all the options with `help` command.
 
 ```bash
 Usage:
-  test                   Runs the tests
+  test                   Runs tests for a given driver. E.g. make test DB_DRIVER=mysql DB_USER=user
   unit-test              Runs the tests with the short flag
-  int-test               Runs the integration tests
   linter                 Runs the golangci-lint command
-  test-all               Runs the integration testing bash script with different database docker image versions
   docker-build           Builds de Docker image
   build                  Builds the Go program
   run                    Runs the application
@@ -130,6 +118,6 @@ Usage:
   down                   Shut down all the containers listed in the docker-compose.yml file
   stop-ssh               Shut down all the containers listed in the docker-compose.ssh.yml file
   form                   Runs the application with no arguments
-  create                 Creates golang-migrate migration files
+  create-migration       Creates golang-migrate migration files
   help                   Prints this help message
 ```

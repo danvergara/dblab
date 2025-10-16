@@ -1,8 +1,14 @@
 PLATFORM=linux/amd64
+DB_DRIVER?=postgres
+DB_USER=?postgres
 
 .PHONY: test
 ## test: Runs the tests
 test:
+	DB_USER=$(DB_USER) \
+	DB_PASSWORD=password \
+	DB_NAME=products \
+	DB_DRIVER=$(DB_DRIVER) \
 	go test -v -race ./...
 
 .PHONY: unit-test
@@ -10,20 +16,10 @@ test:
 unit-test:
 	go test -v -short -race ./...
 
-.PHONY: int-test
-## int-test: Runs the integration tests
-int-test:
-	docker compose run --entrypoint=make dblab test
-
 .PHONY: linter
 ## linter: Runs the golangci-lint command
 linter:
 	golangci-lint run ./...
-
-.PHONY: test-all
-## test-all: Runs the integration testing bash script with different database docker image versions
-test-all:
-	@./scripts/test_all.sh
 
 .PHONY: docker-build
 ## docker-build: Builds de Docker image
