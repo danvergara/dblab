@@ -95,6 +95,7 @@ Available Commands:
 Flags:
       --cfg-name string                   Database config name section
       --config                            Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)
+      --keybindings, -k                   Get the keybindings configuration from the config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)
       --db string                         Database name (optional)
       --driver string                     Database driver
       --encrypt string                    [strict|disable|false|true] data sent between client and server is encrypted or not
@@ -256,7 +257,7 @@ $ dblab --config --cfg-name "prod"
 
 #### Key bindings configuration
 
-Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. See the example to see the full list of the key bindings subject to change. The file shows the default values. The list of the available key bindings belongs to the [tcell](https://github.com/gdamore/tcell) library. Specifically, see the [KeyNames map](https://github.com/gdamore/tcell/blob/781586687ddb57c9d44727dc9320340c4d049b11/key.go#L83), for an accurate reference.
+Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. By default, the keybindings are not loaded, so you need to use the `--keybindings` or `-k` flag to load them. See the example to see the full list of the key bindings subject to change. The file shows the default values. The list of the available key bindings belongs to the [tcell](https://github.com/gdamore/tcell) library. Specifically, see the [KeyNames map](https://github.com/gdamore/tcell/blob/781586687ddb57c9d44727dc9320340c4d049b11/key.go#L83), for an accurate reference.
 
 #### .dblab.yaml example
 
