@@ -31,6 +31,8 @@ func TestInit(t *testing.T) {
 		sshPort     string
 		sshUser     string
 		sshPass     string
+		sshKeyFile  string
+		sshKeyPass  string
 	}
 	var tests = []struct {
 		name  string
@@ -103,6 +105,26 @@ func TestInit(t *testing.T) {
 			},
 		},
 		{
+			name:  "realistic example",
+			input: "realistic-ssh-example",
+			want: want{
+				host:       "rds-endpoint.region.rds.amazonaws.com",
+				port:       "5432",
+				dbname:     "database_name",
+				user:       "db_user",
+				pass:       "password",
+				driver:     "postgres",
+				schema:     "schema_name",
+				ssl:        "require",
+				sshHost:    "bastion.host.ip",
+				sshPort:    "22",
+				sshUser:    "ec2-user",
+				sshKeyFile: "/path/to/ssh/key.pem",
+				sshKeyPass: "hiuwiewnc092",
+				limit:      50,
+			},
+		},
+		{
 			name:  "oracle",
 			input: "oracle",
 			want: want{
@@ -139,6 +161,14 @@ func TestInit(t *testing.T) {
 			assert.Equal(t, tt.want.sslkey, opts.SSLKey)
 			assert.Equal(t, tt.want.sslpassword, opts.SSLPassword)
 			assert.Equal(t, tt.want.sslrootcert, opts.SSLRootcert)
+
+			// SSH validations.
+			assert.Equal(t, tt.want.sshHost, opts.SSHHost)
+			assert.Equal(t, tt.want.sshPort, opts.SSHPort)
+			assert.Equal(t, tt.want.sshUser, opts.SSHUser)
+			assert.Equal(t, tt.want.sshPass, opts.SSHPass)
+			assert.Equal(t, tt.want.sshPass, opts.SSHPass)
+			assert.Equal(t, tt.want.sshKeyFile, opts.SSHKeyFile)
 		})
 	}
 }
