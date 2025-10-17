@@ -6,6 +6,7 @@ theme:
   theme:
     features:
       - content.code.copy
+  favicon: assets/images/favicon.ico
   palette:
   - media: '(prefers-color-scheme: light)'
     scheme: default
