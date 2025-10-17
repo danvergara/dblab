@@ -35,7 +35,7 @@ build:
 .PHONY: run
 ## run: Runs the application
 run: build
-	./dblab --host localhost --user postgres --db users --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50
+	./dblab --host localhost --user postgres --db users --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 -k
 
 .PHONY: run-ssh
 ## run-ssh: Runs the application through a ssh tunnel

@@ -20,14 +20,17 @@ import (
 
 // Config struct is used to store the db connection data.
 type Config struct {
-	Database    []Database
-	User        string
-	Pswd        string
-	Host        string
-	Port        string
-	DBName      string
-	Driver      string
-	Limit       uint `fig:"limit" default:"100"`
+	Database []Database
+	User     string
+	Pswd     string
+	Host     string
+	Port     string
+	DBName   string
+	Driver   string
+	Limit    uint `fig:"limit" default:"100"`
+}
+
+type KeyBindingsConfig struct {
 	KeyBindings KeyBindings
 }
 
@@ -176,22 +179,49 @@ func Init(configName string) (command.Options, error) {
 		SSHPass:                db.SSHPass,
 		SSHKeyFile:             db.SSHKeyFile,
 		SSHKeyPassphrase:       db.SSHKeyPassphrase,
-		TUIKeyBindings: command.TUIKeyBindings{
-			RunQuery:    tcell.Key(swapedKeyNames[cfg.KeyBindings.RunQuery]),
-			Structure:   tcell.Key(swapedKeyNames[cfg.KeyBindings.Structure]),
-			Constraints: tcell.Key(swapedKeyNames[cfg.KeyBindings.Constraints]),
-			Indexes:     tcell.Key(swapedKeyNames[cfg.KeyBindings.Indexes]),
-			ClearEditor: tcell.Key(swapedKeyNames[cfg.KeyBindings.ClearEditor]),
-			Navigation: command.TUINavigationBindgins{
-				Up:    tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Up]),
-				Down:  tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Down]),
-				Left:  tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Left]),
-				Right: tcell.Key(swapedKeyNames[cfg.KeyBindings.Navigation.Right]),
-			},
-		},
 	}
 
 	return opts, nil
+}
+
+func SetupKeybindings() (command.TUIKeyBindings, error) {
+	var kbc KeyBindingsConfig
+	var tkb command.TUIKeyBindings
+
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return tkb, err
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return tkb, err
+	}
+
+	if err := fig.Load(&kbc, fig.File(".dblab.yaml"), fig.Dirs(".", home, configDir)); err != nil {
+		return tkb, err
+	}
+
+	swapedKeyNames := swapKeyNames(tcell.KeyNames)
+	// This entry is missing in the tcell.KeyNames.
+	swapedKeyNames["Ctrl-H"] = tcell.KeyCtrlH
+	swapedKeyNames["Ctrl-I"] = tcell.KeyCtrlI
+
+	tkb = command.TUIKeyBindings{
+		RunQuery:    tcell.Key(swapedKeyNames[kbc.KeyBindings.RunQuery]),
+		Structure:   tcell.Key(swapedKeyNames[kbc.KeyBindings.Structure]),
+		Constraints: tcell.Key(swapedKeyNames[kbc.KeyBindings.Constraints]),
+		Indexes:     tcell.Key(swapedKeyNames[kbc.KeyBindings.Indexes]),
+		ClearEditor: tcell.Key(swapedKeyNames[kbc.KeyBindings.ClearEditor]),
+		Navigation: command.TUINavigationBindgins{
+			Up:    tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Up]),
+			Down:  tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Down]),
+			Left:  tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Left]),
+			Right: tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Right]),
+		},
+	}
+
+	return tkb, nil
 }
 
 // Open returns a db connection using the data from the config object.

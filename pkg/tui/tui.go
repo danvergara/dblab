@@ -553,7 +553,7 @@ func (t *Tui) setUpFlexBoxes() {
 	helpInfo := tview.NewTextView().SetDynamicColors(true)
 	helpStr := fmt.Sprintf(
 		"[green]%s",
-		"Press Ctrl-C to exit, press Ctrl-(vim motions) to move between panels, press Ctrl-L to execute queries, press j/k to scroll on tables panel",
+		"Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.",
 	)
 	fmt.Fprintln(helpInfo, helpStr)
 

@@ -48,6 +48,9 @@ var (
 	encrypt                string
 	trustServerCertificate string
 	connectionTimeout      string
+
+	// keybindings.
+	keybindings bool
 )
 
 // NewRootCmd returns the root command.
@@ -59,6 +62,7 @@ func NewRootCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var opts command.Options
 			var err error
+			var kb command.TUIKeyBindings
 
 			if cfg {
 				opts, err = config.Init(cfgName)
@@ -94,20 +98,34 @@ func NewRootCmd() *cobra.Command {
 					SSHPass:                sshPass,
 					SSHKeyFile:             sshKey,
 					SSHKeyPassphrase:       sshKeyPassphrase,
-					TUIKeyBindings: command.TUIKeyBindings{
-						RunQuery:    tcell.KeyCtrlSpace,
-						Structure:   tcell.KeyCtrlS,
-						Indexes:     tcell.KeyCtrlI,
-						Constraints: tcell.KeyCtrlT,
-						ClearEditor: tcell.KeyCtrlD,
-						Navigation: command.TUINavigationBindgins{
-							Up:    tcell.KeyCtrlK,
-							Down:  tcell.KeyCtrlJ,
-							Left:  tcell.KeyCtrlH,
-							Right: tcell.KeyCtrlL,
-						},
+				}
+
+				// Default keybindings.
+				kb = command.TUIKeyBindings{
+					RunQuery:    tcell.KeyCtrlSpace,
+					Structure:   tcell.KeyCtrlS,
+					Indexes:     tcell.KeyCtrlI,
+					Constraints: tcell.KeyCtrlT,
+					ClearEditor: tcell.KeyCtrlD,
+					Navigation: command.TUINavigationBindgins{
+						Up:    tcell.KeyCtrlK,
+						Down:  tcell.KeyCtrlJ,
+						Left:  tcell.KeyCtrlH,
+						Right: tcell.KeyCtrlL,
 					},
 				}
+
+				// If the --keybindings flag is set, fill the keybindings with the ones fonud in the config file.
+				// This is safe to do even if they're missing in the config files, because the config package has default values for it.
+				if keybindings {
+					kb, err = config.SetupKeybindings()
+					if err != nil {
+						return err
+					}
+				}
+
+				// Set the keybindings values, either the default ones or the found in the config file.
+				opts.UpdateKeybindings(kb)
 
 				if form.IsEmpty(opts) {
 					opts, err = form.Run()
@@ -152,6 +170,11 @@ func init() {
 	// config file flag.
 	rootCmd.PersistentFlags().
 		BoolVarP(&cfg, "config", "", false, "Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)")
+
+	// keybindings flag.
+	rootCmd.PersistentFlags().
+		BoolVarP(&keybindings, "keybindings", "k", false, "Get the keybindings configuration from the config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)")
+
 	// cfg-name is used to indicate the name of the config section to be used to establish a
 	// connection with desired database.
 	// default: if empty, the first item of the databases options is gonna be selected.
