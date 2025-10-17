@@ -19,14 +19,14 @@ const (
 	structurePage   = "structure"
 	indexesPage     = "indexes"
 	constraintsPage = "constraints"
-	errorPage       = "error"
+	feedbackPage    = "feedback"
 
 	// Tables' metadata page titles.
 	contentPageTitle     = "Table Content"
 	structurePageTitle   = "Structure"
 	indexesPageTitle     = "Indexes"
 	constraintsPageTitle = "Constraints"
-	errorPageTitle       = "error"
+	feedbackPageTitle    = "Feedback"
 
 	// Titles.
 	queriesAreaTitle     = "SQL query"
@@ -70,7 +70,7 @@ type AppWidgets struct {
 	content            *tview.Table
 	constraints        *tview.Table
 	indexes            *tview.Table
-	errorView          *tview.TextView
+	feedbackView       *tview.TextView
 	banner             *tview.TextView
 	tables             *tview.List
 	tableMetadata      *tview.Pages
@@ -128,42 +128,49 @@ func (t *Tui) setupQueries() {
 			// Call the Query method from the client and populate the content page.
 			resultSet, columnNames, err := t.c.Query(query)
 			if err != nil {
-				t.aw.errorView.Clear()
+				t.aw.feedbackView.Clear()
 				errorMsg := fmt.Sprintf("[red]%s", err.Error())
-				fmt.Fprintln(t.aw.errorView, errorMsg)
+				fmt.Fprintln(t.aw.feedbackView, errorMsg)
 
-				t.aw.tableMetadata.SwitchToPage(errorPage)
+				t.aw.tableMetadata.SwitchToPage(feedbackPage)
 
 				return event
 			}
 
-			for i, tc := range columnNames {
-				t.aw.content.SetCell(
-					0,
-					i,
-					tview.NewTableCell(tc).
-						SetAlign(tview.AlignCenter).
-						SetTextColor(tcell.ColorYellow),
-				)
-			}
+			if len(resultSet) > 0 && len(columnNames) > 0 {
+				for i, tc := range columnNames {
+					t.aw.content.SetCell(
+						0,
+						i,
+						tview.NewTableCell(tc).
+							SetAlign(tview.AlignCenter).
+							SetTextColor(tcell.ColorYellow),
+					)
+				}
 
-			for i, sr := range resultSet {
-				for j, sc := range sr {
-					if i == 0 {
-						t.aw.content.SetCell(
-							i+1,
-							j,
-							tview.NewTableCell(sc).SetTextColor(tcell.ColorRed),
-						)
-					} else {
-						t.aw.content.SetCell(i+1, j, tview.NewTableCell(sc).SetMaxWidth(0))
+				for i, sr := range resultSet {
+					for j, sc := range sr {
+						if i == 0 {
+							t.aw.content.SetCell(
+								i+1,
+								j,
+								tview.NewTableCell(sc).SetTextColor(tcell.ColorRed),
+							)
+						} else {
+							t.aw.content.SetCell(i+1, j, tview.NewTableCell(sc).SetMaxWidth(0))
+						}
 					}
 				}
-			}
 
-			t.aw.content.ScrollToBeginning()
-			t.aw.content.Select(0, 0)
-			t.app.SetFocus(t.aw.content)
+				t.aw.content.ScrollToBeginning()
+				t.aw.content.Select(0, 0)
+				t.app.SetFocus(t.aw.content)
+			} else {
+				t.aw.feedbackView.Clear()
+				feedbackMsg := fmt.Sprintf("[green]%s", "msg: query was executed successfully")
+				fmt.Fprintln(t.aw.feedbackView, feedbackMsg)
+				t.aw.tableMetadata.SwitchToPage(feedbackPage)
+			}
 
 			// Update the table list if the tables get updated somehow.
 			switch {
@@ -174,11 +181,11 @@ func (t *Tui) setupQueries() {
 			case strings.Contains(strings.ToLower(query), "create table"):
 				ts, err := t.c.ShowTables()
 				if err != nil {
-					t.aw.errorView.Clear()
+					t.aw.feedbackView.Clear()
 					errorMsg := fmt.Sprintf("[red]%s", err.Error())
-					fmt.Fprintln(t.aw.errorView, errorMsg)
+					fmt.Fprintln(t.aw.feedbackView, errorMsg)
 
-					t.aw.tableMetadata.SwitchToPage(errorPage)
+					t.aw.tableMetadata.SwitchToPage(feedbackPage)
 
 					return event
 				}
@@ -232,15 +239,15 @@ func (t *Tui) setupTablesMetadata() {
 	t.aw.indexes = tview.NewTable().SetBorders(true).SetFixed(1, 0)
 	t.aw.indexes.SetBorder(true).SetTitle(indexesPageTitle)
 
-	t.aw.errorView = tview.NewTextView().SetDynamicColors(true)
-	t.aw.errorView.SetTitle(errorPageTitle).SetBorder(true)
+	t.aw.feedbackView = tview.NewTextView().SetDynamicColors(true)
+	t.aw.feedbackView.SetTitle(feedbackPageTitle).SetBorder(true)
 
 	t.aw.tableMetadata = tview.NewPages().
 		AddPage(contentPage, t.aw.content, true, true).
 		AddPage(structurePage, t.aw.structure, true, false).
 		AddPage(constraintsPage, t.aw.constraints, true, false).
 		AddPage(indexesPage, t.aw.indexes, true, false).
-		AddPage(errorPage, t.aw.errorView, true, false)
+		AddPage(feedbackPage, t.aw.feedbackView, true, false)
 
 		// Define how to navigate between pages.
 	t.aw.tableMetadata.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -435,10 +442,10 @@ func (t *Tui) updateTableMetadataOnChange(tableName string) {
 	// Get the constraints, indexes, schema and the content of a given table.
 	m, err := t.c.Metadata(tableName)
 	if err != nil {
-		t.aw.errorView.Clear()
+		t.aw.feedbackView.Clear()
 		errorMsg := fmt.Sprintf("[red]%s", err.Error())
-		fmt.Fprintln(t.aw.errorView, errorMsg)
-		t.aw.tableMetadata.SwitchToPage(errorPage)
+		fmt.Fprintln(t.aw.feedbackView, errorMsg)
+		t.aw.tableMetadata.SwitchToPage(feedbackPage)
 		return
 	}
 
