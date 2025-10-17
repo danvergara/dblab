@@ -50,7 +50,7 @@ dblab --url "mysql://user:password@unix(/path/to/socket/mysql.sock)/dbname?chars
 dblab --socket /path/to/socket/mysql.sock --user user --db dbname --pass password --ssl disable --port 5432 --driver mysql --limit 50
 ```
 
-For more information about the available flags check the [Usage section](https://dblab.danvergara.com/usage/#usage).
+For more information about the available flags check the [Usage section](https://dblab.app/usage/#usage).
 
 ### Using a config file
 

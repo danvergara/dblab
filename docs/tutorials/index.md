@@ -34,4 +34,4 @@ Select the ssl mode (just press enter if you selected sqlite3):
 If everything went well you should see the UI  
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/full-ui.png){ width="700" : .center }
 
-For further knowledge on the navigation of the UI you can check this [first steps in navigation](https://dblab.danvergara.com/tutorials/navigation/)
+For further knowledge on the navigation of the UI you can check this [first steps in navigation](https://dblab.app/tutorials/navigation/)
