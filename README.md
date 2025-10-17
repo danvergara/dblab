@@ -11,7 +11,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
 
 ---
 
-**Documentation**: <a href="https://dblab.danvergara.com" target="_blank">https://dblab.danvergara.com</a>
+**Documentation**: <a href="https://dblab.app" target="_blank">https://dblab.app</a>
 
 ---
 

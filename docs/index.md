@@ -8,7 +8,7 @@ Cross-platform, zero dependencies, terminal based UI application for your Data B
 
 ---
 
-**Documentation**: <a href="https://dblab.danvergara.com" target="_blank">https://dblab.danvergara.com</a>
+**Documentation**: <a href="https://dblab.app" target="_blank">https://dblab.app</a>
 
 **Source Code**: <a href="https://github.com/danvergara/dblab" target="_blank">https://github.com/danvergara/dblab</a>
 
