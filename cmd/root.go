@@ -188,7 +188,8 @@ func init() {
 	rootCmd.Flags().StringVarP(&user, "user", "", "", "Database user")
 	rootCmd.Flags().StringVarP(&pass, "pass", "", "", "Password for user")
 	rootCmd.Flags().StringVarP(&db, "db", "", "", "Database name (optional)")
-	rootCmd.Flags().StringVarP(&schema, "schema", "", "", "Database schema (postgres only)")
+	rootCmd.Flags().
+		StringVarP(&schema, "schema", "", "", "Database schema (postgres and oracle only)")
 	rootCmd.Flags().StringVarP(&ssl, "ssl", "", "", "SSL mode")
 	rootCmd.Flags().
 		UintVarP(&limit, "limit", "", 100, "Size of the result set from the table content query (should be greater than zero, otherwise the app will error out)")

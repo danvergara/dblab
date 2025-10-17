@@ -64,7 +64,10 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	if opts.Schema == "" {
-		c.schema = "public"
+		switch c.driver {
+		case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
+			c.schema = "public"
+		}
 	} else {
 		c.schema = opts.Schema
 	}
@@ -78,7 +81,7 @@ func New(opts command.Options) (*Client, error) {
 	case drivers.SQLite:
 		c.databaseQuerier = newSQLite()
 	case drivers.Oracle:
-		c.databaseQuerier = newOracle()
+		c.databaseQuerier = newOracle(c.schema)
 	case drivers.SQLServer:
 		c.databaseQuerier = newMSSQL()
 	default:
@@ -107,8 +110,14 @@ func New(opts command.Options) (*Client, error) {
 
 	switch c.driver {
 	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
-		if _, err = db.Exec(fmt.Sprintf("set search_path='%s'", c.schema)); err != nil {
+		if _, err = db.Exec(fmt.Sprintf("set search_path = '%s'", c.schema)); err != nil {
 			return nil, err
+		}
+	case drivers.Oracle:
+		if c.schema != "" {
+			if _, err = db.Exec(fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s", c.schema)); err != nil {
+				return nil, err
+			}
 		}
 	}
 

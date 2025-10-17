@@ -19,7 +19,7 @@ database:
   - name: "oracle"
     host: "localhost"
     port: 1521
-    db: "FREEPDB1 "
+    db: "FREEPDB1"
     password: "password"
     user: "system"
     driver: "oracle"

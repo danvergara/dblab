@@ -44,7 +44,7 @@ Flags:
       --limit uint                        Size of the result set from the table content query (should be greater than zero, otherwise the app will error out) (default 100)
       --pass string                       Password for user
       --port string                       Server port
-      --schema string                     Database schema (postgres only)
+      --schema string                     Database schema (postgres and oracle only)
       --socket string                     Path to a Unix socket file
       --ssh-host string                   SSH Server Hostname/IP
       --ssh-key string                    File with private key for SSH authentication
@@ -158,13 +158,24 @@ dblab --url 'oracle://user:password@localhost:1521/db'
 dblab --url 'sqlserver://SA:myStrong(!)Password@localhost:1433?database=tempdb&encrypt=true&trustservercertificate=false&connection+timeout=30'
 ```
 
-if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
+if you're using PostgreSQL or Oracle, you have the option to define the schema you want to work with, the default value is `public` for Postgres, empty for Oracle.
+
+**Postgres**
 
 ```{ .sh .copy }
 dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
 ```
 ```{ .sh .copy }
 dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
+```
+
+**Oracle**
+
+```{ .sh .copy }
+dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50 --schema user1
+```
+```{ .sh .copy }
+dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
 
 As a request made in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
@@ -300,9 +311,10 @@ database:
   - name: "oracle"
     host: "localhost"
     port: 1521
-    db: "FREEPDB1 "
+    db: "FREEPDB1"
+    schema: "user1"
     password: "password"
-    user: "system"
+    user: "user2"
     driver: "oracle"
     ssl: "enable"
     wallet: "path/to/wallet"
