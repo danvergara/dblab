@@ -26,13 +26,19 @@ dblab --url mysql://user:password@tcp(host:port)/db
 dblab --url file:test.db?cache=shared&mode=memory
 ```
 
-if you're using PostgreSQL, you have the option to define the schema you want to work with, the default value is `public`.
+if you're using PostgreSQL or Oracle, you have the option to define the schema you want to work with, the default value is `public` for Postgres, empty for Oracle.
 
 ```{ .sh .copy }
 dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
 ```
 ```{ .sh .copy }
 dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schema myschema
+```
+```{ .sh .copy }
+dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50 --schema user1
+```
+```{ .sh .copy }
+dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
 
 As a request made in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
@@ -80,6 +86,17 @@ database:
     user: "postgres"
     schema: "public"
     driver: "postgres"
+  - name: "oracle"
+    host: "localhost"
+    port: 1521
+    db: "FREEPDB1"
+    schema: "user1"
+    password: "password"
+    user: "user2"
+    driver: "oracle"
+    ssl: "enable"
+    wallet: "path/to/wallet"
+    ssl-verify: true
 # should be greater than 0, otherwise the app will error out
 limit: 50
 ```
