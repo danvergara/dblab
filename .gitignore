@@ -33,3 +33,5 @@ assets/.DS_Store
 
 # sshdb pkg testing
 pkg/sshdb/testdata/known_hosts
+
+site/
