@@ -65,10 +65,10 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 
-			if m.cursor > len(inputs) {
+			if m.cursor > len(inputs)-1 {
 				m.cursor = 0
 			} else if m.cursor < 0 {
-				m.cursor = len(inputs)
+				m.cursor = len(inputs) - 1
 			}
 
 			for i := 0; i <= len(inputs)-1; i++ {
@@ -252,10 +252,10 @@ func updateSSLConn(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 
-			if m.cursor > len(inputs) {
+			if m.cursor > len(inputs)-1 {
 				m.cursor = 0
 			} else if m.cursor < 0 {
-				m.cursor = len(inputs)
+				m.cursor = len(inputs) - 1
 			}
 
 			for i := 0; i <= len(inputs)-1; i++ {
