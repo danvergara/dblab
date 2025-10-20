@@ -208,15 +208,15 @@ func updateSSLMode(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 				m.sslMode = m.sqlServerSSLModes[m.cursor]
 			}
 
-			m.steps = 3
-			m.cursor = 0
-
 			switch m.driver {
 			case drivers.Postgres, drivers.Oracle, drivers.SQLServer, drivers.MySQL:
 				if m.sslMode == "disable" || m.sslMode == "false" {
 					return m, tea.Quit
 				}
 			}
+
+			m.steps = 3
+			m.cursor = 0
 
 			return m, nil
 		}
