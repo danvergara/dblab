@@ -62,7 +62,20 @@ func NewRootCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var opts command.Options
 			var err error
-			var kb command.TUIKeyBindings
+			// Default keybindings.
+			var kb = command.TUIKeyBindings{
+				RunQuery:    tcell.KeyCtrlSpace,
+				Structure:   tcell.KeyCtrlS,
+				Indexes:     tcell.KeyCtrlI,
+				Constraints: tcell.KeyCtrlT,
+				ClearEditor: tcell.KeyCtrlD,
+				Navigation: command.TUINavigationBindgins{
+					Up:    tcell.KeyCtrlK,
+					Down:  tcell.KeyCtrlJ,
+					Left:  tcell.KeyCtrlH,
+					Right: tcell.KeyCtrlL,
+				},
+			}
 
 			if cfg {
 				opts, err = config.Init(cfgName)
@@ -100,33 +113,6 @@ func NewRootCmd() *cobra.Command {
 					SSHKeyPassphrase:       sshKeyPassphrase,
 				}
 
-				// Default keybindings.
-				kb = command.TUIKeyBindings{
-					RunQuery:    tcell.KeyCtrlSpace,
-					Structure:   tcell.KeyCtrlS,
-					Indexes:     tcell.KeyCtrlI,
-					Constraints: tcell.KeyCtrlT,
-					ClearEditor: tcell.KeyCtrlD,
-					Navigation: command.TUINavigationBindgins{
-						Up:    tcell.KeyCtrlK,
-						Down:  tcell.KeyCtrlJ,
-						Left:  tcell.KeyCtrlH,
-						Right: tcell.KeyCtrlL,
-					},
-				}
-
-				// If the --keybindings flag is set, fill the keybindings with the ones fonud in the config file.
-				// This is safe to do even if they're missing in the config files, because the config package has default values for it.
-				if keybindings {
-					kb, err = config.SetupKeybindings()
-					if err != nil {
-						return err
-					}
-				}
-
-				// Set the keybindings values, either the default ones or the found in the config file.
-				opts.UpdateKeybindings(kb)
-
 				if form.IsEmpty(opts) {
 					opts, err = form.Run()
 					if err != nil {
@@ -134,6 +120,18 @@ func NewRootCmd() *cobra.Command {
 					}
 				}
 			}
+
+			// If the --keybindings flag is set, fill the keybindings with the ones fonud in the config file.
+			// This is safe to do even if they're missing in the config files, because the config package has default values for it.
+			if keybindings {
+				kb, err = config.SetupKeybindings()
+				if err != nil {
+					return err
+				}
+			}
+
+			// Set the keybindings values, either the default ones or the found in the config file.
+			opts.UpdateKeybindings(kb)
 
 			if err := connection.ValidateOpts(opts); err != nil {
 				return err
