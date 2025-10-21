@@ -78,7 +78,11 @@ If you want to see the rows of a table, press <kbd>Enter</kbd>.
 
 To see the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.  
 
-The same can be achieved for the `constraints` view by pressing <kbd>Ctrl+F</kbd> to go back and forth between the `rows` and the `constraints` panels.
+The same can be achieved for the `constraints` view by pressing <kbd>Ctrl+T</kbd> to go back and forth between the `rows` and the `constraints` panels.
+
+The `--db` flag is now optional (except for Oracle), meaning that the user will be able to see the list of databases they have access to. The regular list of tables will be replaced with a tree structure showing a list of databases and their respective list of tables, branching off each database. Due to the nature of the vast majority of DBMSs that don't allow cross-database queries, dblab has to open an independent connection for each database. The side effect of this decision, is that the user has to press `Enter` on the specific database of interest. An indicator showing the current active database will appear at the bottom-right of the screen. To change the focus, just hit enter on another database. Once a database is selected, the usual behavior of inspecting tables remains the same.
+
+<img src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/tree-view.png" />
 
 Now, there's a menu to navigate between hidden views by just clicking on the desired options:
 
@@ -87,8 +91,7 @@ Now, there's a menu to navigate between hidden views by just clicking on the des
 ![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/constraints-view.png){ width="700" : .center }
 ![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/indexes-view.png){ width="700" : .center }
 
-As you may have noticed, navigation has already been added, so every time you query the content of a listed table, the result set is going to be paginated. This allows to the user dealing with large tables, optimizing resources.
-Just hit the `BACK` and `NEXT` buttons to go back and forth.
+
 
 ### Key Bindings
 Key                                     | Description
@@ -97,7 +100,7 @@ Key                                     | Description
 <kbd>Ctrl+D</kbd>                       | Cleans the whole text from the query editor, when the editor is selected
 <kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel
 <kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel. The opposite is true
-<kbd>Ctrl+F</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true
+<kbd>Ctrl+T</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true
 <kbd>Ctrl+I</kbd>                       | If the rows panel is active, switch to the indexes view. The opposite is true
 <kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left
 <kbd>Ctrl+J</kbd>                       | Toggle to the panel below
@@ -110,7 +113,6 @@ Key                                     | Description
 <kbd>Arrow Right</kbd>                  | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
 <kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
 <kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
 <kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
 <kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes
 <kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes

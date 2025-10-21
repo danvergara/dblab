@@ -7,17 +7,18 @@ theme:
     features:
       - content.code.copy
   favicon: assets/images/favicon.ico
+  logo: assets/images/dblab-logo.png
   palette:
   - media: '(prefers-color-scheme: light)'
     scheme: default
-    primary: blue
+    primary: indigo
     accent: teal
     toggle:
       icon: material/lightbulb
       name: Switch to light mode
   - media: '(prefers-color-scheme: dark)'
     scheme: slate
-    primary: blue
+    primary: indigo
     accent: teal
     toggle:
       icon: material/lightbulb-outline
@@ -29,16 +30,15 @@ plugins:
 - search
 - termynal
 nav:
-- dblab: index.md
-- quickstart.md
-- Tutorials:
-  - First steps: tutorials/index.md
-  - tutorials/navigation.md
-  - Config File: tutorials/config-file.md
-- usage.md
-- features.md
-- release-notes.md
-- contribute.md
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Usage: usage.md
+  - Tutorials:
+    - Getting Started: tutorials/index.md
+    - Navigation: tutorials/navigation.md
+    - Config File: tutorials/config-file.md
+  - Contribute: contribute.md
+  - Release Notes: release-notes.md
 
 markdown_extensions:
 - toc:
