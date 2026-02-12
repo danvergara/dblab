@@ -436,6 +436,9 @@ func (t *Tui) updateTableMetadataOnChange(tableName string) {
 	t.aw.constraints.Clear()
 
 	if tableName == "" {
+		if t.aw.tables == nil || t.aw.tables.GetItemCount() == 0 {
+			return
+		}
 		tableName, _ = t.aw.tables.GetItemText(t.aw.tables.GetCurrentItem())
 	}
 

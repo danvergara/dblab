@@ -1,6 +1,6 @@
 PLATFORM=linux/amd64
 DB_DRIVER?=postgres
-DB_USER=?postgres
+DB_USER?=postgres
 
 .PHONY: test
 ## test: Runs the tests
