@@ -16,7 +16,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25.2'
+          go-version: '1.26'
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
