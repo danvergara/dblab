@@ -17,7 +17,7 @@ Cross-platform, zero dependencies, terminal based UI application for your Data B
 ## Overview
 
 dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3,
-written in Go and works on OSX, Linux and Windows machines. Main idea behind using Go for backend development
+written in Go and works on OSX and Linux machines. Main idea behind using Go for backend development
 is to utilize ability of the compiler to produce zero-dependency binaries for
 multiple platforms. dblab was created as an attempt to build very simple and portable
 application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Server databases.
@@ -25,7 +25,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 
 ## Features
 
-  * Cross-platform support OSX/Linux/Windows 32/64-bit  
+  * Cross-platform support OSX/Linux 32/64-bit  
   * Simple installation (distributed as a single binary)  
   * Zero dependencies.  
 
@@ -56,7 +56,7 @@ brew install --cask dblab
 ```
 
 ### Manual Binary Installation
-The binaries are compatible with Linux, OSX and Windows.  
+The binaries are compatible with Linux and OSX.  
 You can manually download and install the binary release from [the release page](https://github.com/danvergara/dblab/releases).
 
 ### Automated installation/update

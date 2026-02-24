@@ -21,7 +21,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
 - [Features](#features)
 - [Installation](#installation)
     - [Homebrew](#homebrew)
-    - [Binary Release](#binary-release-linuxosxwindows)
+    - [Binary Release](#binary-release-linuxosx)
     - [Automated installation/update](#automated-installationupdate)
 - [Help Command](#help)
 - [Usage](#usage)
@@ -36,14 +36,14 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
 ## Overview
 
 dblab is a fast and lightweight interactive terminal based UI application for PostgreSQL, MySQL and SQLite3,
-written in Go and works on OSX, Linux and Windows machines. Main idea behind using Go for backend development
+written in Go and works on OSX and Linux machines. Main idea behind using Go for backend development
 is to utilize ability of the compiler to produce zero-dependency binaries for
 multiple platforms. dblab was created as an attempt to build very simple and portable
 application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Server databases.
 
 ## Features
 
-- Cross-platform support OSX/Linux/Windows 32/64-bit
+- Cross-platform support OSX/Linux 32/64-bit
 - Simple installation (distributed as a single binary)
 - Zero dependencies.
 
@@ -67,7 +67,7 @@ brew tap danvergara/tools
 brew install --cask dblab
 ```
 
-### Binary Release (Linux/OSX/Windows)
+### Binary Release (Linux/OSX)
 You can manually download a binary release from [the release page](https://github.com/danvergara/dblab/releases).
 
 ## Automated installation/update
