@@ -11,6 +11,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/danvergara/dblab/pkg/client"
+	"github.com/danvergara/dblab/pkg/command"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
 )
@@ -114,6 +116,9 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type Model struct {
+	c        *client.Client
+	bindings *command.TUIKeyBindings
+	t        table.Writer
 	viewport viewport.Model
 	input    textarea.Model
 	list     list.Model
@@ -124,118 +129,16 @@ type Model struct {
 	ready    bool
 }
 
-func generateQueryResults() string {
-	t := table.NewWriter()
-
-	t.AppendHeader(table.Row{"pid", "datname", "usename", "application_name", "client_addr", "state", "query"})
-
-	t.AppendRows([]table.Row{
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-		{14293, "production_db", "admin_user", "PostgreSQL JDBC Driver", "192.168.1.104", "active", "SELECT * FROM users JOIN orders ON users.id = orders.user_id WHERE orders.created_at > NOW() - INTERVAL '1 day';"},
-		{14295, "production_db", "readonly_role", "pgAdmin 4", "10.0.0.55", "idle", "BEGIN;"},
-		{14298, "metrics_db", "grafana", "grafana-server", "10.0.0.12", "active", "SELECT time_bucket('1 minute', time) AS bucket, COUNT(*) FROM api_requests GROUP BY bucket ORDER BY bucket DESC LIMIT 100;"},
-		{14301, "production_db", "admin_user", "psql", "127.0.0.1", "idle in transaction", "UPDATE settings SET value = 'true' WHERE feature_flag = 'new_ui';"},
-	})
-
-	cyberStyle := table.StyleRounded
-
-	// 2. Define the Colors using standard ANSI high-intensity variants
-	cyberStyle.Color = table.ColorOptions{
-		// Make the borders Neon Purple
-		Border: text.Colors{text.FgHiMagenta},
-
-		// Make the Header text Cyber Green and Bold
-		Header: text.Colors{text.FgHiGreen, text.Bold},
-
-		// Make the Data rows Muted Green
-		Row: text.Colors{text.FgGreen},
-
-		// Optional: If you use a footer, style it here
-		Footer: text.Colors{text.FgHiGreen},
-	}
-
-	t.SetStyle(cyberStyle)
-
-	return t.Render()
-}
-
-func NewModel() Model {
-	ti := textarea.New()
-	ti.Placeholder = "Search or enter text..."
-	ti.FocusedStyle.Text = lipgloss.NewStyle().Foreground(mutedGreen)
-	ti.BlurredStyle.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
-	ti.Focus()
-
-	var items []list.Item = []list.Item{
-		item("users"),
-		item("products"),
-		item("admins"),
-		item("invoices"),
-		item("relays"),
-	}
-
-	l := list.New(items, itemDelegate{}, 0, 0)
-	l.Title = "Tables"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.SetShowHelp(false)
-
-	m := Model{
-		input: ti,
-		list:  l,
+func NewModel(c *client.Client) (*Model, error) {
+	m := &Model{
 		focus: focusInput,
 	}
-	m.updateStyles()
 
-	return m
+	if err := m.prepare(); err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
 
 func (m Model) Init() tea.Cmd {
@@ -268,7 +171,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if !m.ready {
 			m.viewport = viewport.New(rightWidth-4, tableHeight-2)
-			m.viewport.SetContent(generateQueryResults())
+			m.viewport.SetContent(m.t.Render())
 			m.ready = true
 		} else {
 			m.viewport.Width = rightWidth - 4
@@ -399,4 +302,60 @@ func (m *Model) updateStyles() {
 	m.list.Styles.PaginationStyle = m.styles.pagination
 	m.list.Styles.HelpStyle = m.styles.help
 	m.list.SetDelegate(itemDelegate{styles: &m.styles})
+}
+
+func (m *Model) prepare() error {
+	m.setupTable()
+	m.setupQueries()
+	if err := m.setupDatabaseCatalog(); err != nil {
+		return err
+	}
+	m.updateStyles()
+	return nil
+}
+
+func (m *Model) setupTable() {
+	t := table.NewWriter()
+
+	cyberStyle := table.StyleRounded
+
+	// 2. Define the Colors using standard ANSI high-intensity variants
+	cyberStyle.Color = table.ColorOptions{
+		// Make the borders Neon Purple
+		Border: text.Colors{text.FgHiMagenta},
+
+		// Make the Header text Cyber Green and Bold
+		Header: text.Colors{text.FgHiGreen, text.Bold},
+
+		// Make the Data rows Muted Green
+		Row: text.Colors{text.FgGreen},
+
+		// Optional: If you use a footer, style it here
+		Footer: text.Colors{text.FgHiGreen},
+	}
+
+	t.SetStyle(cyberStyle)
+	m.t = t
+}
+
+func (m *Model) setupDatabaseCatalog() error {
+	l := list.New([]list.Item{}, itemDelegate{}, 0, 0)
+
+	l.Title = "Tables"
+	l.SetShowStatusBar(false)
+	l.SetFilteringEnabled(false)
+	l.SetShowHelp(false)
+
+	m.list = l
+
+	return nil
+}
+
+func (m *Model) setupQueries() {
+	ti := textarea.New()
+	ti.Placeholder = "Search or enter text..."
+	ti.FocusedStyle.Text = lipgloss.NewStyle().Foreground(mutedGreen)
+	ti.BlurredStyle.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
+	ti.Focus()
+	m.input = ti
 }
