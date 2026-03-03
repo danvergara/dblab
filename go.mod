@@ -15,6 +15,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/go-cmp v0.7.0
+	github.com/jedib0t/go-pretty/v6 v6.7.8
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/kkyr/fig v0.4.0
 	github.com/lib/pq v1.10.9
