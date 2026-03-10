@@ -30,9 +30,6 @@ const (
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
 
-	activeBorder   = lipgloss.Color("62")
-	inactiveBorder = lipgloss.Color("240")
-
 	listHeight = 14
 
 	focusInput focusState = iota
@@ -58,7 +55,62 @@ var (
 
 	footerStyle = lipgloss.NewStyle().
 			Foreground(green)
+
+	errorStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FF0000")). // Bright Red
+			Bold(true).
+			Padding(1, 2)
 )
+
+type metadataSucessMsg struct {
+	metadata *client.Metadata
+}
+
+type metadataErrMsg struct{ err error }
+
+type querySuccessMsg struct {
+	columns []string
+	rows    [][]string
+}
+
+type queryErrMsg struct{ err error }
+
+type tabStyles struct {
+	doc         lipgloss.Style
+	highlight   lipgloss.Style
+	inactiveTab lipgloss.Style
+	activeTab   lipgloss.Style
+	window      lipgloss.Style
+}
+
+func newTabStyles() *tabStyles {
+	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
+	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
+	s := new(tabStyles)
+	s.doc = lipgloss.NewStyle().
+		Padding(1, 2, 1, 2)
+	s.inactiveTab = lipgloss.NewStyle().
+		Border(inactiveTabBorder, true).
+		BorderForeground(darkPurple).
+		Padding(0, 0)
+	s.activeTab = s.inactiveTab.
+		Border(activeTabBorder, true)
+	s.window = lipgloss.NewStyle().
+		BorderForeground(neonPurple).
+		Padding(2, 0).
+		Align(lipgloss.Center).
+		Border(lipgloss.NormalBorder()).
+		UnsetBorderTop()
+	return s
+}
+
+func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
+	border := lipgloss.RoundedBorder()
+	border.BottomLeft = left
+	border.Bottom = middle
+	border.BottomRight = right
+	return border
+}
 
 type styles struct {
 	title        lipgloss.Style
@@ -116,22 +168,29 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type Model struct {
-	c        *client.Client
-	bindings *command.TUIKeyBindings
-	t        table.Writer
-	viewport viewport.Model
-	input    textarea.Model
-	list     list.Model
-	focus    focusState
-	width    int
-	height   int
-	styles   styles
-	ready    bool
+	c          *client.Client
+	tabs       []string
+	activeTab  int
+	bindings   *command.TUIKeyBindings
+	tables     []table.Writer
+	viewport   viewport.Model
+	input      textarea.Model
+	list       list.Model
+	focus      focusState
+	width      int
+	height     int
+	styles     styles
+	tabStyles  *tabStyles
+	ready      bool
+	leftWidth  int
+	rightWidth int
 }
 
 func NewModel(c *client.Client) (*Model, error) {
 	m := &Model{
 		focus: focusInput,
+		c:     c,
+		tabs:  []string{"Content", "Structure", "Indexes", "Constraints"},
 	}
 
 	if err := m.prepare(); err != nil {
@@ -170,8 +229,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.input.SetHeight(inputHeight - 2)
 
 		if !m.ready {
-			m.viewport = viewport.New(rightWidth-4, tableHeight-2)
-			m.viewport.SetContent(m.t.Render())
+			m.viewport = viewport.New(rightWidth-4, tableHeight-4)
 			m.ready = true
 		} else {
 			m.viewport.Width = rightWidth - 4
@@ -215,8 +273,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 			}
 			return m, tea.Batch(cmds...)
+		case tea.KeyEnter:
+			if m.focus == focusList {
+				return m, m.runTableMetadata("")
+			}
 		}
 		switch msg.String() {
+		case "ctrl+e":
+			if m.focus == focusInput {
+				query := m.input.Value()
+				if strings.TrimSpace(query) == "" {
+					return m, nil
+				}
+				return m, m.executeQueryCmd(query)
+			}
 		case "left", "h":
 			if m.focus == focusTable {
 				m.viewport.ScrollLeft(4)
@@ -225,7 +295,42 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusTable {
 				m.viewport.ScrollRight(4)
 			}
+		case "n", "tab":
+			if m.focus == focusTable {
+				m.activeTab = min(m.activeTab+1, len(m.tabs)-1)
+				m.viewport.SetContent(m.tables[m.activeTab].Render())
+				return m, nil
+			}
+		case "p", "shift+tab":
+			if m.focus == focusTable {
+				m.activeTab = max(m.activeTab-1, 0)
+				m.viewport.SetContent(m.tables[m.activeTab].Render())
+				return m, nil
+			}
 		}
+	case querySuccessMsg:
+		m.clearTables()
+		m.tables[0].AppendHeader(populateTableHeaders(msg.columns))
+		m.tables[0].AppendRows(populateTableRows(msg.rows))
+		m.viewport.SetContent(m.tables[0].Render())
+		m.viewport.GotoTop()
+		return m, nil
+	case queryErrMsg:
+		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
+		styledError := errorStyle.Render(errorText)
+
+		m.viewport.SetContent(styledError)
+
+		m.viewport.GotoTop()
+	case metadataSucessMsg:
+		m.updateTableMetadataOnChange(msg.metadata)
+		m.viewport.SetContent(m.tables[m.activeTab].Render())
+		m.viewport.GotoTop()
+	case metadataErrMsg:
+		errorText := fmt.Sprintf("❌ table metadata failed\n\n%s", msg.err.Error())
+		styledError := errorStyle.Render(errorText)
+		m.viewport.SetContent(styledError)
+		m.viewport.GotoTop()
 	}
 
 	switch m.focus {
@@ -257,6 +362,11 @@ func (m Model) View() string {
 		tableBorder = neonPurple
 	}
 
+	doc := strings.Builder{}
+	s := m.tabStyles
+
+	var renderedTabs []string
+
 	leftWidth := m.width / 5
 	rightWidth := m.width - leftWidth
 
@@ -276,10 +386,45 @@ func (m Model) View() string {
 	styledList := listStyle.BorderForeground(listBorder).Width(leftWidth - 2).Height(listHeight - 2).Render(m.list.View())
 
 	styledInput := inputStyle.BorderForeground(textAreaBorder).Width(rightWidth - 2).Height(inputHeight - 2).Render(m.input.View())
-	styledTable := tableStyle.BorderForeground(tableBorder).Width(rightWidth - 2).Height(tableHeight - 2).Render(m.viewport.View())
+	styledTable := tableStyle.BorderForeground(tableBorder).Width(rightWidth - 2).Height(tableHeight - 4).UnsetBorderTop()
+
+	for i, t := range m.tabs {
+		var style lipgloss.Style
+		isFirst, isLast, isActive := i == 0, i == len(m.tabs)-1, i == m.activeTab
+
+		if isActive {
+			style = s.activeTab
+			if m.focus == focusTable {
+				style = style.BorderForeground(neonPurple)
+			}
+		} else {
+			style = s.inactiveTab
+		}
+
+		style = style.Width((rightWidth-2)/len(m.tabs) - 1)
+
+		border, _, _, _, _ := style.GetBorder()
+		if isFirst && isActive {
+			border.BottomLeft = "│"
+		} else if isFirst && !isActive {
+			border.BottomLeft = "│"
+		} else if isLast && isActive {
+			border.BottomRight = "│"
+		} else if isLast && !isActive {
+			border.BottomRight = "┤"
+		}
+		style = style.Border(border)
+		renderedTabs = append(renderedTabs, style.Render(t))
+	}
+
+	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
+
+	doc.WriteString(row)
+	doc.WriteString("\n")
+	doc.WriteString(styledTable.Render(m.viewport.View()))
 
 	leftColumn := lipgloss.JoinVertical(lipgloss.Left, titleBox, styledList)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledInput, styledTable)
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledInput, doc.String())
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
 
@@ -297,6 +442,7 @@ func (m *Model) Run() error {
 }
 
 func (m *Model) updateStyles() {
+	m.tabStyles = newTabStyles()
 	m.styles = newStyles()
 	m.list.Styles.Title = m.styles.title
 	m.list.Styles.PaginationStyle = m.styles.pagination
@@ -315,37 +461,57 @@ func (m *Model) prepare() error {
 }
 
 func (m *Model) setupTable() {
+	structure := setupTable()
+	content := setupTable()
+	constraints := setupTable()
+	indexes := setupTable()
+	m.tables = []table.Writer{
+		content,
+		structure,
+		indexes,
+		constraints,
+	}
+}
+
+func (m *Model) clearTables() {
+	for i := range m.tables {
+		m.tables[i] = setupTable()
+	}
+}
+
+func setupTable() table.Writer {
 	t := table.NewWriter()
 
 	cyberStyle := table.StyleRounded
 
-	// 2. Define the Colors using standard ANSI high-intensity variants
 	cyberStyle.Color = table.ColorOptions{
-		// Make the borders Neon Purple
 		Border: text.Colors{text.FgHiMagenta},
-
-		// Make the Header text Cyber Green and Bold
 		Header: text.Colors{text.FgHiGreen, text.Bold},
-
-		// Make the Data rows Muted Green
-		Row: text.Colors{text.FgGreen},
-
-		// Optional: If you use a footer, style it here
+		Row:    text.Colors{text.FgGreen},
 		Footer: text.Colors{text.FgHiGreen},
 	}
 
 	t.SetStyle(cyberStyle)
-	m.t = t
+	return t
 }
 
 func (m *Model) setupDatabaseCatalog() error {
-	l := list.New([]list.Item{}, itemDelegate{}, 0, 0)
+	ts, err := m.c.ShowTables()
+	if err != nil {
+		return err
+	}
+
+	tables := make([]list.Item, 0)
+	for _, ta := range ts {
+		tables = append(tables, item(ta))
+	}
+
+	l := list.New(tables, itemDelegate{}, 0, 0)
 
 	l.Title = "Tables"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(false)
-
 	m.list = l
 
 	return nil
@@ -358,4 +524,87 @@ func (m *Model) setupQueries() {
 	ti.BlurredStyle.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
 	ti.Focus()
 	m.input = ti
+}
+
+func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
+	if metadata != nil {
+		m.clearTables()
+
+		// table content.
+		m.tables[0].AppendHeader(populateTableHeaders(metadata.TableContent.Columns))
+		m.tables[0].AppendRows(populateTableRows(metadata.TableContent.Rows))
+
+		// table structure.
+		m.tables[1].AppendHeader(populateTableHeaders(metadata.Structure.Columns))
+		m.tables[1].AppendRows(populateTableRows(metadata.Structure.Rows))
+
+		// table indexes.
+		m.tables[2].AppendHeader(populateTableHeaders(metadata.Indexes.Columns))
+		m.tables[2].AppendRows(populateTableRows(metadata.Indexes.Rows))
+
+		// table constraints.
+		m.tables[3].AppendHeader(populateTableHeaders(metadata.Constraints.Columns))
+		m.tables[3].AppendRows(populateTableRows(metadata.Constraints.Rows))
+	}
+}
+
+func (m *Model) runTableMetadata(tableName string) tea.Cmd {
+	return func() tea.Msg {
+		if tableName == "" {
+			if len(m.list.Items()) == 0 {
+				return metadataErrMsg{fmt.Errorf("empty list of tables")}
+			}
+			tableItem := m.list.Items()[m.list.Index()]
+			i, ok := tableItem.(item)
+			if !ok {
+				return metadataErrMsg{fmt.Errorf("not valid tables list item %d", m.list.Index())}
+			}
+
+			tableName = i.Title()
+		}
+
+		metadata, err := m.c.Metadata(tableName)
+		if err != nil {
+			return metadataErrMsg{err}
+		}
+
+		return metadataSucessMsg{metadata}
+	}
+}
+
+func (m *Model) executeQueryCmd(query string) tea.Cmd {
+	return func() tea.Msg {
+		rows, columns, err := m.c.Query(query)
+		if err != nil {
+			return queryErrMsg{err}
+		}
+
+		return querySuccessMsg{columns, rows}
+	}
+}
+
+func populateTableHeaders(headers []string) table.Row {
+	headerRow := make(table.Row, len(headers))
+
+	for i, h := range headers {
+		headerRow[i] = h
+	}
+
+	return headerRow
+}
+
+func populateTableRows(data [][]string) []table.Row {
+	var convertedRows []table.Row
+
+	for _, stringRow := range data {
+		newRow := make(table.Row, len(stringRow))
+
+		for i, cellData := range stringRow {
+			newRow[i] = cellData
+		}
+
+		convertedRows = append(convertedRows, newRow)
+	}
+
+	return convertedRows
 }
