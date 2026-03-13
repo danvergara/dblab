@@ -247,14 +247,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.list.SetSize(m.tableListWidth, m.tableListHeight)
 
-		m.input.SetWidth(m.editorWidth)
-		m.input.SetHeight(m.editorHeight)
+		m.input.SetWidth(m.editorWidth - 4)
+		m.input.SetHeight(m.editorHeight - 2)
 
 		if !m.ready {
-			m.viewport = viewport.New(m.resultSetWidth, m.resultSetHeight)
+			m.viewport = viewport.New(m.resultSetWidth-4, m.resultSetHeight-2)
 			m.ready = true
 		} else {
-			m.viewport.Width = m.rightWidth - 4
+			m.viewport.Width = m.resultSetWidth - 4
 			m.viewport.Height = m.resultSetHeight - 2
 		}
 		if m.ready {
