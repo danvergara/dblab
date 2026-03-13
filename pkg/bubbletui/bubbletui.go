@@ -168,22 +168,37 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type Model struct {
-	c          *client.Client
-	tabs       []string
-	activeTab  int
-	bindings   *command.TUIKeyBindings
-	tables     []table.Writer
-	viewport   viewport.Model
-	input      textarea.Model
-	list       list.Model
-	focus      focusState
-	width      int
-	height     int
-	styles     styles
-	tabStyles  *tabStyles
-	ready      bool
+	c         *client.Client
+	tabs      []string
+	activeTab int
+	bindings  *command.TUIKeyBindings
+	tables    []table.Writer
+	viewport  viewport.Model
+	input     textarea.Model
+	list      list.Model
+	focus     focusState
+	width     int
+	height    int
+	styles    styles
+	tabStyles *tabStyles
+	ready     bool
+
 	leftWidth  int
 	rightWidth int
+
+	availableHeight int
+
+	titleHeight int
+	titleWidth  int
+
+	tableListHeight int
+	tableListWidth  int
+
+	resultSetHeight int
+	resultSetWidth  int
+
+	editorHeight int
+	editorWidth  int
 }
 
 func NewModel(c *client.Client) (*Model, error) {
@@ -215,25 +230,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		fixedFooterHeight := 2
 		availableHeight := m.height - fixedFooterHeight
 
-		leftWidth := m.width / 5
-		rightWidth := m.width - leftWidth
+		m.leftWidth = m.width / 5
+		m.rightWidth = m.width - m.leftWidth
 
-		titleHeight := availableHeight / 4
-		listContainerHeight := availableHeight - titleHeight
-		inputHeight := availableHeight / 3
+		m.titleHeight = availableHeight/4 - 2
+		m.titleWidth = m.leftWidth - 2
 
-		tableHeight := availableHeight - inputHeight
+		m.tableListHeight = availableHeight - m.titleHeight - 4
+		m.tableListWidth = m.leftWidth - 2
 
-		m.list.SetSize(m.width-4, listContainerHeight-2)
-		m.input.SetWidth(rightWidth - 4)
-		m.input.SetHeight(inputHeight - 2)
+		m.editorWidth = m.rightWidth - 4
+		m.editorHeight = availableHeight/3 - 2
+
+		m.resultSetHeight = availableHeight - m.editorHeight - 6
+		m.resultSetWidth = m.rightWidth - 4
+
+		m.list.SetSize(m.tableListWidth, m.tableListHeight)
+
+		m.input.SetWidth(m.editorWidth)
+		m.input.SetHeight(m.editorHeight)
 
 		if !m.ready {
-			m.viewport = viewport.New(rightWidth-4, tableHeight-4)
+			m.viewport = viewport.New(m.resultSetWidth, m.resultSetHeight)
 			m.ready = true
 		} else {
-			m.viewport.Width = rightWidth - 4
-			m.viewport.Height = tableHeight - 2
+			m.viewport.Width = m.rightWidth - 4
+			m.viewport.Height = m.resultSetHeight - 2
 		}
 		if m.ready {
 			m.viewport, cmd = m.viewport.Update(msg)
@@ -367,41 +389,40 @@ func (m Model) View() string {
 
 	var renderedTabs []string
 
-	leftWidth := m.width / 5
-	rightWidth := m.width - leftWidth
-
 	footerView := footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)")
-	footerHeight := lipgloss.Height(footerView)
-	availableHeight := m.height - footerHeight
-
-	titleHeight := availableHeight / 4
-	listHeight := availableHeight - titleHeight
-
-	inputHeight := availableHeight / 3
-	tableHeight := availableHeight - inputHeight
 
 	dblabFigure := figure.NewFigure("dblab", "", true)
 
-	titleBox := titleStyle.Width(leftWidth - 2).Height(titleHeight - 2).Render(dblabFigure.String())
-	styledList := listStyle.BorderForeground(listBorder).Width(leftWidth - 2).Height(listHeight - 2).Render(m.list.View())
+	titleBox := titleStyle.Width(m.titleWidth).Height(m.titleHeight).Render(dblabFigure.String())
+	styledTableList := listStyle.BorderForeground(listBorder).Width(m.tableListWidth).Height(m.tableListHeight).Render(m.list.View())
 
-	styledInput := inputStyle.BorderForeground(textAreaBorder).Width(rightWidth - 2).Height(inputHeight - 2).Render(m.input.View())
-	styledTable := tableStyle.BorderForeground(tableBorder).Width(rightWidth - 2).Height(tableHeight - 4).UnsetBorderTop()
+	styledEditor := inputStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.input.View())
+	styledResultSet := tableStyle.BorderForeground(tableBorder).Width(m.resultSetWidth).Height(m.resultSetHeight).UnsetBorderTop()
+
+	numTabs := len(m.tabs)
+	viewportWidth := m.resultSetWidth - 6
+
+	baseWidth := viewportWidth / numTabs
+	remainder := viewportWidth % numTabs
 
 	for i, t := range m.tabs {
+		tabWidth := baseWidth
+
+		if i < remainder {
+			tabWidth++
+		}
+
 		var style lipgloss.Style
 		isFirst, isLast, isActive := i == 0, i == len(m.tabs)-1, i == m.activeTab
 
 		if isActive {
-			style = s.activeTab
+			style = s.activeTab.Width(tabWidth)
 			if m.focus == focusTable {
 				style = style.BorderForeground(neonPurple)
 			}
 		} else {
-			style = s.inactiveTab
+			style = s.inactiveTab.Width(tabWidth)
 		}
-
-		style = style.Width((rightWidth-2)/len(m.tabs) - 1)
 
 		border, _, _, _, _ := style.GetBorder()
 		if isFirst && isActive {
@@ -413,18 +434,20 @@ func (m Model) View() string {
 		} else if isLast && !isActive {
 			border.BottomRight = "┤"
 		}
+
 		style = style.Border(border)
 		renderedTabs = append(renderedTabs, style.Render(t))
 	}
 
 	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 
+	lipgloss.JoinVertical(lipgloss.Left, row, m.viewport.View())
 	doc.WriteString(row)
 	doc.WriteString("\n")
-	doc.WriteString(styledTable.Render(m.viewport.View()))
+	doc.WriteString(styledResultSet.Render(m.viewport.View()))
 
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, titleBox, styledList)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledInput, doc.String())
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, titleBox, styledTableList)
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, doc.String())
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
 
