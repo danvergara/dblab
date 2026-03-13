@@ -12,7 +12,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
-	"github.com/danvergara/dblab/pkg/command"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
 )
@@ -20,7 +19,7 @@ import (
 type focusState int
 
 const (
-	// colors
+	// colors.
 	green  = lipgloss.Color("#1fb009")
 	purple = lipgloss.Color("#800080")
 
@@ -29,8 +28,6 @@ const (
 	neonPurple = lipgloss.Color("#BF40BF") // Bright purple for highlights
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
-
-	listHeight = 14
 
 	focusInput focusState = iota
 	focusList
@@ -77,7 +74,6 @@ type queryErrMsg struct{ err error }
 
 type tabStyles struct {
 	doc         lipgloss.Style
-	highlight   lipgloss.Style
 	inactiveTab lipgloss.Style
 	activeTab   lipgloss.Style
 	window      lipgloss.Style
@@ -171,7 +167,7 @@ type Model struct {
 	c         *client.Client
 	tabs      []string
 	activeTab int
-	bindings  *command.TUIKeyBindings
+	// bindings  *command.TUIKeyBindings
 	tables    []table.Writer
 	viewport  viewport.Model
 	input     textarea.Model
@@ -185,8 +181,6 @@ type Model struct {
 
 	leftWidth  int
 	rightWidth int
-
-	availableHeight int
 
 	titleHeight int
 	titleWidth  int
