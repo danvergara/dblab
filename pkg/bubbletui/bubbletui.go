@@ -55,6 +55,15 @@ var (
 	footerStyle = lipgloss.NewStyle().
 			Foreground(green)
 
+	activeLabelStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#B200FF")).
+				Bold(true)
+
+	dbNameStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FF9D00")).
+			Bold(true).
+			PaddingRight(1)
+
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000")). // Bright Red
 			Bold(true).
@@ -187,6 +196,8 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 type Model struct {
 	// database client.
 	c *client.Client
+
+	activeDatabase string
 
 	// tab management.
 	tabs      []string
@@ -334,8 +345,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch targetNode.Desc {
 					case "database":
 						m.c.SetActiveDatabase(targetNode.Value)
+						m.activeDatabase = targetNode.Value
 						if len(targetNode.Children) == 0 {
 							return m, m.fetchTablesCmd(targetNode.Value)
+						} else {
+							currentNodes := m.dbTree.Nodes()
+							updatedNodes := injectTablesIntoTree(currentNodes, targetNode.Value, []string{})
+							m.dbTree.SetNodes(updatedNodes)
 						}
 					case "table":
 						return m, m.runTableMetadata(targetNode.Value)
@@ -459,6 +475,27 @@ func (m Model) View() string {
 
 	footerView := footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)")
 
+	var rightText string
+
+	if m.c.ShowDataCatalog() && m.activeDatabase != "" {
+		label := activeLabelStyle.Render("Active: ")
+		dbName := dbNameStyle.Render(m.activeDatabase + " ")
+		rightText = label + dbName
+	}
+
+	gapWidth := m.width - lipgloss.Width(footerView) - lipgloss.Width(rightText)
+
+	if gapWidth < 0 {
+		gapWidth = 0
+	}
+
+	spacer := strings.Repeat(" ", gapWidth)
+	fullFooter := footerView + spacer + rightText
+	lipgloss.JoinVertical(
+		lipgloss.Left,
+		fullFooter,
+	)
+
 	dblabFigure := figure.NewFigure("dblab", "", true)
 
 	titleBox := titleStyle.Width(m.titleWidth).Height(m.titleHeight).Render(dblabFigure.String())
@@ -526,7 +563,7 @@ func (m Model) View() string {
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
 
-	return lipgloss.JoinVertical(lipgloss.Left, contentLayout, footerView)
+	return lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter)
 }
 
 func (m *Model) Run() error {
