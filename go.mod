@@ -22,6 +22,7 @@ require (
 	github.com/microsoft/go-mssqldb v1.8.0
 	github.com/muesli/termenv v0.16.0
 	github.com/rivo/tview v0.0.0-20250330220935-949945f8d922
+	github.com/savannahostrowski/tree-bubble v0.0.0-20230724043728-d7bb06a8a67e
 	github.com/sijms/go-ora/v2 v2.8.24
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.11.1

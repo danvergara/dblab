@@ -254,6 +254,8 @@ github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWN
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sahilm/fuzzy v0.1.1 h1:ceu5RHF8DGgoi+/dR5PsECjCDH1BE3Fnmpo7aVXOdRA=
 github.com/sahilm/fuzzy v0.1.1/go.mod h1:VFvziUEIMCrT6A6tw2RFIXPXXmzXbOsSHF0DOI8ZK9Y=
+github.com/savannahostrowski/tree-bubble v0.0.0-20230724043728-d7bb06a8a67e h1:nktxNPbFDw48XE8CImkdkjFu68+kmMf0sC+W+v46uKI=
+github.com/savannahostrowski/tree-bubble v0.0.0-20230724043728-d7bb06a8a67e/go.mod h1:inJ/hStD+7ynR44VY0B/Ebp9U2TK1QFD4NavPTm8BsY=
 github.com/shirou/gopsutil/v4 v4.25.6 h1:kLysI2JsKorfaFPcYmcJqbzROzsBWEOAtw6A7dIfqXs=
 github.com/shirou/gopsutil/v4 v4.25.6/go.mod h1:PfybzyydfZcN+JMMjkF6Zb8Mq1A/VcogFFg7hj50W9c=
 github.com/sijms/go-ora/v2 v2.8.24 h1:TODRWjWGwJ1VlBOhbTLat+diTYe8HXq2soJeB+HMjnw=

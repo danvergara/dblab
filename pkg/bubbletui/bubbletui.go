@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -14,6 +15,7 @@ import (
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
+	"github.com/savannahostrowski/tree-bubble"
 )
 
 type focusState int
@@ -29,7 +31,7 @@ const (
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
 
-	focusInput focusState = iota
+	focusEditor focusState = iota
 	focusList
 	focusTable
 )
@@ -39,9 +41,9 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			Padding(0, 1)
 
-	listStyle  = baseStyle
-	inputStyle = baseStyle
-	tableStyle = baseStyle
+	tablesListStyle = baseStyle
+	editorStyle     = baseStyle
+	resultSetStyle  = baseStyle
 
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -65,9 +67,17 @@ type metadataSucessMsg struct {
 
 type metadataErrMsg struct{ err error }
 
+type tablesFetchedMsg struct {
+	dbName string
+	tables []string
+}
+
+type tablesFetchError struct{ err error }
+
 type querySuccessMsg struct {
 	columns []string
 	rows    [][]string
+	tables  []string
 }
 
 type queryErrMsg struct{ err error }
@@ -164,40 +174,50 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type Model struct {
-	c         *client.Client
+	// database client.
+	c *client.Client
+
+	// tab management.
 	tabs      []string
 	activeTab int
-	// bindings  *command.TUIKeyBindings
-	tables    []table.Writer
-	viewport  viewport.Model
-	input     textarea.Model
-	list      list.Model
-	focus     focusState
-	width     int
-	height    int
+
+	// models.
+	tablesMetadata []table.Writer
+	viewport       viewport.Model
+	editor         textarea.Model
+	tablesList     list.Model
+	dbTree         tree.Model
+
+	// Manages the focus on the app.
+	focus focusState
+
+	// app dimensions.
+	width  int
+	height int
+
+	// flag used to let the app know that the viewport is ready.
+	ready bool
+
+	// app styles.
 	styles    styles
 	tabStyles *tabStyles
-	ready     bool
 
-	leftWidth  int
-	rightWidth int
-
-	titleHeight int
-	titleWidth  int
-
-	tableListHeight int
-	tableListWidth  int
-
-	resultSetHeight int
-	resultSetWidth  int
-
-	editorHeight int
-	editorWidth  int
+	// widget dimensions.
+	leftWidth        int
+	rightWidth       int
+	titleHeight      int
+	titleWidth       int
+	tablesListHeight int
+	tablesListWidth  int
+	resultSetHeight  int
+	resultSetWidth   int
+	editorHeight     int
+	editorWidth      int
 }
 
 func NewModel(c *client.Client) (*Model, error) {
 	m := &Model{
-		focus: focusInput,
+		focus: focusEditor,
 		c:     c,
 		tabs:  []string{"Content", "Structure", "Indexes", "Constraints"},
 	}
@@ -230,8 +250,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.titleHeight = availableHeight/4 - 2
 		m.titleWidth = m.leftWidth - 2
 
-		m.tableListHeight = availableHeight - m.titleHeight - 4
-		m.tableListWidth = m.leftWidth - 2
+		m.tablesListHeight = availableHeight - m.titleHeight - 4
+		m.tablesListWidth = m.leftWidth - 2
 
 		m.editorWidth = m.rightWidth - 4
 		m.editorHeight = availableHeight/3 - 2
@@ -239,10 +259,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resultSetHeight = availableHeight - m.editorHeight - 6
 		m.resultSetWidth = m.rightWidth - 4
 
-		m.list.SetSize(m.tableListWidth, m.tableListHeight)
+		m.tablesList.SetSize(m.tablesListWidth, m.tablesListHeight)
 
-		m.input.SetWidth(m.editorWidth - 4)
-		m.input.SetHeight(m.editorHeight - 2)
+		m.editor.SetWidth(m.editorWidth - 4)
+		m.editor.SetHeight(m.editorHeight - 2)
 
 		if !m.ready {
 			m.viewport = viewport.New(m.resultSetWidth-4, m.resultSetHeight-2)
@@ -263,41 +283,61 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyCtrlL:
 			if m.focus == focusList {
-				m.focus = focusInput
-				cmd = m.input.Focus()
+				m.focus = focusEditor
+				cmd = m.editor.Focus()
 				cmds = append(cmds, cmd)
 			}
 			return m, tea.Batch(cmds...)
 		case tea.KeyCtrlJ:
-			if m.focus == focusInput {
+			if m.focus == focusEditor {
 				m.focus = focusTable
-				m.input.Blur()
+				m.editor.Blur()
 			}
 		case tea.KeyCtrlH:
 			if m.focus == focusTable {
 				m.focus = focusList
 			}
 
-			if m.focus == focusInput {
-				m.input.Blur()
+			if m.focus == focusEditor {
+				m.editor.Blur()
 				m.focus = focusList
 			}
 		case tea.KeyCtrlK:
 			if m.focus == focusTable {
-				m.focus = focusInput
-				cmd = m.input.Focus()
+				m.focus = focusEditor
+				cmd = m.editor.Focus()
 				cmds = append(cmds, cmd)
 			}
 			return m, tea.Batch(cmds...)
 		case tea.KeyEnter:
 			if m.focus == focusList {
-				return m, m.runTableMetadata("")
+				if m.c.ShowDataCatalog() {
+					cursor := m.dbTree.Cursor()
+					nodes := m.dbTree.Nodes()
+					path := getPathToCursor(nodes, cursor)
+					if len(path) == 0 {
+						return m, nil
+					}
+					targetNode := path[len(path)-1]
+
+					switch targetNode.Desc {
+					case "database":
+						m.c.SetActiveDatabase(targetNode.Value)
+						if len(targetNode.Children) == 0 {
+							return m, m.fetchTablesCmd(targetNode.Value)
+						}
+					case "table":
+						return m, m.runTableMetadata(targetNode.Value)
+					}
+				} else {
+					return m, m.runTableMetadata("")
+				}
 			}
 		}
 		switch msg.String() {
 		case "ctrl+e":
-			if m.focus == focusInput {
-				query := m.input.Value()
+			if m.focus == focusEditor {
+				query := m.editor.Value()
 				if strings.TrimSpace(query) == "" {
 					return m, nil
 				}
@@ -314,22 +354,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "n", "tab":
 			if m.focus == focusTable {
 				m.activeTab = min(m.activeTab+1, len(m.tabs)-1)
-				m.viewport.SetContent(m.tables[m.activeTab].Render())
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
 				return m, nil
 			}
 		case "p", "shift+tab":
 			if m.focus == focusTable {
 				m.activeTab = max(m.activeTab-1, 0)
-				m.viewport.SetContent(m.tables[m.activeTab].Render())
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
 				return m, nil
 			}
 		}
 	case querySuccessMsg:
 		m.clearTables()
-		m.tables[0].AppendHeader(populateTableHeaders(msg.columns))
-		m.tables[0].AppendRows(populateTableRows(msg.rows))
-		m.viewport.SetContent(m.tables[0].Render())
+		m.tablesMetadata[0].AppendHeader(populateTableHeaders(msg.columns))
+		m.tablesMetadata[0].AppendRows(populateTableRows(msg.rows))
+		m.viewport.SetContent(m.tablesMetadata[0].Render())
+
+		if len(msg.tables) > 0 {
+			tables := make([]list.Item, 0)
+			for _, ta := range msg.tables {
+				tables = append(tables, item(ta))
+			}
+			m.tablesList.SetItems(tables)
+		}
+
 		m.viewport.GotoTop()
+
 		return m, nil
 	case queryErrMsg:
 		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
@@ -340,10 +390,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.GotoTop()
 	case metadataSucessMsg:
 		m.updateTableMetadataOnChange(msg.metadata)
-		m.viewport.SetContent(m.tables[m.activeTab].Render())
+		m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
 		m.viewport.GotoTop()
 	case metadataErrMsg:
-		errorText := fmt.Sprintf("❌ table metadata failed\n\n%s", msg.err.Error())
+		errorText := fmt.Sprintf("❌ failed to get table metadata\n\n%s", msg.err.Error())
+		styledError := errorStyle.Render(errorText)
+		m.viewport.SetContent(styledError)
+		m.viewport.GotoTop()
+	case tablesFetchedMsg:
+		currentNodes := m.dbTree.Nodes()
+		updatedNodes := injectTablesIntoTree(currentNodes, msg.dbName, msg.tables)
+		m.dbTree.SetNodes(updatedNodes)
+	case tablesFetchError:
+		errorText := fmt.Sprintf("❌ failed to retrieve the current database tables\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
@@ -351,10 +410,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch m.focus {
 	case focusList:
-		m.list, cmd = m.list.Update(msg)
+		if m.c.ShowDataCatalog() {
+			m.dbTree, cmd = m.dbTree.Update(msg)
+		} else {
+			m.tablesList, cmd = m.tablesList.Update(msg)
+		}
 		cmds = append(cmds, cmd)
-	case focusInput:
-		m.input, cmd = m.input.Update(msg)
+	case focusEditor:
+		m.editor, cmd = m.editor.Update(msg)
 		cmds = append(cmds, cmd)
 	case focusTable:
 		m.viewport, cmd = m.viewport.Update(msg)
@@ -372,7 +435,7 @@ func (m Model) View() string {
 	switch m.focus {
 	case focusList:
 		listBorder = neonPurple
-	case focusInput:
+	case focusEditor:
 		textAreaBorder = neonPurple
 	case focusTable:
 		tableBorder = neonPurple
@@ -388,10 +451,17 @@ func (m Model) View() string {
 	dblabFigure := figure.NewFigure("dblab", "", true)
 
 	titleBox := titleStyle.Width(m.titleWidth).Height(m.titleHeight).Render(dblabFigure.String())
-	styledTableList := listStyle.BorderForeground(listBorder).Width(m.tableListWidth).Height(m.tableListHeight).Render(m.list.View())
 
-	styledEditor := inputStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.input.View())
-	styledResultSet := tableStyle.BorderForeground(tableBorder).Width(m.resultSetWidth).Height(m.resultSetHeight).UnsetBorderTop()
+	styledTableList := ""
+
+	if m.c.ShowDataCatalog() {
+		styledTableList = tablesListStyle.BorderForeground(listBorder).Width(m.tablesListWidth).Height(m.tablesListHeight).Render(m.dbTree.View())
+	} else {
+		styledTableList = tablesListStyle.BorderForeground(listBorder).Width(m.tablesListWidth).Height(m.tablesListHeight).Render(m.tablesList.View())
+	}
+
+	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
+	styledResultSet := resultSetStyle.BorderForeground(tableBorder).Width(m.resultSetWidth).Height(m.resultSetHeight).UnsetBorderTop()
 
 	numTabs := len(m.tabs)
 	viewportWidth := m.resultSetWidth - 6
@@ -461,10 +531,10 @@ func (m *Model) Run() error {
 func (m *Model) updateStyles() {
 	m.tabStyles = newTabStyles()
 	m.styles = newStyles()
-	m.list.Styles.Title = m.styles.title
-	m.list.Styles.PaginationStyle = m.styles.pagination
-	m.list.Styles.HelpStyle = m.styles.help
-	m.list.SetDelegate(itemDelegate{styles: &m.styles})
+	m.tablesList.Styles.Title = m.styles.title
+	m.tablesList.Styles.PaginationStyle = m.styles.pagination
+	m.tablesList.Styles.HelpStyle = m.styles.help
+	m.tablesList.SetDelegate(itemDelegate{styles: &m.styles})
 }
 
 func (m *Model) prepare() error {
@@ -482,7 +552,7 @@ func (m *Model) setupTable() {
 	content := setupTable()
 	constraints := setupTable()
 	indexes := setupTable()
-	m.tables = []table.Writer{
+	m.tablesMetadata = []table.Writer{
 		content,
 		structure,
 		indexes,
@@ -491,8 +561,8 @@ func (m *Model) setupTable() {
 }
 
 func (m *Model) clearTables() {
-	for i := range m.tables {
-		m.tables[i] = setupTable()
+	for i := range m.tablesMetadata {
+		m.tablesMetadata[i] = setupTable()
 	}
 }
 
@@ -513,23 +583,49 @@ func setupTable() table.Writer {
 }
 
 func (m *Model) setupDatabaseCatalog() error {
-	ts, err := m.c.ShowTables()
-	if err != nil {
-		return err
+	if m.c.ShowDataCatalog() {
+
+		dbs, err := m.c.ShowDatabases()
+		if err != nil {
+			return err
+		}
+		nodes := make([]tree.Node, len(dbs))
+		for i, db := range dbs {
+			nodes[i] = tree.Node{Value: db, Desc: "database"}
+		}
+
+		m.dbTree = tree.New(nodes, m.tablesListWidth, m.tablesListHeight)
+
+		// Override the Down binding.
+		m.dbTree.KeyMap.Down = key.NewBinding(
+			key.WithKeys("down", "j", "s"),
+			key.WithHelp("↓/j/s", "move down"),
+		)
+
+		// Override the Up binding.
+		m.dbTree.KeyMap.Up = key.NewBinding(
+			key.WithKeys("up", "k", "w"),
+			key.WithHelp("↑/k/w", "move up"),
+		)
+	} else {
+		ts, err := m.c.ShowTables()
+		if err != nil {
+			return err
+		}
+
+		tables := make([]list.Item, 0)
+		for _, ta := range ts {
+			tables = append(tables, item(ta))
+		}
+
+		l := list.New(tables, itemDelegate{}, 0, 0)
+
+		l.Title = "Tables"
+		l.SetShowStatusBar(false)
+		l.SetFilteringEnabled(false)
+		l.SetShowHelp(false)
+		m.tablesList = l
 	}
-
-	tables := make([]list.Item, 0)
-	for _, ta := range ts {
-		tables = append(tables, item(ta))
-	}
-
-	l := list.New(tables, itemDelegate{}, 0, 0)
-
-	l.Title = "Tables"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.SetShowHelp(false)
-	m.list = l
 
 	return nil
 }
@@ -540,7 +636,7 @@ func (m *Model) setupQueries() {
 	ti.FocusedStyle.Text = lipgloss.NewStyle().Foreground(mutedGreen)
 	ti.BlurredStyle.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
 	ti.Focus()
-	m.input = ti
+	m.editor = ti
 }
 
 func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
@@ -548,33 +644,33 @@ func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
 		m.clearTables()
 
 		// table content.
-		m.tables[0].AppendHeader(populateTableHeaders(metadata.TableContent.Columns))
-		m.tables[0].AppendRows(populateTableRows(metadata.TableContent.Rows))
+		m.tablesMetadata[0].AppendHeader(populateTableHeaders(metadata.TableContent.Columns))
+		m.tablesMetadata[0].AppendRows(populateTableRows(metadata.TableContent.Rows))
 
 		// table structure.
-		m.tables[1].AppendHeader(populateTableHeaders(metadata.Structure.Columns))
-		m.tables[1].AppendRows(populateTableRows(metadata.Structure.Rows))
+		m.tablesMetadata[1].AppendHeader(populateTableHeaders(metadata.Structure.Columns))
+		m.tablesMetadata[1].AppendRows(populateTableRows(metadata.Structure.Rows))
 
 		// table indexes.
-		m.tables[2].AppendHeader(populateTableHeaders(metadata.Indexes.Columns))
-		m.tables[2].AppendRows(populateTableRows(metadata.Indexes.Rows))
+		m.tablesMetadata[2].AppendHeader(populateTableHeaders(metadata.Indexes.Columns))
+		m.tablesMetadata[2].AppendRows(populateTableRows(metadata.Indexes.Rows))
 
 		// table constraints.
-		m.tables[3].AppendHeader(populateTableHeaders(metadata.Constraints.Columns))
-		m.tables[3].AppendRows(populateTableRows(metadata.Constraints.Rows))
+		m.tablesMetadata[3].AppendHeader(populateTableHeaders(metadata.Constraints.Columns))
+		m.tablesMetadata[3].AppendRows(populateTableRows(metadata.Constraints.Rows))
 	}
 }
 
 func (m *Model) runTableMetadata(tableName string) tea.Cmd {
 	return func() tea.Msg {
 		if tableName == "" {
-			if len(m.list.Items()) == 0 {
+			if len(m.tablesList.Items()) == 0 {
 				return metadataErrMsg{fmt.Errorf("empty list of tables")}
 			}
-			tableItem := m.list.Items()[m.list.Index()]
+			tableItem := m.tablesList.Items()[m.tablesList.Index()]
 			i, ok := tableItem.(item)
 			if !ok {
-				return metadataErrMsg{fmt.Errorf("not valid tables list item %d", m.list.Index())}
+				return metadataErrMsg{fmt.Errorf("not valid tables list item %d", m.tablesList.Index())}
 			}
 
 			tableName = i.Title()
@@ -591,12 +687,39 @@ func (m *Model) runTableMetadata(tableName string) tea.Cmd {
 
 func (m *Model) executeQueryCmd(query string) tea.Cmd {
 	return func() tea.Msg {
+		var ts []string
 		rows, columns, err := m.c.Query(query)
 		if err != nil {
 			return queryErrMsg{err}
 		}
 
-		return querySuccessMsg{columns, rows}
+		switch {
+		case strings.Contains(strings.ToLower(query), "alter table"):
+			fallthrough
+		case strings.Contains(strings.ToLower(query), "drop table"):
+			fallthrough
+		case strings.Contains(strings.ToLower(query), "create table"):
+			ts, err = m.c.ShowTables()
+			if err != nil {
+				return queryErrMsg{err}
+			}
+		}
+
+		return querySuccessMsg{columns: columns, rows: rows, tables: ts}
+	}
+}
+
+func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
+	return func() tea.Msg {
+		ts, err := m.c.ShowTablesPerDB(dbName)
+		if err != nil {
+			return tablesFetchError{err}
+		}
+
+		return tablesFetchedMsg{
+			dbName: dbName,
+			tables: ts,
+		}
 	}
 }
 
@@ -624,4 +747,58 @@ func populateTableRows(data [][]string) []table.Row {
 	}
 
 	return convertedRows
+}
+
+// Returns the full path of nodes from the Root down to the Cursor position.
+func getPathToCursor(nodes []tree.Node, targetCursor int) []tree.Node {
+	var currentPath []tree.Node
+	var currentIndex int
+
+	var traverse func(currentNodes []tree.Node) bool
+
+	traverse = func(currentNodes []tree.Node) bool {
+		for _, node := range currentNodes {
+			currentPath = append(currentPath, node)
+
+			if currentIndex == targetCursor {
+				return true
+			}
+
+			currentIndex++
+
+			if len(node.Children) > 0 {
+				if traverse(node.Children) {
+					return true // The target was found deep inside this branch
+				}
+			}
+
+			currentPath = currentPath[:len(currentPath)-1]
+		}
+		return false
+	}
+
+	traverse(nodes)
+	return currentPath
+}
+
+func injectTablesIntoTree(nodes []tree.Node, targetDB string, tables []string) []tree.Node {
+	for i := range nodes {
+
+		if nodes[i].Desc == "database" && nodes[i].Value == targetDB {
+
+			var newChildren []tree.Node
+			for _, tableName := range tables {
+				newChildren = append(newChildren, tree.Node{
+					Value: tableName,
+					Desc:  "table",
+				})
+			}
+
+			nodes[i].Children = newChildren
+
+			break
+		}
+	}
+
+	return nodes
 }
