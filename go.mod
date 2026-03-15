@@ -4,7 +4,6 @@ go 1.26
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/atotto/clipboard v0.1.4
 	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
@@ -21,7 +20,6 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/microsoft/go-mssqldb v1.8.0
 	github.com/muesli/termenv v0.16.0
-	github.com/rivo/tview v0.0.0-20250330220935-949945f8d922
 	github.com/savannahostrowski/tree-bubble v0.0.0-20230724043728-d7bb06a8a67e
 	github.com/sijms/go-ora/v2 v2.8.24
 	github.com/spf13/cobra v1.9.1
@@ -43,6 +41,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.1 // indirect
