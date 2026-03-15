@@ -22,15 +22,15 @@ type focusState int
 
 const (
 	// colors.
-	green  = lipgloss.Color("#1fb009")
-	purple = lipgloss.Color("#800080")
-
+	green      = lipgloss.Color("#1fb009")
+	purple     = lipgloss.Color("#800080")
 	cyberGreen = lipgloss.Color("#39FF14") // High-visibility neon green
 	mutedGreen = lipgloss.Color("#2ECC71") // Softer green for standard text
 	neonPurple = lipgloss.Color("#BF40BF") // Bright purple for highlights
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
 
+	// focus state management.
 	focusEditor focusState = iota
 	focusList
 	focusTable
@@ -61,55 +61,59 @@ var (
 			Padding(1, 2)
 )
 
+// metadataSucessMsg struct used to retrieve a given table's metadata asynchronously.
 type metadataSucessMsg struct {
 	metadata *client.Metadata
 }
 
+// metadataErrMsg struct used to report error to user at the time to retrieve metadata.
 type metadataErrMsg struct{ err error }
 
+// tablesFetchedMsg struct used to get a given database's tables asynchronously.
 type tablesFetchedMsg struct {
 	dbName string
 	tables []string
 }
 
+// tablesFetchError struct used to report errors to the user at the time to get the list of tables.
 type tablesFetchError struct{ err error }
 
+// querySuccessMsg struct used to get result sets from executed queries asynchronously.
+// Sometimes, tables can be created, altered of deleted, so the this returns a refreshed list of tables.
 type querySuccessMsg struct {
 	columns []string
 	rows    [][]string
 	tables  []string
 }
 
+// queryErrMsg struct used to report when the query execution fails.
 type queryErrMsg struct{ err error }
 
+// tabStyles is for tab styling.
+// The tabs are used to show table metadata.
 type tabStyles struct {
-	doc         lipgloss.Style
 	inactiveTab lipgloss.Style
 	activeTab   lipgloss.Style
-	window      lipgloss.Style
 }
 
+// newTabStyles function retuns a pointer to the tabStyles.
+// It basically defines the default borders for bot active and inactive tabs.
 func newTabStyles() *tabStyles {
 	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
 	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
 	s := new(tabStyles)
-	s.doc = lipgloss.NewStyle().
-		Padding(1, 2, 1, 2)
 	s.inactiveTab = lipgloss.NewStyle().
 		Border(inactiveTabBorder, true).
 		BorderForeground(darkPurple).
 		Padding(0, 0)
 	s.activeTab = s.inactiveTab.
 		Border(activeTabBorder, true)
-	s.window = lipgloss.NewStyle().
-		BorderForeground(neonPurple).
-		Padding(2, 0).
-		Align(lipgloss.Center).
-		Border(lipgloss.NormalBorder()).
-		UnsetBorderTop()
 	return s
 }
 
+// tabBorderWithBottom function is used to define the tab borders.
+// Borders changes whether the tabs is inacative or inactive.
+// Active tab misses the bottom border.
 func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	border := lipgloss.RoundedBorder()
 	border.BottomLeft = left
@@ -118,6 +122,7 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	return border
 }
 
+// styles struct is for generic styling.
 type styles struct {
 	title        lipgloss.Style
 	item         lipgloss.Style
@@ -127,6 +132,7 @@ type styles struct {
 	quitText     lipgloss.Style
 }
 
+// newStyles function retunrs a styles with defaults.
 func newStyles() styles {
 	var s styles
 
@@ -142,12 +148,16 @@ func newStyles() styles {
 	return s
 }
 
+// item implements the Item interface for required for the List Model from bubbles.
 type item string
 
 func (i item) Title() string       { return string(i) }
 func (i item) Description() string { return "" }
 func (i item) FilterValue() string { return string(i) }
 
+// itemDelegate is used to inject styling to the list items.
+// Implements the ItemDelegate interface.
+// It's important to highlight the selected item.
 type itemDelegate struct {
 	styles *styles
 }
@@ -173,6 +183,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	fmt.Fprint(w, fn(str))
 }
 
+// Model struct implements the bubbletea's Model interface.
 type Model struct {
 	// database client.
 	c *client.Client
@@ -528,6 +539,7 @@ func (m *Model) Run() error {
 	return nil
 }
 
+// updateStyle setup the styles across the client.
 func (m *Model) updateStyles() {
 	m.tabStyles = newTabStyles()
 	m.styles = newStyles()
@@ -537,6 +549,7 @@ func (m *Model) updateStyles() {
 	m.tablesList.SetDelegate(itemDelegate{styles: &m.styles})
 }
 
+// prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
 func (m *Model) prepare() error {
 	m.setupTable()
 	m.setupQueries()
@@ -582,6 +595,9 @@ func setupTable() table.Writer {
 	return t
 }
 
+// setupDatabaseCatalog method shows the initial database/tables catalog the user has access to.
+// If the user wants to see the database catalog, the client will present a tree view, with a graph with databases and tables.
+// Otherwise, the user will see a list of tables of the database connected.
 func (m *Model) setupDatabaseCatalog() error {
 	if m.c.ShowDataCatalog() {
 
@@ -639,6 +655,7 @@ func (m *Model) setupQueries() {
 	m.editor = ti
 }
 
+// updateTableMetadataOnChange method is used to print the table metadata retrieved asynchronously.
 func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
 	if metadata != nil {
 		m.clearTables()
@@ -661,6 +678,8 @@ func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
 	}
 }
 
+// runTableMetadata gets the given table's metadata asynchronously.
+// If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
 func (m *Model) runTableMetadata(tableName string) tea.Cmd {
 	return func() tea.Msg {
 		if tableName == "" {
@@ -685,6 +704,8 @@ func (m *Model) runTableMetadata(tableName string) tea.Cmd {
 	}
 }
 
+// executeQueryCmd method executes queryes asynchronously, so it does not block the bubbletea execution.
+// If it succeeds, returns a querySuccessMsg with the resultset. Otherwise, it returns queryErrMsg with the error.
 func (m *Model) executeQueryCmd(query string) tea.Cmd {
 	return func() tea.Msg {
 		var ts []string
@@ -709,6 +730,8 @@ func (m *Model) executeQueryCmd(query string) tea.Cmd {
 	}
 }
 
+// fetchTablesCmd method gets the list from a given database asynchronously.
+// If it succeeds, returns tablesFetchedMsg. Otherwise, it returns tablesFetchError with the error.
 func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
 	return func() tea.Msg {
 		ts, err := m.c.ShowTablesPerDB(dbName)
@@ -749,7 +772,7 @@ func populateTableRows(data [][]string) []table.Row {
 	return convertedRows
 }
 
-// Returns the full path of nodes from the Root down to the Cursor position.
+// getPathToCursor returns the full path of nodes from the Root down to the Cursor position.
 func getPathToCursor(nodes []tree.Node, targetCursor int) []tree.Node {
 	var currentPath []tree.Node
 	var currentIndex int
@@ -781,6 +804,7 @@ func getPathToCursor(nodes []tree.Node, targetCursor int) []tree.Node {
 	return currentPath
 }
 
+// injectTablesIntoTree traverses the graph to find a not which is the database of interest to add tables to it.
 func injectTablesIntoTree(nodes []tree.Node, targetDB string, tables []string) []tree.Node {
 	for i := range nodes {
 
