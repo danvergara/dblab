@@ -3,7 +3,6 @@ package config_test
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/danvergara/dblab/pkg/config"
@@ -177,33 +176,11 @@ func TestSetupKeybindings(t *testing.T) {
 	kb, err := config.SetupKeybindings()
 	assert.NoError(t, err)
 
-	assert.Equal(t, tcell.Key(tcell.KeyCtrlSpace), kb.RunQuery)
-	assert.Equal(t, tcell.Key(tcell.KeyCtrlK), kb.Navigation.Up)
-	assert.Equal(t, tcell.Key(tcell.KeyCtrlJ), kb.Navigation.Down)
-	assert.Equal(
-		t,
-		tcell.Key(tcell.KeyCtrlL),
-		kb.Navigation.Right,
-	)
-	assert.Equal(t, tcell.Key(tcell.KeyCtrlH), kb.Navigation.Left)
-	assert.Equal(
-		t,
-		tcell.Key(tcell.KeyCtrlT),
-		kb.Constraints,
-	)
-	assert.Equal(
-		t,
-		tcell.Key(tcell.KeyCtrlI),
-		kb.Indexes,
-	)
-	assert.Equal(
-		t,
-		tcell.Key(tcell.KeyCtrlS),
-		kb.Structure,
-	)
-	assert.Equal(
-		t,
-		tcell.Key(tcell.KeyCtrlD),
-		kb.ClearEditor,
-	)
+	assert.Contains(t, kb.ExecuteQuery.Keys(), "ctrl+e")
+	assert.Contains(t, kb.NextTab.Keys(), "tab")
+	assert.Contains(t, kb.PrevTab.Keys(), "shift+tab")
+	assert.Contains(t, kb.Navigation.Up.Keys(), "ctrl+k")
+	assert.Contains(t, kb.Navigation.Down.Keys(), "ctrl+j")
+	assert.Contains(t, kb.Navigation.Right.Keys(), "ctrl+l")
+	assert.Contains(t, kb.Navigation.Left.Keys(), "ctrl+h")
 }

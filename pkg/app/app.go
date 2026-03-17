@@ -40,7 +40,7 @@ func New(opts command.Options) (*App, error) {
 		return nil, err
 	}
 
-	m, err := bubbletui.NewModel(c)
+	m, err := bubbletui.NewModel(c, &opts.TUIKeyBindings)
 	if err != nil {
 		return nil, err
 	}

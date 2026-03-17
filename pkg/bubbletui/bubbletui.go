@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
+	"github.com/danvergara/dblab/pkg/command"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/savannahostrowski/tree-bubble"
@@ -235,13 +236,16 @@ type Model struct {
 	resultSetWidth   int
 	editorHeight     int
 	editorWidth      int
+
+	bindings *command.TUIKeyBindings
 }
 
-func NewModel(c *client.Client) (*Model, error) {
+func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
 	m := &Model{
-		focus: focusEditor,
-		c:     c,
-		tabs:  []string{"Content", "Structure", "Indexes", "Constraints"},
+		focus:    focusEditor,
+		c:        c,
+		bindings: kb,
+		tabs:     []string{"Content", "Structure", "Indexes", "Constraints"},
 	}
 
 	if err := m.prepare(); err != nil {
@@ -303,34 +307,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			return m, tea.Quit
-		case tea.KeyCtrlL:
-			if m.focus == focusList {
-				m.focus = focusEditor
-				cmd = m.editor.Focus()
-				cmds = append(cmds, cmd)
-			}
-			return m, tea.Batch(cmds...)
-		case tea.KeyCtrlJ:
-			if m.focus == focusEditor {
-				m.focus = focusTable
-				m.editor.Blur()
-			}
-		case tea.KeyCtrlH:
-			if m.focus == focusTable {
-				m.focus = focusList
-			}
-
-			if m.focus == focusEditor {
-				m.editor.Blur()
-				m.focus = focusList
-			}
-		case tea.KeyCtrlK:
-			if m.focus == focusTable {
-				m.focus = focusEditor
-				cmd = m.editor.Focus()
-				cmds = append(cmds, cmd)
-			}
-			return m, tea.Batch(cmds...)
 		case tea.KeyEnter:
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
@@ -361,8 +337,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
-		switch msg.String() {
-		case "ctrl+e":
+		switch {
+		case key.Matches(msg, m.bindings.ExecuteQuery):
 			if m.focus == focusEditor {
 				query := m.editor.Value()
 				if strings.TrimSpace(query) == "" {
@@ -370,6 +346,58 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, m.executeQueryCmd(query)
 			}
+		case key.Matches(msg, m.bindings.NextTab):
+			if m.focus == focusTable {
+				m.activeTab = min(m.activeTab+1, len(m.tabs)-1)
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
+				return m, nil
+			}
+		case key.Matches(msg, m.bindings.PrevTab):
+			if m.focus == focusTable {
+				m.activeTab = max(m.activeTab-1, 0)
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
+				return m, nil
+			}
+		case key.Matches(msg, m.bindings.Navigation.Right):
+			if m.focus == focusList {
+				m.focus = focusEditor
+				cmd = m.editor.Focus()
+				cmds = append(cmds, cmd)
+			}
+			return m, tea.Batch(cmds...)
+		case key.Matches(msg, m.bindings.Navigation.Down):
+			if m.focus == focusEditor {
+				m.focus = focusTable
+				m.editor.Blur()
+			}
+		case key.Matches(msg, m.bindings.Navigation.Left):
+			if m.focus == focusTable {
+				m.focus = focusList
+			}
+
+			if m.focus == focusEditor {
+				m.editor.Blur()
+				m.focus = focusList
+			}
+		case key.Matches(msg, m.bindings.Navigation.Up):
+			if m.focus == focusTable {
+				m.focus = focusEditor
+				cmd = m.editor.Focus()
+				cmds = append(cmds, cmd)
+			}
+			return m, tea.Batch(cmds...)
+		case key.Matches(msg, m.bindings.PageTop):
+			if m.focus == focusTable {
+				m.viewport.GotoTop()
+			}
+			return m, nil
+		case key.Matches(msg, m.bindings.PageBottom):
+			if m.focus == focusTable {
+				m.viewport.GotoBottom()
+			}
+			return m, nil
+		}
+		switch msg.String() {
 		case "left", "h":
 			if m.focus == focusTable {
 				m.viewport.ScrollLeft(4)
@@ -377,18 +405,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "right", "l":
 			if m.focus == focusTable {
 				m.viewport.ScrollRight(4)
-			}
-		case "n", "tab":
-			if m.focus == focusTable {
-				m.activeTab = min(m.activeTab+1, len(m.tabs)-1)
-				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
-				return m, nil
-			}
-		case "p", "shift+tab":
-			if m.focus == focusTable {
-				m.activeTab = max(m.activeTab-1, 0)
-				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
-				return m, nil
 			}
 		}
 	case querySuccessMsg:
