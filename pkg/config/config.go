@@ -39,7 +39,7 @@ type Database struct {
 
 	Host     string
 	Port     string
-	DB       string `validate:"required"`
+	DB       string
 	User     string
 	Password string
 	Driver   string `validate:"required"`
