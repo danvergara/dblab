@@ -459,7 +459,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.tablesList, cmd = m.tablesList.Update(msg)
 				m.sidebarViewport.SetContent(m.tablesList.View())
 			}
-
 			cmds = append(cmds, cmd)
 			return m, tea.Batch(cmds...)
 		case focusEditor:
@@ -739,6 +738,7 @@ func (m *Model) setupDatabaseCatalog() error {
 		l.SetFilteringEnabled(false)
 		l.SetShowHelp(false)
 		m.tablesList = l
+		m.tablesList.KeyMap.Quit.Unbind()
 	}
 
 	return nil
