@@ -205,11 +205,12 @@ type Model struct {
 	activeTab int
 
 	// models.
-	tablesMetadata []table.Writer
-	viewport       viewport.Model
-	editor         textarea.Model
-	tablesList     list.Model
-	dbTree         tree.Model
+	tablesMetadata  []table.Writer
+	viewport        viewport.Model
+	editor          textarea.Model
+	tablesList      list.Model
+	dbTree          tree.Model
+	sidebarViewport viewport.Model
 
 	// Manages the focus on the app.
 	focus focusState
@@ -226,17 +227,18 @@ type Model struct {
 	tabStyles *tabStyles
 
 	// widget dimensions.
-	leftWidth        int
-	rightWidth       int
-	titleHeight      int
-	titleWidth       int
-	tablesListHeight int
-	tablesListWidth  int
-	resultSetHeight  int
-	resultSetWidth   int
-	editorHeight     int
-	editorWidth      int
+	leftWidth             int
+	rightWidth            int
+	titleHeight           int
+	titleWidth            int
+	sidebarViewportHeight int
+	sidebarViewportWidth  int
+	resultSetHeight       int
+	resultSetWidth        int
+	editorHeight          int
+	editorWidth           int
 
+	// Key Bindings.
 	bindings *command.TUIKeyBindings
 }
 
@@ -276,8 +278,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.titleHeight = availableHeight/4 - 2
 		m.titleWidth = m.leftWidth - 2
 
-		m.tablesListHeight = availableHeight - m.titleHeight - 4
-		m.tablesListWidth = m.leftWidth - 2
+		m.sidebarViewportHeight = availableHeight - m.titleHeight - 4
+		m.sidebarViewportWidth = m.leftWidth - 2
 
 		m.editorWidth = m.rightWidth - 4
 		m.editorHeight = availableHeight/3 - 2
@@ -285,10 +287,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resultSetHeight = availableHeight - m.editorHeight - 6
 		m.resultSetWidth = m.rightWidth - 4
 
-		m.tablesList.SetSize(m.tablesListWidth, m.tablesListHeight)
+		m.tablesList.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
+		m.dbTree.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
+
+		m.sidebarViewport.Height = m.sidebarViewportHeight - 4
+		m.sidebarViewport.Width = m.sidebarViewportWidth - 4
 
 		m.editor.SetWidth(m.editorWidth - 4)
 		m.editor.SetHeight(m.editorHeight - 2)
+
+		if m.c.ShowDataCatalog() {
+			m.sidebarViewport.SetContent(m.dbTree.View())
+		} else {
+			m.sidebarViewport.SetContent(m.tablesList.View())
+		}
 
 		if !m.ready {
 			m.viewport = viewport.New(m.resultSetWidth-4, m.resultSetHeight-2)
@@ -407,6 +419,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.viewport.ScrollRight(4)
 			}
 		}
+		switch m.focus {
+		case focusList:
+			if m.c.ShowDataCatalog() {
+				m.dbTree, cmd = m.dbTree.Update(msg)
+				m.sidebarViewport.SetContent(m.dbTree.View())
+				m.syncTreeToViewport()
+			} else {
+				m.tablesList, cmd = m.tablesList.Update(msg)
+				m.sidebarViewport.SetContent(m.tablesList.View())
+			}
+
+			cmds = append(cmds, cmd)
+			return m, tea.Batch(cmds...)
+		case focusEditor:
+			m.editor, cmd = m.editor.Update(msg)
+			cmds = append(cmds, cmd)
+		case focusTable:
+			m.viewport, cmd = m.viewport.Update(msg)
+			cmds = append(cmds, cmd)
+		}
+
 	case querySuccessMsg:
 		m.clearTables()
 		m.tablesMetadata[0].AppendHeader(populateTableHeaders(msg.columns))
@@ -444,27 +477,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		currentNodes := m.dbTree.Nodes()
 		updatedNodes := injectTablesIntoTree(currentNodes, msg.dbName, msg.tables)
 		m.dbTree.SetNodes(updatedNodes)
+		m.sidebarViewport.SetContent(m.dbTree.View())
 	case tablesFetchError:
 		errorText := fmt.Sprintf("❌ failed to retrieve the current database tables\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
-	}
-
-	switch m.focus {
-	case focusList:
-		if m.c.ShowDataCatalog() {
-			m.dbTree, cmd = m.dbTree.Update(msg)
-		} else {
-			m.tablesList, cmd = m.tablesList.Update(msg)
-		}
-		cmds = append(cmds, cmd)
-	case focusEditor:
-		m.editor, cmd = m.editor.Update(msg)
-		cmds = append(cmds, cmd)
-	case focusTable:
-		m.viewport, cmd = m.viewport.Update(msg)
-		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -516,13 +534,7 @@ func (m Model) View() string {
 
 	titleBox := titleStyle.Width(m.titleWidth).Height(m.titleHeight).Render(dblabFigure.String())
 
-	styledTableList := ""
-
-	if m.c.ShowDataCatalog() {
-		styledTableList = tablesListStyle.BorderForeground(listBorder).Width(m.tablesListWidth).Height(m.tablesListHeight).Render(m.dbTree.View())
-	} else {
-		styledTableList = tablesListStyle.BorderForeground(listBorder).Width(m.tablesListWidth).Height(m.tablesListHeight).Render(m.tablesList.View())
-	}
+	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight).Render(m.sidebarViewport.View())
 
 	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
 	styledResultSet := resultSetStyle.BorderForeground(tableBorder).Width(m.resultSetWidth).Height(m.resultSetHeight).UnsetBorderTop()
@@ -652,6 +664,9 @@ func setupTable() table.Writer {
 // If the user wants to see the database catalog, the client will present a tree view, with a graph with databases and tables.
 // Otherwise, the user will see a list of tables of the database connected.
 func (m *Model) setupDatabaseCatalog() error {
+	m.sidebarViewport = viewport.New(0, 0)
+	m.sidebarViewport.KeyMap = viewport.KeyMap{}
+
 	if m.c.ShowDataCatalog() {
 
 		dbs, err := m.c.ShowDatabases()
@@ -663,7 +678,7 @@ func (m *Model) setupDatabaseCatalog() error {
 			nodes[i] = tree.Node{Value: db, Desc: "database"}
 		}
 
-		m.dbTree = tree.New(nodes, m.tablesListWidth, m.tablesListHeight)
+		m.dbTree = tree.New(nodes, m.sidebarViewportWidth, m.sidebarViewportHeight)
 
 		// Override the Down binding.
 		m.dbTree.KeyMap.Down = key.NewBinding(
@@ -796,6 +811,18 @@ func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
 			dbName: dbName,
 			tables: ts,
 		}
+	}
+}
+
+func (m *Model) syncTreeToViewport() {
+	m.sidebarViewport.SetContent(m.dbTree.View())
+
+	cursor := m.dbTree.Cursor()
+	if cursor >= m.sidebarViewport.YOffset+m.sidebarViewport.Height {
+		m.sidebarViewport.SetYOffset(cursor - m.sidebarViewport.Height + 1)
+	}
+	if cursor < m.sidebarViewport.YOffset {
+		m.sidebarViewport.SetYOffset(cursor)
 	}
 }
 
