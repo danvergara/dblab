@@ -402,10 +402,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusTable {
 				m.viewport.GotoTop()
 			}
+			if m.focus == focusList {
+				for m.dbTree.Cursor() > 0 {
+					m.dbTree, _ = m.dbTree.Update(tea.KeyMsg{Type: tea.KeyUp})
+				}
+
+				m.syncTreeToViewport()
+				return m, nil
+			}
 			return m, nil
 		case key.Matches(msg, m.bindings.PageBottom):
 			if m.focus == focusTable {
 				m.viewport.GotoBottom()
+			}
+			if m.focus == focusList {
+				totalNodes := m.dbTree.NumberOfNodes()
+				if totalNodes > 0 {
+					m.dbTree.SetCursor(totalNodes - 1)
+				}
+
+				m.syncTreeToViewport()
+				return m, nil
 			}
 			return m, nil
 		}
