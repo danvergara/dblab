@@ -399,16 +399,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmds...)
 		case key.Matches(msg, m.bindings.PageTop):
-			if m.focus == focusTable {
-				m.viewport.GotoTop()
-			}
-			if m.focus == focusList {
-				for m.dbTree.Cursor() > 0 {
-					m.dbTree, _ = m.dbTree.Update(tea.KeyMsg{Type: tea.KeyUp})
+			if m.c.ShowDataCatalog() {
+				if m.focus == focusTable {
+					m.viewport.GotoTop()
 				}
+				if m.focus == focusList {
+					for m.dbTree.Cursor() > 0 {
+						m.dbTree, _ = m.dbTree.Update(tea.KeyMsg{Type: tea.KeyUp})
+					}
 
-				m.syncTreeToViewport()
-				return m, nil
+					m.syncTreeToViewport()
+					return m, nil
+				}
+			} else {
+				m.tablesList.Select(0)
+				m.sidebarViewport.SetContent(m.tablesList.View())
 			}
 			return m, nil
 		case key.Matches(msg, m.bindings.PageBottom):
@@ -416,13 +421,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.viewport.GotoBottom()
 			}
 			if m.focus == focusList {
-				totalNodes := m.dbTree.NumberOfNodes()
-				if totalNodes > 0 {
-					m.dbTree.SetCursor(totalNodes - 1)
-				}
+				if m.c.ShowDataCatalog() {
+					totalNodes := m.dbTree.NumberOfNodes()
+					if totalNodes > 0 {
+						m.dbTree.SetCursor(totalNodes - 1)
+					}
 
-				m.syncTreeToViewport()
-				return m, nil
+					m.syncTreeToViewport()
+					return m, nil
+				} else {
+					totalItems := len(m.tablesList.Items())
+					if totalItems > 0 {
+						m.tablesList.Select(totalItems - 1)
+					}
+					m.sidebarViewport.SetContent(m.tablesList.View())
+				}
 			}
 			return m, nil
 		}
