@@ -51,7 +51,8 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(green).
 			Foreground(purple).
-			AlignVertical(lipgloss.Center)
+			AlignVertical(lipgloss.Center).
+			Align(lipgloss.Center)
 
 	footerStyle = lipgloss.NewStyle().
 			Foreground(green)
@@ -275,7 +276,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
 
-		m.titleHeight = availableHeight/4 - 2
+		m.titleHeight = availableHeight/6 - 2
 		m.titleWidth = m.leftWidth - 2
 
 		m.sidebarViewportHeight = availableHeight - m.titleHeight - 4
@@ -561,7 +562,14 @@ func (m Model) View() string {
 
 	dblabFigure := figure.NewFigure("dblab", "", true)
 
-	titleBox := titleStyle.Width(m.titleWidth).Height(m.titleHeight).Render(dblabFigure.String())
+	tightBlock := lipgloss.NewStyle().
+		Align(lipgloss.Left).
+		Render(dblabFigure.String())
+
+	centeredLogo := titleStyle.
+		Width(m.titleWidth).Height(m.titleHeight).
+		Align(lipgloss.Center).
+		Render(tightBlock)
 
 	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight).Render(m.sidebarViewport.View())
 
@@ -615,7 +623,7 @@ func (m Model) View() string {
 	doc.WriteString("\n")
 	doc.WriteString(styledResultSet.Render(m.viewport.View()))
 
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, titleBox, styledTableList)
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, styledTableList)
 	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, doc.String())
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
