@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,8 +15,6 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
-	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/savannahostrowski/tree-bubble"
 )
 
@@ -23,13 +22,15 @@ type focusState int
 
 const (
 	// colors.
-	green      = lipgloss.Color("#1fb009")
+	green      = lipgloss.Color("#1fb009") // Normal green
 	purple     = lipgloss.Color("#800080")
 	cyberGreen = lipgloss.Color("#39FF14") // High-visibility neon green
+	hiMagenta  = lipgloss.Color("#FF00FF") // High-visibility Magenta
 	mutedGreen = lipgloss.Color("#2ECC71") // Softer green for standard text
 	neonPurple = lipgloss.Color("#BF40BF") // Bright purple for highlights
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
+	black      = lipgloss.Color("#000000")
 
 	// focus state management.
 	focusEditor focusState = iota
@@ -116,7 +117,7 @@ func newTabStyles() *tabStyles {
 	s.inactiveTab = lipgloss.NewStyle().
 		Border(inactiveTabBorder, true).
 		BorderForeground(darkPurple).
-		Padding(0, 0)
+		Padding(0, 1)
 	s.activeTab = s.inactiveTab.
 		Border(activeTabBorder, true)
 	return s
@@ -206,7 +207,7 @@ type Model struct {
 	activeTab int
 
 	// models.
-	tablesMetadata  []table.Writer
+	tablesMetadata  []table.Model
 	viewport        viewport.Model
 	editor          textarea.Model
 	tablesList      list.Model
@@ -248,7 +249,7 @@ func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
 		focus:    focusEditor,
 		c:        c,
 		bindings: kb,
-		tabs:     []string{"Content", "Structure", "Indexes", "Constraints"},
+		tabs:     []string{"Data", "Columns", "Indexes", "Constraints"},
 	}
 
 	if err := m.prepare(); err != nil {
@@ -288,8 +289,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resultSetHeight = availableHeight - m.editorHeight - 6
 		m.resultSetWidth = m.rightWidth - 4
 
-		m.tablesList.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
-		m.dbTree.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
+		m.tablesList.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight-2)
+		m.dbTree.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight-2)
 
 		m.sidebarViewport.Height = m.sidebarViewportHeight - 4
 		m.sidebarViewport.Width = m.sidebarViewportWidth - 4
@@ -304,15 +305,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if !m.ready {
-			m.viewport = viewport.New(m.resultSetWidth-4, m.resultSetHeight-2)
+			m.viewport = viewport.New(m.resultSetWidth-4, m.resultSetHeight)
 			m.ready = true
 		} else {
 			m.viewport.Width = m.resultSetWidth - 4
-			m.viewport.Height = m.resultSetHeight - 2
-		}
-		if m.ready {
-			m.viewport, cmd = m.viewport.Update(msg)
-			cmds = append(cmds, cmd)
+			m.viewport.Height = m.resultSetHeight
 		}
 
 		return m, tea.Batch(cmds...)
@@ -362,13 +359,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.NextTab):
 			if m.focus == focusTable {
 				m.activeTab = min(m.activeTab+1, len(m.tabs)-1)
-				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
 				return m, nil
 			}
 		case key.Matches(msg, m.bindings.PrevTab):
 			if m.focus == focusTable {
 				m.activeTab = max(m.activeTab-1, 0)
-				m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
 				return m, nil
 			}
 		case key.Matches(msg, m.bindings.Navigation.Right):
@@ -400,26 +397,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmds...)
 		case key.Matches(msg, m.bindings.PageTop):
-			if m.c.ShowDataCatalog() {
-				if m.focus == focusTable {
-					m.viewport.GotoTop()
-				}
-				if m.focus == focusList {
+			if m.focus == focusList {
+				if m.c.ShowDataCatalog() {
 					for m.dbTree.Cursor() > 0 {
 						m.dbTree, _ = m.dbTree.Update(tea.KeyMsg{Type: tea.KeyUp})
 					}
 
 					m.syncTreeToViewport()
 					return m, nil
+				} else {
+					m.tablesList.Select(0)
+					m.sidebarViewport.SetContent(m.tablesList.View())
+					return m, nil
 				}
-			} else {
-				m.tablesList.Select(0)
-				m.sidebarViewport.SetContent(m.tablesList.View())
 			}
-			return m, nil
 		case key.Matches(msg, m.bindings.PageBottom):
 			if m.focus == focusTable {
-				m.viewport.GotoBottom()
+				if m.focus == focusTable {
+					var tableCmd tea.Cmd
+					m.tablesMetadata[m.activeTab], tableCmd = m.tablesMetadata[m.activeTab].Update(msg)
+					m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
+					return m, tableCmd
+				}
 			}
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
@@ -450,6 +449,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.viewport.ScrollRight(4)
 			}
 		}
+
 		switch m.focus {
 		case focusList:
 			if m.c.ShowDataCatalog() {
@@ -465,16 +465,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case focusEditor:
 			m.editor, cmd = m.editor.Update(msg)
 			cmds = append(cmds, cmd)
+			return m, tea.Batch(cmds...)
 		case focusTable:
-			m.viewport, cmd = m.viewport.Update(msg)
+			if m.ready {
+				m.viewport, cmd = m.viewport.Update(msg)
+				cmds = append(cmds, cmd)
+			}
+			m.tablesMetadata[m.activeTab], cmd = m.tablesMetadata[m.activeTab].Update(msg)
+			m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
 			cmds = append(cmds, cmd)
+			return m, tea.Batch(cmds...)
 		}
 
 	case querySuccessMsg:
 		m.clearTables()
-		m.tablesMetadata[0].AppendHeader(populateTableHeaders(msg.columns))
-		m.tablesMetadata[0].AppendRows(populateTableRows(msg.rows))
-		m.viewport.SetContent(m.tablesMetadata[0].Render())
+		m.tablesMetadata[0].SetColumns(populateTableHeaders(msg.columns))
+		m.tablesMetadata[0].SetRows(populateTableRows(msg.rows))
+		m.viewport.SetContent(m.tablesMetadata[0].View())
 
 		if len(msg.tables) > 0 {
 			tables := make([]list.Item, 0)
@@ -496,7 +503,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.GotoTop()
 	case metadataSucessMsg:
 		m.updateTableMetadataOnChange(msg.metadata)
-		m.viewport.SetContent(m.tablesMetadata[m.activeTab].Render())
+		m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
 		m.viewport.GotoTop()
 	case metadataErrMsg:
 		errorText := fmt.Sprintf("❌ failed to get table metadata\n\n%s", msg.err.Error())
@@ -571,7 +578,7 @@ func (m Model) View() string {
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
-	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight).Render(m.sidebarViewport.View())
+	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
 
 	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
 	styledResultSet := resultSetStyle.BorderForeground(tableBorder).Width(m.resultSetWidth).Height(m.resultSetHeight).UnsetBorderTop()
@@ -654,6 +661,7 @@ func (m *Model) updateStyles() {
 // prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
 func (m *Model) prepare() error {
 	m.setupTable()
+	m.setupTable()
 	m.setupQueries()
 	if err := m.setupDatabaseCatalog(); err != nil {
 		return err
@@ -663,13 +671,13 @@ func (m *Model) prepare() error {
 }
 
 func (m *Model) setupTable() {
-	structure := setupTable()
-	content := setupTable()
-	constraints := setupTable()
-	indexes := setupTable()
-	m.tablesMetadata = []table.Writer{
-		content,
-		structure,
+	columns := setupTable(m.resultSetHeight - 2)
+	data := setupTable(m.resultSetHeight - 2)
+	constraints := setupTable(m.resultSetHeight)
+	indexes := setupTable(m.resultSetHeight)
+	m.tablesMetadata = []table.Model{
+		data,
+		columns,
 		indexes,
 		constraints,
 	}
@@ -677,23 +685,32 @@ func (m *Model) setupTable() {
 
 func (m *Model) clearTables() {
 	for i := range m.tablesMetadata {
-		m.tablesMetadata[i] = setupTable()
+		m.tablesMetadata[i] = setupTable(m.resultSetHeight)
 	}
 }
 
-func setupTable() table.Writer {
-	t := table.NewWriter()
+func setupTable(height int) table.Model {
+	t := table.New(
+		table.WithFocused(true),
+		table.WithHeight(height-2),
+	)
 
-	cyberStyle := table.StyleRounded
+	s := table.DefaultStyles()
 
-	cyberStyle.Color = table.ColorOptions{
-		Border: text.Colors{text.FgHiMagenta},
-		Header: text.Colors{text.FgHiGreen, text.Bold},
-		Row:    text.Colors{text.FgGreen},
-		Footer: text.Colors{text.FgHiGreen},
-	}
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(hiMagenta).
+		BorderBottom(true).
+		Foreground(cyberGreen).
+		Bold(true)
 
-	t.SetStyle(cyberStyle)
+	s.Selected = s.Selected.
+		Foreground(black).
+		Background(cyberGreen).
+		Bold(true)
+
+	t.SetStyles(s)
+
 	return t
 }
 
@@ -705,7 +722,6 @@ func (m *Model) setupDatabaseCatalog() error {
 	m.sidebarViewport.KeyMap = viewport.KeyMap{}
 
 	if m.c.ShowDataCatalog() {
-
 		dbs, err := m.c.ShowDatabases()
 		if err != nil {
 			return err
@@ -766,21 +782,21 @@ func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
 	if metadata != nil {
 		m.clearTables()
 
-		// table content.
-		m.tablesMetadata[0].AppendHeader(populateTableHeaders(metadata.TableContent.Columns))
-		m.tablesMetadata[0].AppendRows(populateTableRows(metadata.TableContent.Rows))
+		// table data.
+		m.tablesMetadata[0].SetColumns(populateTableHeaders(metadata.TableContent.Columns))
+		m.tablesMetadata[0].SetRows(populateTableRows(metadata.TableContent.Rows))
 
-		// table structure.
-		m.tablesMetadata[1].AppendHeader(populateTableHeaders(metadata.Structure.Columns))
-		m.tablesMetadata[1].AppendRows(populateTableRows(metadata.Structure.Rows))
+		// table columns.
+		m.tablesMetadata[1].SetColumns(populateTableHeaders(metadata.Structure.Columns))
+		m.tablesMetadata[1].SetRows(populateTableRows(metadata.Structure.Rows))
 
 		// table indexes.
-		m.tablesMetadata[2].AppendHeader(populateTableHeaders(metadata.Indexes.Columns))
-		m.tablesMetadata[2].AppendRows(populateTableRows(metadata.Indexes.Rows))
+		m.tablesMetadata[2].SetColumns(populateTableHeaders(metadata.Indexes.Columns))
+		m.tablesMetadata[2].SetRows(populateTableRows(metadata.Indexes.Rows))
 
 		// table constraints.
-		m.tablesMetadata[3].AppendHeader(populateTableHeaders(metadata.Constraints.Columns))
-		m.tablesMetadata[3].AppendRows(populateTableRows(metadata.Constraints.Rows))
+		m.tablesMetadata[3].SetColumns(populateTableHeaders(metadata.Constraints.Columns))
+		m.tablesMetadata[3].SetRows(populateTableRows(metadata.Constraints.Rows))
 	}
 }
 
@@ -864,11 +880,19 @@ func (m *Model) syncTreeToViewport() {
 	}
 }
 
-func populateTableHeaders(headers []string) table.Row {
-	headerRow := make(table.Row, len(headers))
+func populateTableHeaders(headers []string) []table.Column {
+	headerRow := make([]table.Column, len(headers))
 
 	for i, h := range headers {
-		headerRow[i] = h
+		colWidth := len(h) + 5
+		if colWidth < 15 {
+			colWidth = 15
+		}
+
+		headerRow[i] = table.Column{
+			Title: h,
+			Width: colWidth,
+		}
 	}
 
 	return headerRow
