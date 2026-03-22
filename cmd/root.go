@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/danvergara/dblab/pkg/app"
@@ -62,20 +61,9 @@ func NewRootCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var opts command.Options
 			var err error
+
 			// Default keybindings.
-			var kb = command.TUIKeyBindings{
-				RunQuery:    tcell.KeyCtrlSpace,
-				Structure:   tcell.KeyCtrlS,
-				Indexes:     tcell.KeyCtrlI,
-				Constraints: tcell.KeyCtrlT,
-				ClearEditor: tcell.KeyCtrlD,
-				Navigation: command.TUINavigationBindgins{
-					Up:    tcell.KeyCtrlK,
-					Down:  tcell.KeyCtrlJ,
-					Left:  tcell.KeyCtrlH,
-					Right: tcell.KeyCtrlL,
-				},
-			}
+			var kb = command.DefaultKeyMap()
 
 			if cfg {
 				opts, err = config.Init(cfgName)

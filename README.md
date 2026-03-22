@@ -387,14 +387,13 @@ The `--db` flag is now optional (except for Oracle), meaning that the user will 
 At the time to navigate queries' resultsets, the cell will be highlighted, so the user can know which table cell is on. This is important because you can press the `Enter` key on a cell of interest to copy its content.
 
 ### Key Bindings
-| Key                                     | Description                           |
+| Key                                    | Description                           |
 |----------------------------------------|----------------------------------------|
-|<kbd>Ctrl+Space</kbd>                   | If the query editor is active, execute the query |
+|<kbd>Ctrl+E</kbd>                       | If the query editor is active, execute the query |
 |<kbd>Ctrl+D</kbd>                       | Cleans the whole text from the query editor, when the editor is selected |
 |<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel |
-|<kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel. The opposite is true |
-|<kbd>Ctrl+T</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true |
-|<kbd>Ctrl+I</kbd>                       | If the rows panel is active, switch to the indexes view. The opposite is true |
+|<kbd>tab</kbd>                          | If the resulset panel is active, press tab to navigate to the right on the right |
+|<kbd>shift+tab</kbd>                    | If the resultst panel is active, press shfit+tab to navigate to the tab on the left |
 |<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left |
 |<kbd>Ctrl+J</kbd>                       | Toggle to the panel below |
 |<kbd>Ctrl+K</kbd>                       | Toggle to the panel above |
@@ -409,9 +408,6 @@ At the time to navigate queries' resultsets, the cell will be highlighted, so th
 |<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
 |<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes |
 |<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes |
-|<kbd>Ctrl-F</kbd>                       | Move down by one page. Views: rows, constraints, structure and indexes |
-|<kbd>Ctrl-B</kbd>                       | Move up by one page. Views: rows, constraints, structure and indexes |
-|<kbd>Enter</kbd>                        | Press the Enter key on a resultset table cell to copy the content |
 |<kbd>Ctrl+c</kbd>                       | Quit |
 
 ## Contribute

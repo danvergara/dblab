@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/file"
@@ -39,7 +39,7 @@ type Database struct {
 
 	Host     string
 	Port     string
-	DB       string `validate:"required"`
+	DB       string
 	User     string
 	Password string
 	Driver   string `validate:"required"`
@@ -73,30 +73,19 @@ type Database struct {
 }
 
 type KeyBindings struct {
-	RunQuery    string `fig:"run-query"    default:"Ctrl-Space"`
-	Structure   string `fig:"structure"    default:"Ctrl-S"`
-	Indexes     string `fig:"indexes"      default:"Ctrl-I"`
-	Constraints string `fig:"constraints"  default:"Ctrl-T"`
-	ClearEditor string `fig:"clear-editor" default:"Ctrl-D"`
-	Navigation  NavigationBindgins
+	ExecuteQuery string `fig:"execute-query" default:"ctrl+e"`
+	NextTab      string `fig:"next-tab"      default:"tab"`
+	PrevTab      string `fig:"prev-tab"      default:"shift+tab"`
+	PageTop      string `fig:"page-top"      default:"g"`
+	PageBottom   string `fig:"page-bottom"   default:"G"`
+	Navigation   NavigationBindgins
 }
 
 type NavigationBindgins struct {
-	Up    string `fig:"up"    default:"Ctrl-K"`
-	Down  string `fig:"down"  default:"Ctrl-J"`
-	Left  string `fig:"left"  default:"Ctrl-H"`
-	Right string `fig:"right" default:"Ctrl-L"`
-}
-
-// swapKeyNames swap keys and values of the tcell.KeyNames map.
-func swapKeyNames[K comparable, V comparable](m map[K]V) map[V]K {
-	reversed := make(map[V]K, len(m))
-
-	for k, v := range m {
-		reversed[v] = k
-	}
-
-	return reversed
+	Up    string `fig:"up"    default:"ctrl+k"`
+	Down  string `fig:"down"  default:"ctrl+j"`
+	Left  string `fig:"left"  default:"ctrl+h"`
+	Right string `fig:"right" default:"ctrl+l"`
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
@@ -148,11 +137,6 @@ func Init(configName string) (command.Options, error) {
 		db = cfg.Database[0]
 	}
 
-	swapedKeyNames := swapKeyNames(tcell.KeyNames)
-	// This entry is missing in the tcell.KeyNames.
-	swapedKeyNames["Ctrl-H"] = tcell.KeyCtrlH
-	swapedKeyNames["Ctrl-I"] = tcell.KeyCtrlI
-
 	opts = command.Options{
 		Driver:                 db.Driver,
 		Host:                   db.Host,
@@ -202,22 +186,17 @@ func SetupKeybindings() (command.TUIKeyBindings, error) {
 		return tkb, err
 	}
 
-	swapedKeyNames := swapKeyNames(tcell.KeyNames)
-	// This entry is missing in the tcell.KeyNames.
-	swapedKeyNames["Ctrl-H"] = tcell.KeyCtrlH
-	swapedKeyNames["Ctrl-I"] = tcell.KeyCtrlI
-
 	tkb = command.TUIKeyBindings{
-		RunQuery:    tcell.Key(swapedKeyNames[kbc.KeyBindings.RunQuery]),
-		Structure:   tcell.Key(swapedKeyNames[kbc.KeyBindings.Structure]),
-		Constraints: tcell.Key(swapedKeyNames[kbc.KeyBindings.Constraints]),
-		Indexes:     tcell.Key(swapedKeyNames[kbc.KeyBindings.Indexes]),
-		ClearEditor: tcell.Key(swapedKeyNames[kbc.KeyBindings.ClearEditor]),
+		ExecuteQuery: key.NewBinding(key.WithKeys(kbc.KeyBindings.ExecuteQuery), key.WithHelp(kbc.KeyBindings.ExecuteQuery, "execute query")),
+		NextTab:      key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab")),
+		PrevTab:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab")),
+		PageTop:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PageTop), key.WithHelp(kbc.KeyBindings.PageTop, "go to top")),
+		PageBottom:   key.NewBinding(key.WithKeys(kbc.KeyBindings.PageBottom), key.WithHelp(kbc.KeyBindings.PageBottom, "go to bottom")),
 		Navigation: command.TUINavigationBindgins{
-			Up:    tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Up]),
-			Down:  tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Down]),
-			Left:  tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Left]),
-			Right: tcell.Key(swapedKeyNames[kbc.KeyBindings.Navigation.Right]),
+			Up:    key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Up), key.WithHelp(kbc.KeyBindings.Navigation.Up, "Toggle to the panel above")),
+			Down:  key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Down), key.WithHelp(kbc.KeyBindings.Navigation.Down, "Toggle to the panel below")),
+			Left:  key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Left), key.WithHelp(kbc.KeyBindings.Navigation.Left, "Toggle to the panel on the left")),
+			Right: key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Right), key.WithHelp(kbc.KeyBindings.Navigation.Right, "Toggle to the panel on the right")),
 		},
 	}
 

@@ -1,17 +1,17 @@
 package app
 
 import (
+	"github.com/danvergara/dblab/pkg/bubbletui"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/sshdb"
-	"github.com/danvergara/dblab/pkg/tui"
 )
 
 // App Struct.
 type App struct {
-	t  *tui.Tui
 	c  *client.Client
 	sc *sshdb.SSHConfig
+	m  *bubbletui.Model
 }
 
 // New bootstrap a new application.
@@ -40,14 +40,14 @@ func New(opts command.Options) (*App, error) {
 		return nil, err
 	}
 
-	t, err := tui.New(tui.WithClient(c), tui.WithKeyBinding(&opts.TUIKeyBindings))
+	m, err := bubbletui.NewModel(c, &opts.TUIKeyBindings)
 	if err != nil {
 		return nil, err
 	}
 
 	app := App{
 		c:  c,
-		t:  t,
+		m:  m,
 		sc: sc,
 	}
 
@@ -64,7 +64,7 @@ func (a *App) Run() error {
 		_ = a.c.DB().Close()
 	}()
 
-	if err := a.t.Run(); err != nil {
+	if err := a.m.Run(); err != nil {
 		return err
 	}
 

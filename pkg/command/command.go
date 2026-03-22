@@ -3,7 +3,7 @@ package command
 import (
 	"os"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/charmbracelet/bubbles/key"
 )
 
 // Options is a struct that stores the provided commands by the user.
@@ -50,19 +50,62 @@ func (o *Options) UpdateKeybindings(k TUIKeyBindings) {
 }
 
 type TUIKeyBindings struct {
-	RunQuery    tcell.Key
-	Structure   tcell.Key
-	Indexes     tcell.Key
-	Constraints tcell.Key
-	ClearEditor tcell.Key
-	Navigation  TUINavigationBindgins
+	ExecuteQuery key.Binding
+	NextTab      key.Binding
+	PrevTab      key.Binding
+	PageTop      key.Binding
+	PageBottom   key.Binding
+	Navigation   TUINavigationBindgins
 }
 
 type TUINavigationBindgins struct {
-	Up    tcell.Key
-	Down  tcell.Key
-	Left  tcell.Key
-	Right tcell.Key
+	Up    key.Binding
+	Down  key.Binding
+	Left  key.Binding
+	Right key.Binding
+}
+
+func DefaultKeyMap() TUIKeyBindings {
+	return TUIKeyBindings{
+		ExecuteQuery: key.NewBinding(
+			key.WithKeys("ctrl+e"),
+			key.WithHelp("ctrl+e", "execute query"),
+		),
+		NextTab: key.NewBinding(
+			key.WithKeys("tab"),
+			key.WithHelp("tab", "next tab"),
+		),
+		PrevTab: key.NewBinding(
+			key.WithKeys("shift+tab"),
+			key.WithHelp("shift+tab", "previous tab"),
+		),
+		PageTop: key.NewBinding(
+			key.WithKeys("g"),
+			key.WithHelp("g", "go to top"),
+		),
+		PageBottom: key.NewBinding(
+			key.WithKeys("G"), // Capital 'G' for shift+g
+			key.WithHelp("G", "go to bottom"),
+		),
+		Navigation: TUINavigationBindgins{
+			Up: key.NewBinding(
+				key.WithKeys("ctrl+k"),
+				key.WithKeys("ctrl+k", "Toggle to the panel above"),
+			),
+			Down: key.NewBinding(
+				key.WithKeys("ctrl+j"),
+				key.WithHelp("ctrl+j", "Toggle to the panel below"),
+			),
+			Left: key.NewBinding(
+				key.WithKeys("ctrl+h"),
+				key.WithHelp("ctrl+h", "Toggle to the panel on the left"),
+			),
+			Right: key.NewBinding(
+				key.WithKeys("ctrl+l"),
+				key.WithHelp("ctrl+l", "Toggle to the panel on the right"),
+			),
+		},
+	}
 }
 
 // SetDefault returns a Options struct and fills the empty
