@@ -337,16 +337,16 @@ database:
 # should be greater than 0, otherwise the app will error out
 limit: 50
 keybindings:
-  run-query: 'Ctrl-Space'
-  structure: 'Ctrl-S'
-  indexes: 'Ctrl-I'
-  constraints: 'Ctrl-T'
-  clear-editor: 'Ctrl-D'
+  execute-query: 'ctrl+e'
+  next-tab: 'tab'
+  prev-tab: 'shift+tab'
+  page-top: 'g'
+  page-bottom: 'G'
   navigation:
-    up: 'Ctrl-K'
-    down: 'Ctrl-J'
-    left: 'Ctrl-H'
-    right: 'Ctrl-L'
+    up: 'ctrl+k'
+    down: 'ctrl+j'
+    left: 'ctrl+h'
+    right: 'ctrl+l'
 ```
 
 Or for sqlite:
@@ -364,11 +364,9 @@ Only the `host` and `ssl` fields are optionals. `127.0.0.1` and `disable`, respe
 
 The key bindings are now configurable, see [Key bindings configuration](#key-bindings-configuration) to learn how to replace existing key bindings. It's worth noting that key bindings are only configurable through the configuration file, there is no flags to do so. If you don't replace them through the configuration file, the information below remains the same, otherwise, just replace the new key binding with the existing information for the default one.
 
-If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
-Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.
-The same can be achieved for the `constraints` view by pressing <kbd>Ctrl+F</kbd> to go back and forth between the `rows` and the `constraints` panels.
+If the query panel is active, type the desired query and press <kbd>ctrl+e</kbd> to see the results on the rows panel below.
 
-Now, there's a menu to navigate between hidden views by just clicking on the desired options:
+Otherwise, you might be located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the schema of a table, locate yourself on the `tables` panel and press <kbd>tab</kbd> to switch to the `columns` panel, then switch <kbd>shift+tab</kbd> to switch back.
 
 <img src="screenshots/rows-view.png" />
 <img src="screenshots/structure-view.png" />
@@ -389,11 +387,11 @@ At the time to navigate queries' resultsets, the cell will be highlighted, so th
 ### Key Bindings
 | Key                                    | Description                           |
 |----------------------------------------|----------------------------------------|
-|<kbd>Ctrl+E</kbd>                       | If the query editor is active, execute the query |
+|<kbd>ctrl+e</kbd>                       | If the query editor is active, execute the query |
 |<kbd>Ctrl+D</kbd>                       | Cleans the whole text from the query editor, when the editor is selected |
 |<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel |
-|<kbd>tab</kbd>                          | If the resulset panel is active, press tab to navigate to the right on the right |
-|<kbd>shift+tab</kbd>                    | If the resultst panel is active, press shfit+tab to navigate to the tab on the left |
+|<kbd>tab</kbd>                          | If the resultset panel is active, press tab to navigate to the next metadata tab |
+|<kbd>shift+tab</kbd>                    | If the resultset panel is active, press shift+tab to navigate to the previous metadata tab |
 |<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left |
 |<kbd>Ctrl+J</kbd>                       | Toggle to the panel below |
 |<kbd>Ctrl+K</kbd>                       | Toggle to the panel above |
