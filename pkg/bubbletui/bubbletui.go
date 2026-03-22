@@ -904,9 +904,7 @@ func populateTableRows(data [][]string) []table.Row {
 	for _, stringRow := range data {
 		newRow := make(table.Row, len(stringRow))
 
-		for i, cellData := range stringRow {
-			newRow[i] = cellData
-		}
+		copy(newRow, stringRow)
 
 		convertedRows = append(convertedRows, newRow)
 	}
