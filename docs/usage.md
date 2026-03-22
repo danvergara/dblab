@@ -1,4 +1,3 @@
-
 You can get started by using the connection flags or by using a configuration file with the connection params.
 
 ```sh
@@ -71,14 +70,9 @@ Use "dblab [command] --help" for more information about a command.
 
 ## Navigation
 
-If the query panel is active, type the desired query and press <kbd>Ctrl+Space</kbd> to see the results on the rows panel below.
-Otherwise, you might me located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively).  
+If the query panel is active, type the desired query and press <kbd>ctrl+e</kbd> to see the results on the rows panel below.
 
-If you want to see the rows of a table, press <kbd>Enter</kbd>.  
-
-To see the schema of a table, locate yourself on the `rows` panel and press <kbd>Ctrl+S</kbd> to switch to the `structure` panel, then switch <kbd>Ctrl+S</kbd> to switch back.  
-
-The same can be achieved for the `constraints` view by pressing <kbd>Ctrl+T</kbd> to go back and forth between the `rows` and the `constraints` panels.
+Otherwise, you might be located at the tables panel, then you can navigate by using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the schema of a table, locate yourself on the `tables` panel and press <kbd>tab</kbd> to switch to the `columns` panel, then switch <kbd>shift+tab</kbd> to switch back.
 
 The `--db` flag is now optional (except for Oracle), meaning that the user will be able to see the list of databases they have access to. The regular list of tables will be replaced with a tree structure showing a list of databases and their respective list of tables, branching off each database. Due to the nature of the vast majority of DBMSs that don't allow cross-database queries, dblab has to open an independent connection for each database. The side effect of this decision, is that the user has to press `Enter` on the specific database of interest. An indicator showing the current active database will appear at the bottom-right of the screen. To change the focus, just hit enter on another database. Once a database is selected, the usual behavior of inspecting tables remains the same.
 
@@ -91,34 +85,31 @@ Now, there's a menu to navigate between hidden views by just clicking on the des
 ![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/constraints-view.png){ width="700" : .center }
 ![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/indexes-view.png){ width="700" : .center }
 
-
+At the time to navigate queries' resultsets, the cell will be highlighted, so the user can know which table cell is on. This is important because you can press the `Enter` key on a cell of interest to copy its content.
 
 ### Key Bindings
-Key                                     | Description
-----------------------------------------|---------------------------------------
-<kbd>Ctrl+Space</kbd>                   | If the query panel is active, execute the query
-<kbd>Ctrl+D</kbd>                       | Cleans the whole text from the query editor, when the editor is selected
-<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel
-<kbd>Ctrl+S</kbd>                       | If the rows panel is active, switch to the schema panel. The opposite is true
-<kbd>Ctrl+T</kbd>                       | If the rows panel is active, switch to the constraints view. The opposite is true
-<kbd>Ctrl+I</kbd>                       | If the rows panel is active, switch to the indexes view. The opposite is true
-<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left
-<kbd>Ctrl+J</kbd>                       | Toggle to the panel below
-<kbd>Ctrl+K</kbd>                       | Toggle to the panel above
-<kbd>Ctrl+L</kbd>                       | Toggle to the panel on the right
-<kbd>Arrow Up</kbd>                     | Next row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>k</kbd>                            | Next row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>Arrow Down</kbd>                   | Previous row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>j</kbd>                            | Previous row of the result set on the panel. Views: rows, table, constraints, structure and indexes
-<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes
-<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes
-<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes
-<kbd>Ctrl-F</kbd>                       | Move down by one page. Views: rows, constraints, structure and indexes
-<kbd>Ctrl-B</kbd>                       | Move up by one page. Views: rows, constraints, structure and indexes
-<kbd>Ctrl+c</kbd>                       | Quit
+| Key                                    | Description                           |
+|----------------------------------------|----------------------------------------|
+|<kbd>ctrl+e</kbd>                       | If the query editor is active, execute the query |
+|<kbd>Ctrl+D</kbd>                       | Cleans the whole text from the query editor, when the editor is selected |
+|<kbd>Enter</kbd>                        | If the tables panel is active, list all the rows as a result set on the rows panel and display the structure of the table on the structure panel |
+|<kbd>tab</kbd>                          | If the resultset panel is active, press tab to navigate to the next metadata tab |
+|<kbd>shift+tab</kbd>                    | If the resultset panel is active, press shift+tab to navigate to the previous metadata tab |
+|<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left |
+|<kbd>Ctrl+J</kbd>                       | Toggle to the panel below |
+|<kbd>Ctrl+K</kbd>                       | Toggle to the panel above |
+|<kbd>Ctrl+L</kbd>                       | Toggle to the panel on the right |
+|<kbd>Arrow Up</kbd>                     | Vertical scrolling on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>k</kbd>                            | Vertical scrolling on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>Arrow Down</kbd>                   | Vertical on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>j</kbd>                            | Vertical on the panel. Views: rows, table, constraints, structure and indexes |
+|<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure and indexes |
+|<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure and indexes |
+|<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure and indexes |
+|<kbd>Ctrl+c</kbd>                       | Quit |
 
 
 ## Connection Examples
@@ -273,7 +264,7 @@ We strongly encourage you to adopt the new format as of `v0.18.0`. `--cfg-name` 
 As of `v0.21.0`, ssl connections options are supported in the config file.
 
 ```{ .sh .copy } 
-dbladb --config
+dblab --config
 ```
 ```{ .sh .copy } 
 dblab --config --cfg-name "prod"
@@ -357,16 +348,16 @@ database:
 # should be greater than 0, otherwise the app will error out
 limit: 50
 keybindings:
-  run-query: 'Ctrl-Space'
-  structure: 'Ctrl-S'
-  indexes: 'Ctrl-I'
-  constraints: 'Ctrl-T'
-  clear-editor: 'Ctrl-D'
+  execute-query: 'ctrl+e'
+  next-tab: 'tab'
+  prev-tab: 'shift+tab'
+  page-top: 'g'
+  page-bottom: 'G'
   navigation:
-    up: 'Ctrl-K'
-    down: 'Ctrl-J'
-    left: 'Ctrl-H'
-    right: 'Ctrl-L'
+    up: 'ctrl+k'
+    down: 'ctrl+j'
+    left: 'ctrl+h'
+    right: 'ctrl+l'
 ```
 
 Or for sqlite:
