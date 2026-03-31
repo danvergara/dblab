@@ -3,6 +3,7 @@ module github.com/danvergara/dblab
 go 1.26
 
 require (
+	github.com/Digital-Shane/treeview v1.8.2
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/charmbracelet/bubbles v1.0.0
@@ -18,7 +19,6 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/microsoft/go-mssqldb v1.8.0
 	github.com/muesli/termenv v0.16.0
-	github.com/savannahostrowski/tree-bubble v0.0.0-20230724043728-d7bb06a8a67e
 	github.com/sijms/go-ora/v2 v2.8.24
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.11.1

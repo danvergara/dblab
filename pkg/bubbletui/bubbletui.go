@@ -1,10 +1,12 @@
 package bubbletui
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/Digital-Shane/treeview"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
@@ -15,7 +17,6 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
-	"github.com/savannahostrowski/tree-bubble"
 )
 
 type focusState int
@@ -211,8 +212,8 @@ type Model struct {
 	viewport        viewport.Model
 	editor          textarea.Model
 	tablesList      list.Model
-	dbTree          tree.Model
 	sidebarViewport viewport.Model
+	dbTree          *treeview.TuiTreeModel[string]
 
 	// Manages the focus on the app.
 	focus focusState
@@ -280,7 +281,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.titleHeight = availableHeight/6 - 2
 		m.titleWidth = m.leftWidth - 2
 
-		m.sidebarViewportHeight = availableHeight - m.titleHeight - 4
+		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
 		m.sidebarViewportWidth = m.leftWidth - 2
 
 		m.editorWidth = m.rightWidth - 4
@@ -290,7 +291,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resultSetWidth = m.rightWidth - 4
 
 		m.tablesList.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight-2)
-		m.dbTree.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight-2)
+		if m.dbTree != nil {
+			m.dbTree = m.newTuiTreeModel(m.dbTree.Tree, m.sidebarViewportWidth, m.sidebarViewportHeight-2)
+		}
 
 		m.sidebarViewport.Height = m.sidebarViewportHeight - 4
 		m.sidebarViewport.Width = m.sidebarViewportWidth - 4
@@ -298,9 +301,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.editor.SetWidth(m.editorWidth - 4)
 		m.editor.SetHeight(m.editorHeight - 2)
 
-		if m.c.ShowDataCatalog() {
-			m.sidebarViewport.SetContent(m.dbTree.View())
-		} else {
+		if !m.c.ShowDataCatalog() {
 			m.sidebarViewport.SetContent(m.tablesList.View())
 		}
 
@@ -320,27 +321,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
-					cursor := m.dbTree.Cursor()
-					nodes := m.dbTree.Nodes()
-					path := getPathToCursor(nodes, cursor)
-					if len(path) == 0 {
-						return m, nil
-					}
-					targetNode := path[len(path)-1]
-
-					switch targetNode.Desc {
-					case "database":
-						m.c.SetActiveDatabase(targetNode.Value)
-						m.activeDatabase = targetNode.Value
-						if len(targetNode.Children) == 0 {
-							return m, m.fetchTablesCmd(targetNode.Value)
-						} else {
-							currentNodes := m.dbTree.Nodes()
-							updatedNodes := injectTablesIntoTree(currentNodes, targetNode.Value, []string{})
-							m.dbTree.SetNodes(updatedNodes)
+					selectedNode := m.dbTree.GetFocusedNode()
+					if selectedNode != nil && selectedNode.Data() != nil {
+						switch *selectedNode.Data() {
+						case "database":
+							m.c.SetActiveDatabase(selectedNode.Name())
+							m.activeDatabase = selectedNode.Name()
+							if selectedNode.IsExpanded() {
+								selectedNode.Collapse()
+								return m, nil
+							} else {
+								selectedNode.Expand()
+								return m, m.fetchTablesCmd(selectedNode.Name())
+							}
+						case "table":
+							return m, m.runTableMetadata(selectedNode.Name())
 						}
-					case "table":
-						return m, m.runTableMetadata(targetNode.Value)
 					}
 				} else {
 					return m, m.runTableMetadata("")
@@ -399,11 +395,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.PageTop):
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
-					for m.dbTree.Cursor() > 0 {
-						m.dbTree, _ = m.dbTree.Update(tea.KeyMsg{Type: tea.KeyUp})
-					}
+					ctx := context.Background()
 
-					m.syncTreeToViewport()
+					for nodeInfo, err := range m.dbTree.AllVisible(ctx) {
+						if err != nil {
+							break
+						}
+
+						_, _ = m.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+						break
+					}
 					return m, nil
 				} else {
 					m.tablesList.Select(0)
@@ -422,12 +423,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
-					totalNodes := m.dbTree.NumberOfNodes()
-					if totalNodes > 0 {
-						m.dbTree.SetCursor(totalNodes - 1)
+					ctx := context.Background()
+
+					var bottomNodeID string
+					var found bool
+
+					for nodeInfo, err := range m.dbTree.AllVisible(ctx) {
+						if err != nil {
+							break
+						}
+
+						bottomNodeID = nodeInfo.Node.ID()
+						found = true
 					}
 
-					m.syncTreeToViewport()
+					if found {
+						_, _ = m.dbTree.SetFocusedID(ctx, bottomNodeID)
+					}
 					return m, nil
 				} else {
 					totalItems := len(m.tablesList.Items())
@@ -453,9 +465,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.focus {
 		case focusList:
 			if m.c.ShowDataCatalog() {
-				m.dbTree, cmd = m.dbTree.Update(msg)
-				m.sidebarViewport.SetContent(m.dbTree.View())
-				m.syncTreeToViewport()
+				if m.dbTree != nil {
+					updatedModel, treeCmd := m.dbTree.Update(msg)
+					if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[string]); ok {
+						m.dbTree = newTreeModel
+					}
+					cmd = treeCmd
+				}
 			} else {
 				m.tablesList, cmd = m.tablesList.Update(msg)
 				m.sidebarViewport.SetContent(m.tablesList.View())
@@ -511,15 +527,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
 	case tablesFetchedMsg:
-		currentNodes := m.dbTree.Nodes()
-		updatedNodes := injectTablesIntoTree(currentNodes, msg.dbName, msg.tables)
-		m.dbTree.SetNodes(updatedNodes)
-		m.sidebarViewport.SetContent(m.dbTree.View())
+		selectedNode := m.dbTree.GetFocusedNode()
+		if selectedNode != nil {
+			tables := make([]*treeview.Node[string], len(msg.tables))
+			for i, t := range msg.tables {
+				tables[i] = treeview.NewNode(t, t, "table")
+			}
+			selectedNode.SetChildren(tables)
+		}
 	case tablesFetchError:
 		errorText := fmt.Sprintf("❌ failed to retrieve the current database tables\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
+
 	}
 
 	return m, tea.Batch(cmds...)
@@ -578,7 +599,11 @@ func (m Model) View() string {
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
-	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
+	sideViewContent := m.sidebarViewport.View()
+	if m.c.ShowDataCatalog() {
+		sideViewContent = m.dbTree.View()
+	}
+	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(sideViewContent)
 
 	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
 	styledResultSet := resultSetStyle.BorderForeground(tableBorder).Width(m.resultSetWidth).Height(m.resultSetHeight).UnsetBorderTop()
@@ -726,23 +751,18 @@ func (m *Model) setupDatabaseCatalog() error {
 		if err != nil {
 			return err
 		}
-		nodes := make([]tree.Node, len(dbs))
-		for i, db := range dbs {
-			nodes[i] = tree.Node{Value: db, Desc: "database"}
+		root := treeview.NewNode("db", "db", "root")
+		for _, db := range dbs {
+			root.AddChild(treeview.NewNode(db, db, "database"))
 		}
 
-		m.dbTree = tree.New(nodes, m.sidebarViewportWidth, m.sidebarViewportHeight)
+		root.Expand()
 
-		// Override the Down binding.
-		m.dbTree.KeyMap.Down = key.NewBinding(
-			key.WithKeys("down", "j", "s"),
-			key.WithHelp("↓/j/s", "move down"),
-		)
+		treeRoot := treeview.NewTree([]*treeview.Node[string]{root}, treeview.WithProvider(createCyberpunkProvider()))
 
-		// Override the Up binding.
-		m.dbTree.KeyMap.Up = key.NewBinding(
-			key.WithKeys("up", "k", "w"),
-			key.WithHelp("↑/k/w", "move up"),
+		m.dbTree = treeview.NewTuiTreeModel(treeRoot,
+			treeview.WithTuiWidth[string](0),
+			treeview.WithTuiHeight[string](80),
 		)
 	} else {
 		ts, err := m.c.ShowTables()
@@ -868,16 +888,19 @@ func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
 	}
 }
 
-func (m *Model) syncTreeToViewport() {
-	m.sidebarViewport.SetContent(m.dbTree.View())
+func (m *Model) newTuiTreeModel(tree *treeview.Tree[string], width, height int) *treeview.TuiTreeModel[string] {
+	// Create custom key map to avoid key conflicts
+	keyMap := treeview.DefaultKeyMap()
+	keyMap.SearchStart = []string{"/"}
+	keyMap.Up = []string{"up", "k", "w"}
+	keyMap.Down = []string{"down", "j", "s"}
 
-	cursor := m.dbTree.Cursor()
-	if cursor >= m.sidebarViewport.YOffset+m.sidebarViewport.Height {
-		m.sidebarViewport.SetYOffset(cursor - m.sidebarViewport.Height + 1)
-	}
-	if cursor < m.sidebarViewport.YOffset {
-		m.sidebarViewport.SetYOffset(cursor)
-	}
+	return treeview.NewTuiTreeModel(tree,
+		treeview.WithTuiWidth[string](width),
+		treeview.WithTuiHeight[string](height),
+		treeview.WithTuiKeyMap[string](keyMap),
+		treeview.WithTuiDisableNavBar[string](true),
+	)
 }
 
 func populateTableHeaders(headers []string) []table.Column {
@@ -912,57 +935,27 @@ func populateTableRows(data [][]string) []table.Row {
 	return convertedRows
 }
 
-// getPathToCursor returns the full path of nodes from the Root down to the Cursor position.
-func getPathToCursor(nodes []tree.Node, targetCursor int) []tree.Node {
-	var currentPath []tree.Node
-	var currentIndex int
+func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
+	return treeview.NewDefaultNodeProvider(
+		treeview.WithIconRule(treeview.PredIsExpanded[string](), "▼"),
+		treeview.WithDefaultIcon[string]("▶"),
+		treeview.WithStyleRule(
+			func(n *treeview.Node[string]) bool { return true },
+			lipgloss.NewStyle().
+				Foreground(whiteText).
+				PaddingLeft(2),
 
-	var traverse func(currentNodes []tree.Node) bool
-
-	traverse = func(currentNodes []tree.Node) bool {
-		for _, node := range currentNodes {
-			currentPath = append(currentPath, node)
-
-			if currentIndex == targetCursor {
-				return true
-			}
-
-			currentIndex++
-
-			if len(node.Children) > 0 {
-				if traverse(node.Children) {
-					return true // The target was found deep inside this branch
-				}
-			}
-
-			currentPath = currentPath[:len(currentPath)-1]
-		}
-		return false
-	}
-
-	traverse(nodes)
-	return currentPath
-}
-
-// injectTablesIntoTree traverses the graph to find a not which is the database of interest to add tables to it.
-func injectTablesIntoTree(nodes []tree.Node, targetDB string, tables []string) []tree.Node {
-	for i := range nodes {
-
-		if nodes[i].Desc == "database" && nodes[i].Value == targetDB {
-
-			var newChildren []tree.Node
-			for _, tableName := range tables {
-				newChildren = append(newChildren, tree.Node{
-					Value: tableName,
-					Desc:  "table",
-				})
-			}
-
-			nodes[i].Children = newChildren
-
-			break
-		}
-	}
-
-	return nodes
+			lipgloss.NewStyle().
+				Foreground(cyberGreen).
+				Background(darkPurple).
+				Bold(true).
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderLeft(true).
+				BorderForeground(hiMagenta).
+				PaddingLeft(1),
+		),
+		treeview.WithFormatter[string](func(node *treeview.Node[string]) (string, bool) {
+			return node.Name(), true
+		}),
+	)
 }
