@@ -281,7 +281,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.titleHeight = availableHeight/6 - 2
 		m.titleWidth = m.leftWidth - 2
 
-		m.sidebarViewportHeight = availableHeight - m.titleHeight - 4
+		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
 		m.sidebarViewportWidth = m.leftWidth - 2
 
 		m.editorWidth = m.rightWidth - 4
@@ -937,13 +937,13 @@ func populateTableRows(data [][]string) []table.Row {
 
 func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
 	return treeview.NewDefaultNodeProvider(
-		treeview.WithDefaultIcon[string]("◈"),
-
+		treeview.WithIconRule(treeview.PredIsExpanded[string](), "▼"),
+		treeview.WithDefaultIcon[string]("▶"),
 		treeview.WithStyleRule(
 			func(n *treeview.Node[string]) bool { return true },
-
 			lipgloss.NewStyle().
-				Foreground(whiteText),
+				Foreground(whiteText).
+				PaddingLeft(2),
 
 			lipgloss.NewStyle().
 				Foreground(cyberGreen).
@@ -954,7 +954,6 @@ func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
 				BorderForeground(hiMagenta).
 				PaddingLeft(1),
 		),
-
 		treeview.WithFormatter[string](func(node *treeview.Node[string]) (string, bool) {
 			return node.Name(), true
 		}),
