@@ -599,7 +599,7 @@ func (m Model) View() string {
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
-	var sideViewContent string = m.sidebarViewport.View()
+	sideViewContent := m.sidebarViewport.View()
 	if m.c.ShowDataCatalog() {
 		sideViewContent = m.dbTree.View()
 	}
