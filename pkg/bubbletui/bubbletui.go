@@ -402,7 +402,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							break
 						}
 
-						m.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+						_, _ = m.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
 						break
 					}
 					return m, nil
@@ -438,7 +438,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 
 					if found {
-						m.dbTree.SetFocusedID(ctx, bottomNodeID)
+						_, _ = m.dbTree.SetFocusedID(ctx, bottomNodeID)
 					}
 					return m, nil
 				} else {
