@@ -395,7 +395,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.PageTop):
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
-					ctx := context.Background() // Or your current context
+					ctx := context.Background()
 
 					for nodeInfo, err := range m.dbTree.AllVisible(ctx) {
 						if err != nil {
