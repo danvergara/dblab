@@ -243,6 +243,7 @@ type Model struct {
 
 	// Key Bindings.
 	bindings *command.TUIKeyBindings
+	footer   string
 }
 
 func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
@@ -251,6 +252,7 @@ func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
 		c:        c,
 		bindings: kb,
 		tabs:     []string{"Data", "Columns", "Indexes", "Constraints"},
+		footer:   footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
 	}
 
 	if err := m.prepare(); err != nil {
@@ -272,13 +274,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.width = msg.Width
 
-		fixedFooterHeight := 2
-		availableHeight := m.height - fixedFooterHeight
+		availableHeight := m.height - lipgloss.Height(m.footer)
 
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
 
-		m.titleHeight = availableHeight/6 - 2
+		m.titleHeight = availableHeight / 6
 		m.titleWidth = m.leftWidth - 2
 
 		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
@@ -545,6 +546,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	var (
+		renderedTabs []string
+		rightText    string
+	)
 	listBorder := darkPurple
 	textAreaBorder := darkPurple
 	tableBorder := darkPurple
@@ -561,26 +566,20 @@ func (m Model) View() string {
 	doc := strings.Builder{}
 	s := m.tabStyles
 
-	var renderedTabs []string
-
-	footerView := footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)")
-
-	var rightText string
-
 	if m.c.ShowDataCatalog() && m.activeDatabase != "" {
 		label := activeLabelStyle.Render("Active: ")
 		dbName := dbNameStyle.Render(m.activeDatabase + " ")
 		rightText = label + dbName
 	}
 
-	gapWidth := m.width - lipgloss.Width(footerView) - lipgloss.Width(rightText)
+	gapWidth := m.width - lipgloss.Width(m.footer) - lipgloss.Width(rightText)
 
 	if gapWidth < 0 {
 		gapWidth = 0
 	}
 
 	spacer := strings.Repeat(" ", gapWidth)
-	fullFooter := footerView + spacer + rightText
+	fullFooter := m.footer + spacer + rightText
 	lipgloss.JoinVertical(
 		lipgloss.Left,
 		fullFooter,
