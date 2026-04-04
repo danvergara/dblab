@@ -414,12 +414,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.bindings.PageBottom):
 			if m.focus == focusTable {
-				if m.focus == focusTable {
-					var tableCmd tea.Cmd
-					m.tablesMetadata[m.activeTab], tableCmd = m.tablesMetadata[m.activeTab].Update(msg)
-					m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
-					return m, tableCmd
-				}
+				var tableCmd tea.Cmd
+				m.tablesMetadata[m.activeTab], tableCmd = m.tablesMetadata[m.activeTab].Update(msg)
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
+				return m, tableCmd
 			}
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
