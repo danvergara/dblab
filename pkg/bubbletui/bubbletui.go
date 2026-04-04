@@ -507,19 +507,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.viewport.GotoTop()
+		m.focus = focusTable
 
 		return m, nil
 	case queryErrMsg:
 		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
-
 		m.viewport.SetContent(styledError)
-
 		m.viewport.GotoTop()
 	case metadataSucessMsg:
 		m.updateTableMetadataOnChange(msg.metadata)
 		m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
 		m.viewport.GotoTop()
+		m.focus = focusTable
 	case metadataErrMsg:
 		errorText := fmt.Sprintf("❌ failed to get table metadata\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
@@ -539,7 +539,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		styledError := errorStyle.Render(errorText)
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
-
 	}
 
 	return m, tea.Batch(cmds...)
