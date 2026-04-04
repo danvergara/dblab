@@ -495,8 +495,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case querySuccessMsg:
 		m.clearTables()
-		m.tablesMetadata[0].SetColumns(populateTableHeaders(msg.columns))
-		m.tablesMetadata[0].SetRows(populateTableRows(msg.rows))
+		tableContentColumns, tableContentRows := populateTable(msg.columns, msg.rows)
+		m.tablesMetadata[0].SetColumns(tableContentColumns)
+		m.tablesMetadata[0].SetRows(tableContentRows)
 		m.viewport.SetContent(m.tablesMetadata[0].View())
 
 		if len(msg.tables) > 0 {
@@ -803,20 +804,24 @@ func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
 		m.clearTables()
 
 		// table data.
-		m.tablesMetadata[0].SetColumns(populateTableHeaders(metadata.TableContent.Columns))
-		m.tablesMetadata[0].SetRows(populateTableRows(metadata.TableContent.Rows))
+		tableContentColumns, tableContentRows := populateTable(metadata.TableContent.Columns, metadata.TableContent.Rows)
+		m.tablesMetadata[0].SetColumns(tableContentColumns)
+		m.tablesMetadata[0].SetRows(tableContentRows)
 
 		// table columns.
-		m.tablesMetadata[1].SetColumns(populateTableHeaders(metadata.Structure.Columns))
-		m.tablesMetadata[1].SetRows(populateTableRows(metadata.Structure.Rows))
+		tableStructureColumns, tableStructureRows := populateTable(metadata.Structure.Columns, metadata.Structure.Rows)
+		m.tablesMetadata[1].SetColumns(tableStructureColumns)
+		m.tablesMetadata[1].SetRows(tableStructureRows)
 
 		// table indexes.
-		m.tablesMetadata[2].SetColumns(populateTableHeaders(metadata.Indexes.Columns))
-		m.tablesMetadata[2].SetRows(populateTableRows(metadata.Indexes.Rows))
+		tableIndexColumns, tableIndexRows := populateTable(metadata.Indexes.Columns, metadata.Indexes.Rows)
+		m.tablesMetadata[2].SetColumns(tableIndexColumns)
+		m.tablesMetadata[2].SetRows(tableIndexRows)
 
 		// table constraints.
-		m.tablesMetadata[3].SetColumns(populateTableHeaders(metadata.Constraints.Columns))
-		m.tablesMetadata[3].SetRows(populateTableRows(metadata.Constraints.Rows))
+		tableConstraintsColumns, tableConstraintsRows := populateTable(metadata.Constraints.Columns, metadata.Constraints.Rows)
+		m.tablesMetadata[3].SetColumns(tableConstraintsColumns)
+		m.tablesMetadata[3].SetRows(tableConstraintsRows)
 	}
 }
 
@@ -903,36 +908,46 @@ func (m *Model) newTuiTreeModel(tree *treeview.Tree[string], width, height int) 
 	)
 }
 
-func populateTableHeaders(headers []string) []table.Column {
-	headerRow := make([]table.Column, len(headers))
+func populateTable(headers []string, data [][]string) ([]table.Column, []table.Row) {
+	colWidths := make([]int, len(headers))
 
-	for i, h := range headers {
-		colWidth := len(h) + 5
-		if colWidth < 15 {
-			colWidth = 15
-		}
-
-		headerRow[i] = table.Column{
-			Title: h,
-			Width: colWidth,
-		}
-	}
-
-	return headerRow
-}
-
-func populateTableRows(data [][]string) []table.Row {
-	var convertedRows []table.Row
-
+	var rows []table.Row
 	for _, stringRow := range data {
-		newRow := make(table.Row, len(stringRow))
+		row := make(table.Row, len(stringRow))
 
-		copy(newRow, stringRow)
+		copy(row, stringRow)
 
-		convertedRows = append(convertedRows, newRow)
+		rows = append(rows, row)
 	}
 
-	return convertedRows
+	for _, row := range rows {
+		for i, cell := range row {
+			cellWidth := lipgloss.Width(cell)
+			if cellWidth > colWidths[i] {
+				colWidths[i] = cellWidth
+			}
+		}
+	}
+
+	var columns []table.Column
+	for i, header := range headers {
+		finalWidth := colWidths[i]
+
+		headerWidth := len(header) + 5
+		if finalWidth < headerWidth {
+			finalWidth = headerWidth
+		}
+		if finalWidth < 15 {
+			finalWidth = 15
+		}
+
+		columns = append(columns, table.Column{
+			Title: header,
+			Width: finalWidth,
+		})
+	}
+
+	return columns, rows
 }
 
 func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
