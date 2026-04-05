@@ -17,6 +17,7 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/google/uuid"
 )
 
 type focusState int
@@ -531,7 +532,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if selectedNode != nil {
 			tables := make([]*treeview.Node[string], len(msg.tables))
 			for i, t := range msg.tables {
-				tables[i] = treeview.NewNode(t, t, "table")
+				nodeID := uuid.New().String()
+				tables[i] = treeview.NewNode(t+nodeID, t, "table")
 			}
 			selectedNode.SetChildren(tables)
 		}
@@ -750,7 +752,8 @@ func (m *Model) setupDatabaseCatalog() error {
 		}
 		root := treeview.NewNode("db", "db", "root")
 		for _, db := range dbs {
-			root.AddChild(treeview.NewNode(db, db, "database"))
+			nodeID := uuid.New().String()
+			root.AddChild(treeview.NewNode(db+nodeID, db, "database"))
 		}
 
 		root.Expand()
