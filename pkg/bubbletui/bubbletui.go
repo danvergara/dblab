@@ -742,6 +742,7 @@ func setupTable(height int) table.Model {
 // If the user wants to see the database catalog, the client will present a tree view, with a graph with databases and tables.
 // Otherwise, the user will see a list of tables of the database connected.
 func (m *Model) setupDatabaseCatalog() error {
+	ctx := context.Background()
 	m.sidebarViewport = viewport.New(0, 0)
 	m.sidebarViewport.KeyMap = viewport.KeyMap{}
 
@@ -765,6 +766,25 @@ func (m *Model) setupDatabaseCatalog() error {
 			treeview.WithTuiWidth[string](0),
 			treeview.WithTuiHeight[string](80),
 		)
+
+		// If there are databases, choose the first one as the default active one.
+		if len(dbs) > 0 {
+			var i int
+
+			for n, err := range m.dbTree.AllVisible(ctx) {
+				if err != nil {
+					break
+				}
+
+				if i == 1 {
+					m.c.SetActiveDatabase(n.Node.Name())
+					m.activeDatabase = n.Node.Name()
+					_, _ = m.dbTree.SetFocusedID(ctx, n.Node.ID())
+					break
+				}
+				i++
+			}
+		}
 	} else {
 		ts, err := m.c.ShowTables()
 		if err != nil {
