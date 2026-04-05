@@ -533,7 +533,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			tables := make([]*treeview.Node[string], len(msg.tables))
 			for i, t := range msg.tables {
 				nodeID := uuid.New().String()
-				tables[i] = treeview.NewNode(t+nodeID, t, "table")
+				tables[i] = treeview.NewNode(fmt.Sprintf("%s-%s", t, nodeID), t, "table")
 			}
 			selectedNode.SetChildren(tables)
 		}
@@ -750,10 +750,11 @@ func (m *Model) setupDatabaseCatalog() error {
 		if err != nil {
 			return err
 		}
-		root := treeview.NewNode("db", "db", "root")
+		rootID := uuid.New().String()
+		root := treeview.NewNode(fmt.Sprintf("%s-%s", "db", rootID), "db", "root")
 		for _, db := range dbs {
 			nodeID := uuid.New().String()
-			root.AddChild(treeview.NewNode(db+nodeID, db, "database"))
+			root.AddChild(treeview.NewNode(fmt.Sprintf("%s-%s", db, nodeID), db, "database"))
 		}
 
 		root.Expand()
