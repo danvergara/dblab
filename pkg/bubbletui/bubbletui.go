@@ -17,6 +17,7 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/google/uuid"
 )
 
 type focusState int
@@ -243,6 +244,7 @@ type Model struct {
 
 	// Key Bindings.
 	bindings *command.TUIKeyBindings
+	footer   string
 }
 
 func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
@@ -251,6 +253,7 @@ func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
 		c:        c,
 		bindings: kb,
 		tabs:     []string{"Data", "Columns", "Indexes", "Constraints"},
+		footer:   footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
 	}
 
 	if err := m.prepare(); err != nil {
@@ -272,13 +275,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.width = msg.Width
 
-		fixedFooterHeight := 2
-		availableHeight := m.height - fixedFooterHeight
+		availableHeight := m.height - lipgloss.Height(m.footer)
 
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
 
-		m.titleHeight = availableHeight/6 - 2
+		m.titleHeight = availableHeight / 6
 		m.titleWidth = m.leftWidth - 2
 
 		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
@@ -414,12 +416,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.bindings.PageBottom):
 			if m.focus == focusTable {
-				if m.focus == focusTable {
-					var tableCmd tea.Cmd
-					m.tablesMetadata[m.activeTab], tableCmd = m.tablesMetadata[m.activeTab].Update(msg)
-					m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
-					return m, tableCmd
-				}
+				var tableCmd tea.Cmd
+				m.tablesMetadata[m.activeTab], tableCmd = m.tablesMetadata[m.activeTab].Update(msg)
+				m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
+				return m, tableCmd
 			}
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
@@ -495,8 +495,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case querySuccessMsg:
 		m.clearTables()
-		m.tablesMetadata[0].SetColumns(populateTableHeaders(msg.columns))
-		m.tablesMetadata[0].SetRows(populateTableRows(msg.rows))
+		tableContentColumns, tableContentRows := populateTable(msg.columns, msg.rows)
+		m.tablesMetadata[0].SetColumns(tableContentColumns)
+		m.tablesMetadata[0].SetRows(tableContentRows)
 		m.viewport.SetContent(m.tablesMetadata[0].View())
 
 		if len(msg.tables) > 0 {
@@ -508,19 +509,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.viewport.GotoTop()
+		m.focus = focusTable
 
 		return m, nil
 	case queryErrMsg:
 		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
-
 		m.viewport.SetContent(styledError)
-
 		m.viewport.GotoTop()
 	case metadataSucessMsg:
 		m.updateTableMetadataOnChange(msg.metadata)
 		m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
 		m.viewport.GotoTop()
+		m.focus = focusTable
 	case metadataErrMsg:
 		errorText := fmt.Sprintf("❌ failed to get table metadata\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
@@ -531,7 +532,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if selectedNode != nil {
 			tables := make([]*treeview.Node[string], len(msg.tables))
 			for i, t := range msg.tables {
-				tables[i] = treeview.NewNode(t, t, "table")
+				nodeID := uuid.New().String()
+				tables[i] = treeview.NewNode(fmt.Sprintf("%s-%s", t, nodeID), t, "table")
 			}
 			selectedNode.SetChildren(tables)
 		}
@@ -540,13 +542,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		styledError := errorStyle.Render(errorText)
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
-
 	}
 
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
+	var (
+		renderedTabs []string
+		rightText    string
+	)
 	listBorder := darkPurple
 	textAreaBorder := darkPurple
 	tableBorder := darkPurple
@@ -563,26 +568,20 @@ func (m Model) View() string {
 	doc := strings.Builder{}
 	s := m.tabStyles
 
-	var renderedTabs []string
-
-	footerView := footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)")
-
-	var rightText string
-
 	if m.c.ShowDataCatalog() && m.activeDatabase != "" {
 		label := activeLabelStyle.Render("Active: ")
 		dbName := dbNameStyle.Render(m.activeDatabase + " ")
 		rightText = label + dbName
 	}
 
-	gapWidth := m.width - lipgloss.Width(footerView) - lipgloss.Width(rightText)
+	gapWidth := m.width - lipgloss.Width(m.footer) - lipgloss.Width(rightText)
 
 	if gapWidth < 0 {
 		gapWidth = 0
 	}
 
 	spacer := strings.Repeat(" ", gapWidth)
-	fullFooter := footerView + spacer + rightText
+	fullFooter := m.footer + spacer + rightText
 	lipgloss.JoinVertical(
 		lipgloss.Left,
 		fullFooter,
@@ -743,6 +742,7 @@ func setupTable(height int) table.Model {
 // If the user wants to see the database catalog, the client will present a tree view, with a graph with databases and tables.
 // Otherwise, the user will see a list of tables of the database connected.
 func (m *Model) setupDatabaseCatalog() error {
+	ctx := context.Background()
 	m.sidebarViewport = viewport.New(0, 0)
 	m.sidebarViewport.KeyMap = viewport.KeyMap{}
 
@@ -751,9 +751,11 @@ func (m *Model) setupDatabaseCatalog() error {
 		if err != nil {
 			return err
 		}
-		root := treeview.NewNode("db", "db", "root")
+		rootID := uuid.New().String()
+		root := treeview.NewNode(fmt.Sprintf("%s-%s", "db", rootID), "db", "root")
 		for _, db := range dbs {
-			root.AddChild(treeview.NewNode(db, db, "database"))
+			nodeID := uuid.New().String()
+			root.AddChild(treeview.NewNode(fmt.Sprintf("%s-%s", db, nodeID), db, "database"))
 		}
 
 		root.Expand()
@@ -764,6 +766,25 @@ func (m *Model) setupDatabaseCatalog() error {
 			treeview.WithTuiWidth[string](0),
 			treeview.WithTuiHeight[string](80),
 		)
+
+		// If there are databases, choose the first one as the default active one.
+		if len(dbs) > 0 {
+			var i int
+
+			for n, err := range m.dbTree.AllVisible(ctx) {
+				if err != nil {
+					break
+				}
+
+				if i == 1 {
+					m.c.SetActiveDatabase(n.Node.Name())
+					m.activeDatabase = n.Node.Name()
+					_, _ = m.dbTree.SetFocusedID(ctx, n.Node.ID())
+					break
+				}
+				i++
+			}
+		}
 	} else {
 		ts, err := m.c.ShowTables()
 		if err != nil {
@@ -803,20 +824,24 @@ func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
 		m.clearTables()
 
 		// table data.
-		m.tablesMetadata[0].SetColumns(populateTableHeaders(metadata.TableContent.Columns))
-		m.tablesMetadata[0].SetRows(populateTableRows(metadata.TableContent.Rows))
+		tableContentColumns, tableContentRows := populateTable(metadata.TableContent.Columns, metadata.TableContent.Rows)
+		m.tablesMetadata[0].SetColumns(tableContentColumns)
+		m.tablesMetadata[0].SetRows(tableContentRows)
 
 		// table columns.
-		m.tablesMetadata[1].SetColumns(populateTableHeaders(metadata.Structure.Columns))
-		m.tablesMetadata[1].SetRows(populateTableRows(metadata.Structure.Rows))
+		tableStructureColumns, tableStructureRows := populateTable(metadata.Structure.Columns, metadata.Structure.Rows)
+		m.tablesMetadata[1].SetColumns(tableStructureColumns)
+		m.tablesMetadata[1].SetRows(tableStructureRows)
 
 		// table indexes.
-		m.tablesMetadata[2].SetColumns(populateTableHeaders(metadata.Indexes.Columns))
-		m.tablesMetadata[2].SetRows(populateTableRows(metadata.Indexes.Rows))
+		tableIndexColumns, tableIndexRows := populateTable(metadata.Indexes.Columns, metadata.Indexes.Rows)
+		m.tablesMetadata[2].SetColumns(tableIndexColumns)
+		m.tablesMetadata[2].SetRows(tableIndexRows)
 
 		// table constraints.
-		m.tablesMetadata[3].SetColumns(populateTableHeaders(metadata.Constraints.Columns))
-		m.tablesMetadata[3].SetRows(populateTableRows(metadata.Constraints.Rows))
+		tableConstraintsColumns, tableConstraintsRows := populateTable(metadata.Constraints.Columns, metadata.Constraints.Rows)
+		m.tablesMetadata[3].SetColumns(tableConstraintsColumns)
+		m.tablesMetadata[3].SetRows(tableConstraintsRows)
 	}
 }
 
@@ -903,36 +928,46 @@ func (m *Model) newTuiTreeModel(tree *treeview.Tree[string], width, height int) 
 	)
 }
 
-func populateTableHeaders(headers []string) []table.Column {
-	headerRow := make([]table.Column, len(headers))
+func populateTable(headers []string, data [][]string) ([]table.Column, []table.Row) {
+	colWidths := make([]int, len(headers))
 
-	for i, h := range headers {
-		colWidth := len(h) + 5
-		if colWidth < 15 {
-			colWidth = 15
-		}
-
-		headerRow[i] = table.Column{
-			Title: h,
-			Width: colWidth,
-		}
-	}
-
-	return headerRow
-}
-
-func populateTableRows(data [][]string) []table.Row {
-	var convertedRows []table.Row
-
+	var rows []table.Row
 	for _, stringRow := range data {
-		newRow := make(table.Row, len(stringRow))
+		row := make(table.Row, len(stringRow))
 
-		copy(newRow, stringRow)
+		copy(row, stringRow)
 
-		convertedRows = append(convertedRows, newRow)
+		rows = append(rows, row)
 	}
 
-	return convertedRows
+	for _, row := range rows {
+		for i, cell := range row {
+			cellWidth := lipgloss.Width(cell)
+			if cellWidth > colWidths[i] {
+				colWidths[i] = cellWidth
+			}
+		}
+	}
+
+	var columns []table.Column
+	for i, header := range headers {
+		finalWidth := colWidths[i]
+
+		headerWidth := len(header) + 5
+		if finalWidth < headerWidth {
+			finalWidth = headerWidth
+		}
+		if finalWidth < 15 {
+			finalWidth = 15
+		}
+
+		columns = append(columns, table.Column{
+			Title: header,
+			Width: finalWidth,
+		})
+	}
+
+	return columns, rows
 }
 
 func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
