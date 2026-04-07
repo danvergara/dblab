@@ -341,6 +341,8 @@ keybindings:
   prev-tab: 'shift+tab'
   page-top: 'g'
   page-bottom: 'G'
+  end-of-line: '$'
+  beginning-of-line: '0'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'

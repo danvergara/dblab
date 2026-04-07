@@ -65,6 +65,8 @@ keybindings:
   execute-query: 'ctrl+e'
   next-tab: 'tab'
   prev-tab: 'shift+tab'
+  end-of-line: '$'
+  beginning-of-line: '0'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'
