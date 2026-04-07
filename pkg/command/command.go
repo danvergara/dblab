@@ -50,12 +50,14 @@ func (o *Options) UpdateKeybindings(k TUIKeyBindings) {
 }
 
 type TUIKeyBindings struct {
-	ExecuteQuery key.Binding
-	NextTab      key.Binding
-	PrevTab      key.Binding
-	PageTop      key.Binding
-	PageBottom   key.Binding
-	Navigation   TUINavigationBindgins
+	ExecuteQuery    key.Binding
+	NextTab         key.Binding
+	PrevTab         key.Binding
+	PageTop         key.Binding
+	PageBottom      key.Binding
+	EndOfLine       key.Binding
+	BeginningOfLine key.Binding
+	Navigation      TUINavigationBindgins
 }
 
 type TUINavigationBindgins struct {

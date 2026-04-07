@@ -73,12 +73,14 @@ type Database struct {
 }
 
 type KeyBindings struct {
-	ExecuteQuery string `fig:"execute-query" default:"ctrl+e"`
-	NextTab      string `fig:"next-tab"      default:"tab"`
-	PrevTab      string `fig:"prev-tab"      default:"shift+tab"`
-	PageTop      string `fig:"page-top"      default:"g"`
-	PageBottom   string `fig:"page-bottom"   default:"G"`
-	Navigation   NavigationBindgins
+	ExecuteQuery    string `fig:"execute-query" default:"ctrl+e"`
+	NextTab         string `fig:"next-tab"      default:"tab"`
+	PrevTab         string `fig:"prev-tab"      default:"shift+tab"`
+	PageTop         string `fig:"page-top"      default:"g"`
+	PageBottom      string `fig:"page-bottom"   default:"G"`
+	EndOfLine       string `fig:"end-of-line"   default:"$"`
+	BeginningOfLine string `fig:"beginning-of-line"   default:"0"`
+	Navigation      NavigationBindgins
 }
 
 type NavigationBindgins struct {
@@ -187,11 +189,13 @@ func SetupKeybindings() (command.TUIKeyBindings, error) {
 	}
 
 	tkb = command.TUIKeyBindings{
-		ExecuteQuery: key.NewBinding(key.WithKeys(kbc.KeyBindings.ExecuteQuery), key.WithHelp(kbc.KeyBindings.ExecuteQuery, "execute query")),
-		NextTab:      key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab")),
-		PrevTab:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab")),
-		PageTop:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PageTop), key.WithHelp(kbc.KeyBindings.PageTop, "go to top")),
-		PageBottom:   key.NewBinding(key.WithKeys(kbc.KeyBindings.PageBottom), key.WithHelp(kbc.KeyBindings.PageBottom, "go to bottom")),
+		ExecuteQuery:    key.NewBinding(key.WithKeys(kbc.KeyBindings.ExecuteQuery), key.WithHelp(kbc.KeyBindings.ExecuteQuery, "execute query")),
+		NextTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab")),
+		PrevTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab")),
+		PageTop:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PageTop), key.WithHelp(kbc.KeyBindings.PageTop, "go to top")),
+		PageBottom:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PageBottom), key.WithHelp(kbc.KeyBindings.PageBottom, "go to bottom")),
+		EndOfLine:       key.NewBinding(key.WithKeys(kbc.KeyBindings.EndOfLine), key.WithHelp(kbc.KeyBindings.EndOfLine, "end of current line")),
+		BeginningOfLine: key.NewBinding(key.WithKeys(kbc.KeyBindings.BeginningOfLine), key.WithHelp(kbc.KeyBindings.BeginningOfLine, "beginning of current line")),
 		Navigation: command.TUINavigationBindgins{
 			Up:    key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Up), key.WithHelp(kbc.KeyBindings.Navigation.Up, "Toggle to the panel above")),
 			Down:  key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Down), key.WithHelp(kbc.KeyBindings.Navigation.Down, "Toggle to the panel below")),

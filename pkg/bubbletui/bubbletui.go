@@ -415,6 +415,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 			}
 			return m, tea.Batch(cmds...)
+		case key.Matches(msg, m.bindings.BeginningOfLine):
+			if m.focus == focusTable {
+				m.viewport.SetXOffset(0)
+			}
+		case key.Matches(msg, m.bindings.EndOfLine):
+			if m.focus == focusTable {
+				maxWidth := 0
+				// lines := strings.Split(m.tablesMetadata[m.activeTab].View(), "\n")
+				for line := range strings.SplitSeq(m.tablesMetadata[m.activeTab].View(), "\n") {
+					w := lipgloss.Width(line)
+					if w > maxWidth {
+						maxWidth = w
+					}
+				}
+
+				maxOffset := maxWidth - m.viewport.Width
+
+				if maxOffset < 0 {
+					maxOffset = 0
+				}
+
+				m.viewport.SetXOffset(maxOffset)
+			}
 		case key.Matches(msg, m.bindings.PageTop):
 			if m.focus == focusList {
 				if m.c.ShowDataCatalog() {
