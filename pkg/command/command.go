@@ -89,6 +89,14 @@ func DefaultKeyMap() TUIKeyBindings {
 			key.WithKeys("G"), // Capital 'G' for shift+g
 			key.WithHelp("G", "go to bottom"),
 		),
+		BeginningOfLine: key.NewBinding(
+			key.WithKeys("0"),
+			key.WithHelp("0", "navigate all the way to the left of the table"),
+		),
+		EndOfLine: key.NewBinding(
+			key.WithKeys("$"),
+			key.WithHelp("$", "navigate all the way to the right of the table"),
+		),
 		Navigation: TUINavigationBindgins{
 			Up: key.NewBinding(
 				key.WithKeys("ctrl+k"),
