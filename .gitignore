@@ -35,3 +35,6 @@ assets/.DS_Store
 pkg/sshdb/testdata/known_hosts
 
 site/
+
+# file to dump messages for debugging
+messages.log

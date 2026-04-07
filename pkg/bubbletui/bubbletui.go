@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/Digital-Shane/treeview"
@@ -17,6 +18,7 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 )
 
@@ -244,16 +246,31 @@ type Model struct {
 
 	// Key Bindings.
 	bindings *command.TUIKeyBindings
-	footer   string
+
+	// Footer string.
+	footer string
+
+	// File used to dump every message for debuggin purposes.
+	dump io.Writer
 }
 
 func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
+	var dump *os.File
+	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
+		var err error
+		dump, err = os.OpenFile("messages.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+		if err != nil {
+			os.Exit(1)
+		}
+	}
+
 	m := &Model{
 		focus:    focusEditor,
 		c:        c,
 		bindings: kb,
 		tabs:     []string{"Data", "Columns", "Indexes", "Constraints"},
 		footer:   footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
+		dump:     dump,
 	}
 
 	if err := m.prepare(); err != nil {
@@ -268,6 +285,10 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.dump != nil {
+		spew.Fdump(m.dump, msg)
+	}
+
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
