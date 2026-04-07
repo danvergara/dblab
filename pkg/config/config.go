@@ -78,8 +78,8 @@ type KeyBindings struct {
 	PrevTab         string `fig:"prev-tab"      default:"shift+tab"`
 	PageTop         string `fig:"page-top"      default:"g"`
 	PageBottom      string `fig:"page-bottom"   default:"G"`
-	EndOfLine       string `fig:"page-bottom"   default:"$"`
-	BeginningOfLine string `fig:"page-bottom"   default:"0"`
+	EndOfLine       string `fig:"end-of-line"   default:"$"`
+	BeginningOfLine string `fig:"beginning-of-line"   default:"0"`
 	Navigation      NavigationBindgins
 }
 
