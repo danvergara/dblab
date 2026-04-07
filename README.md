@@ -402,6 +402,8 @@ When navigating query result sets, the cell will be highlighted so the user can 
 |<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure, and indexes |
 |<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure, and indexes |
 |<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure, and indexes |
+|<kbd>0</kbd>                            | Naviagate all the way to the left of the table. Views: rows, constraints, structure, and indexes |
+|<kbd>$</kbd>                            | Naviagate all the way to the right of the table. Views: rows, constraints, structure, and indexes |
 |<kbd>Ctrl+c</kbd>                       | Quit |
 
 ## Contribute
