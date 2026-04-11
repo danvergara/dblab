@@ -78,7 +78,7 @@ var (
 )
 
 // metadataSucessMsg struct used to retrieve a given table's metadata asynchronously.
-type metadataSucessMsg struct {
+type metadataSuccessMsg struct {
 	metadata *client.Metadata
 }
 
@@ -199,6 +199,39 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	fmt.Fprint(w, fn(str))
 }
 
+type ModelV2 struct {
+	c               *client.Client
+	activeDatabase  string
+	editor          Editor
+	sidebarViewport SidebarViewport
+	resulstset      ResultSet
+
+	focus  focusState
+	styles styles
+
+	width  int
+	height int
+
+	leftWidth  int
+	rightWidth int
+
+	titleHeight           int
+	titleWidth            int
+	sidebarViewportHeight int
+	sidebarViewportWidth  int
+	resultSetHeight       int
+	resultSetWidth        int
+	editorHeight          int
+	editorWidth           int
+
+	// Key Bindings.
+	bindings *command.TUIKeyBindings
+
+	footer string
+
+	dump io.Writer
+}
+
 // Model struct implements the bubbletea's Model interface.
 type Model struct {
 	// database client.
@@ -252,6 +285,208 @@ type Model struct {
 
 	// File used to dump every message for debuggin purposes.
 	dump io.Writer
+}
+
+func (m ModelV2) Init() tea.Cmd {
+	return nil
+}
+
+func (m ModelV2) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.dump != nil {
+		spew.Fdump(m.dump, msg)
+	}
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.height = msg.Height
+		m.width = msg.Width
+
+		availableHeight := m.height - lipgloss.Height(m.footer)
+
+		m.leftWidth = m.width / 5
+		m.rightWidth = m.width - m.leftWidth
+
+		m.titleHeight = availableHeight / 6
+		m.titleWidth = m.leftWidth - 2
+
+		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
+		m.sidebarViewportWidth = m.leftWidth - 2
+
+		m.editorWidth = m.rightWidth - 4
+		m.editorHeight = availableHeight/3 - 2
+
+		m.resultSetHeight = availableHeight - m.editorHeight - 6
+		m.resultSetWidth = m.rightWidth - 4
+
+		m.editor.SetHeight(m.editorHeight)
+		m.editor.SetWidth(m.editorWidth)
+
+		m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
+		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
+		return m, tea.Batch(cmds...)
+
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyCtrlC:
+			return m, tea.Quit
+		}
+
+		switch {
+		case key.Matches(msg, m.bindings.Navigation.Right):
+			if m.focus == focusList {
+				m.focus = focusEditor
+				cmd = m.editor.Focus()
+				cmds = append(cmds, cmd)
+			}
+			return m, tea.Batch(cmds...)
+		case key.Matches(msg, m.bindings.Navigation.Down):
+			if m.focus == focusEditor {
+				m.focus = focusTable
+				m.editor.Blur()
+				m.resulstset.Focus()
+			}
+		case key.Matches(msg, m.bindings.Navigation.Left):
+			if m.focus == focusTable {
+				m.focus = focusList
+				m.resulstset.Blur()
+			}
+
+			if m.focus == focusEditor {
+				m.editor.Blur()
+				m.focus = focusList
+			}
+		case key.Matches(msg, m.bindings.Navigation.Up):
+			if m.focus == focusTable {
+				m.focus = focusEditor
+				cmd = m.editor.Focus()
+				m.resulstset.Blur()
+				cmds = append(cmds, cmd)
+			}
+			return m, tea.Batch(cmds...)
+		}
+	case selectDatabaseMsg:
+		m.activeDatabase = msg.ActiveDatabase
+		m.c.SetActiveDatabase(msg.ActiveDatabase)
+		return m, m.fetchTablesCmd(msg.ActiveDatabase)
+	case selectTableMsg:
+		return m, m.runTableMetadata(msg.Table)
+	case executeQueryMsg:
+		return m, m.executeQueryCmd(msg.Query)
+	case metadataErrMsg, metadataSuccessMsg, tablesFetchError, tablesFetchedMsg, queryErrMsg, querySuccessMsg:
+		m.resulstset, cmd = m.resulstset.Update(msg)
+	}
+
+	switch m.focus {
+	case focusEditor:
+		m.editor, cmd = m.editor.Update(msg)
+		cmds = append(cmds, cmd)
+	case focusList:
+		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
+		cmds = append(cmds, cmd)
+	case focusTable:
+		m.resulstset, cmd = m.resulstset.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m ModelV2) View() string {
+	var rightText string
+
+	listBorder := darkPurple
+	textAreaBorder := darkPurple
+
+	switch m.focus {
+	case focusList:
+		listBorder = neonPurple
+	case focusEditor:
+		textAreaBorder = neonPurple
+	case focusTable:
+	}
+
+	if m.c.ShowDataCatalog() {
+		if m.activeDatabase == "" {
+			m.activeDatabase = m.sidebarViewport.ActiveDatabase()
+		}
+		label := activeLabelStyle.Render("Active: ")
+		dbName := dbNameStyle.Render(m.activeDatabase + " ")
+		rightText = label + dbName
+	}
+
+	gapWidth := m.width - lipgloss.Width(m.footer) - lipgloss.Width(rightText)
+
+	if gapWidth < 0 {
+		gapWidth = 0
+	}
+
+	spacer := strings.Repeat(" ", gapWidth)
+	fullFooter := m.footer + spacer + rightText
+	lipgloss.JoinVertical(
+		lipgloss.Left,
+		fullFooter,
+	)
+	dblabFigure := figure.NewFigure("dblab", "", true)
+
+	tightBlock := lipgloss.NewStyle().
+		Align(lipgloss.Left).
+		Render(dblabFigure.String())
+
+	centeredLogo := titleStyle.
+		Width(m.titleWidth).Height(m.titleHeight).
+		Align(lipgloss.Center).
+		Render(tightBlock)
+
+	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
+	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
+
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, styledTableList)
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
+
+	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
+
+	return lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter)
+}
+
+func NewModelV2(c *client.Client, kb *command.TUIKeyBindings) (*ModelV2, error) {
+	var dump *os.File
+	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
+		var err error
+		dump, err = os.OpenFile("messages.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+		if err != nil {
+			os.Exit(1)
+		}
+	}
+	ctx := context.Background()
+	svp, err := NewSidebarViewport(ctx, c, kb)
+	if err != nil {
+		return nil, err
+	}
+
+	m := &ModelV2{
+		focus:           focusEditor,
+		c:               c,
+		bindings:        kb,
+		editor:          NewEditor(kb),
+		sidebarViewport: svp,
+		resulstset:      NewResultSet(kb),
+		footer:          footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
+		dump:            dump,
+	}
+
+	return m, nil
+}
+
+func (m *ModelV2) Run() error {
+	p := tea.NewProgram(m, tea.WithAltScreen())
+
+	if _, err := p.Run(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
@@ -422,7 +657,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.EndOfLine):
 			if m.focus == focusTable {
 				maxWidth := 0
-				// lines := strings.Split(m.tablesMetadata[m.activeTab].View(), "\n")
 				for line := range strings.SplitSeq(m.tablesMetadata[m.activeTab].View(), "\n") {
 					w := lipgloss.Width(line)
 					if w > maxWidth {
@@ -561,7 +795,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		styledError := errorStyle.Render(errorText)
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
-	case metadataSucessMsg:
+	case metadataSuccessMsg:
 		m.updateTableMetadataOnChange(msg.metadata)
 		m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
 		m.viewport.GotoTop()
@@ -586,6 +820,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		styledError := errorStyle.Render(errorText)
 		m.viewport.SetContent(styledError)
 		m.viewport.GotoTop()
+	case selectDatabaseMsg:
+		return m, m.fetchTablesCmd(msg.ActiveDatabase)
+	case selectTableMsg:
+		return m, m.runTableMetadata(msg.Table)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -728,7 +966,6 @@ func (m *Model) updateStyles() {
 
 // prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
 func (m *Model) prepare() error {
-	m.setupTable()
 	m.setupTable()
 	m.setupQueries()
 	if err := m.setupDatabaseCatalog(); err != nil {
@@ -893,25 +1130,25 @@ func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
 // If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
 func (m *Model) runTableMetadata(tableName string) tea.Cmd {
 	return func() tea.Msg {
-		if tableName == "" {
-			if len(m.tablesList.Items()) == 0 {
-				return metadataErrMsg{fmt.Errorf("empty list of tables")}
-			}
-			tableItem := m.tablesList.Items()[m.tablesList.Index()]
-			i, ok := tableItem.(item)
-			if !ok {
-				return metadataErrMsg{fmt.Errorf("not valid tables list item %d", m.tablesList.Index())}
-			}
-
-			tableName = i.Title()
-		}
-
 		metadata, err := m.c.Metadata(tableName)
 		if err != nil {
 			return metadataErrMsg{err}
 		}
 
-		return metadataSucessMsg{metadata}
+		return metadataSuccessMsg{metadata}
+	}
+}
+
+// runTableMetadata gets the given table's metadata asynchronously.
+// If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
+func (m *ModelV2) runTableMetadata(tableName string) tea.Cmd {
+	return func() tea.Msg {
+		metadata, err := m.c.Metadata(tableName)
+		if err != nil {
+			return metadataErrMsg{err}
+		}
+
+		return metadataSuccessMsg{metadata}
 	}
 }
 
@@ -941,9 +1178,51 @@ func (m *Model) executeQueryCmd(query string) tea.Cmd {
 	}
 }
 
+// executeQueryCmd method executes queryes asynchronously, so it does not block the bubbletea execution.
+// If it succeeds, returns a querySuccessMsg with the resultset. Otherwise, it returns queryErrMsg with the error.
+func (m *ModelV2) executeQueryCmd(query string) tea.Cmd {
+	return func() tea.Msg {
+		var ts []string
+		rows, columns, err := m.c.Query(query)
+		if err != nil {
+			return queryErrMsg{err}
+		}
+
+		switch {
+		case strings.Contains(strings.ToLower(query), "alter table"):
+			fallthrough
+		case strings.Contains(strings.ToLower(query), "drop table"):
+			fallthrough
+		case strings.Contains(strings.ToLower(query), "create table"):
+			ts, err = m.c.ShowTables()
+			if err != nil {
+				return queryErrMsg{err}
+			}
+		}
+
+		return querySuccessMsg{columns: columns, rows: rows, tables: ts}
+	}
+}
+
 // fetchTablesCmd method gets the list from a given database asynchronously.
 // If it succeeds, returns tablesFetchedMsg. Otherwise, it returns tablesFetchError with the error.
 func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
+	return func() tea.Msg {
+		ts, err := m.c.ShowTablesPerDB(dbName)
+		if err != nil {
+			return tablesFetchError{err}
+		}
+
+		return tablesFetchedMsg{
+			dbName: dbName,
+			tables: ts,
+		}
+	}
+}
+
+// fetchTablesCmd method gets the list from a given database asynchronously.
+// If it succeeds, returns tablesFetchedMsg. Otherwise, it returns tablesFetchError with the error.
+func (m *ModelV2) fetchTablesCmd(dbName string) tea.Cmd {
 	return func() tea.Msg {
 		ts, err := m.c.ShowTablesPerDB(dbName)
 		if err != nil {
