@@ -2,15 +2,12 @@ package bubbletui
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"strings"
 
-	"github.com/Digital-Shane/treeview"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
@@ -102,39 +99,6 @@ type querySuccessMsg struct {
 // queryErrMsg struct used to report when the query execution fails.
 type queryErrMsg struct{ err error }
 
-// tabStyles is for tab styling.
-// The tabs are used to show table metadata.
-type tabStyles struct {
-	inactiveTab lipgloss.Style
-	activeTab   lipgloss.Style
-}
-
-// newTabStyles function retuns a pointer to the tabStyles.
-// It basically defines the default borders for bot active and inactive tabs.
-func newTabStyles() *tabStyles {
-	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
-	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
-	s := new(tabStyles)
-	s.inactiveTab = lipgloss.NewStyle().
-		Border(inactiveTabBorder, true).
-		BorderForeground(darkPurple).
-		Padding(0, 1)
-	s.activeTab = s.inactiveTab.
-		Border(activeTabBorder, true)
-	return s
-}
-
-// tabBorderWithBottom function is used to define the tab borders.
-// Borders changes whether the tabs is inacative or inactive.
-// Active tab misses the bottom border.
-func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
-	border := lipgloss.RoundedBorder()
-	border.BottomLeft = left
-	border.Bottom = middle
-	border.BottomRight = right
-	return border
-}
-
 // styles struct is for generic styling.
 type styles struct {
 	title        lipgloss.Style
@@ -159,41 +123,6 @@ func newStyles() styles {
 	s.quitText = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 
 	return s
-}
-
-// item implements the Item interface for required for the List Model from bubbles.
-type item string
-
-func (i item) Title() string       { return string(i) }
-func (i item) Description() string { return "" }
-func (i item) FilterValue() string { return string(i) }
-
-// itemDelegate is used to inject styling to the list items.
-// Implements the ItemDelegate interface.
-// It's important to highlight the selected item.
-type itemDelegate struct {
-	styles *styles
-}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := d.styles.item.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return d.styles.selectedItem.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
 }
 
 type Model struct {
@@ -437,32 +366,6 @@ func (m *Model) Run() error {
 	return nil
 }
 
-// prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
-func setupTable(height int) table.Model {
-	t := table.New(
-		table.WithFocused(true),
-		table.WithHeight(height-2),
-	)
-
-	s := table.DefaultStyles()
-
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(hiMagenta).
-		BorderBottom(true).
-		Foreground(cyberGreen).
-		Bold(true)
-
-	s.Selected = s.Selected.
-		Foreground(black).
-		Background(cyberGreen).
-		Bold(true)
-
-	t.SetStyles(s)
-
-	return t
-}
-
 // runTableMetadata gets the given table's metadata asynchronously.
 // If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
 func (m *Model) runTableMetadata(tableName string) tea.Cmd {
@@ -516,71 +419,4 @@ func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
 			tables: ts,
 		}
 	}
-}
-
-func populateTable(headers []string, data [][]string) ([]table.Column, []table.Row) {
-	colWidths := make([]int, len(headers))
-
-	var rows []table.Row
-	for _, stringRow := range data {
-		row := make(table.Row, len(stringRow))
-
-		copy(row, stringRow)
-
-		rows = append(rows, row)
-	}
-
-	for _, row := range rows {
-		for i, cell := range row {
-			cellWidth := lipgloss.Width(cell)
-			if cellWidth > colWidths[i] {
-				colWidths[i] = cellWidth
-			}
-		}
-	}
-
-	var columns []table.Column
-	for i, header := range headers {
-		finalWidth := colWidths[i]
-
-		headerWidth := len(header) + 5
-		if finalWidth < headerWidth {
-			finalWidth = headerWidth
-		}
-		if finalWidth < 15 {
-			finalWidth = 15
-		}
-
-		columns = append(columns, table.Column{
-			Title: header,
-			Width: finalWidth,
-		})
-	}
-
-	return columns, rows
-}
-
-func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
-	return treeview.NewDefaultNodeProvider(
-		treeview.WithIconRule(treeview.PredIsExpanded[string](), "▼"),
-		treeview.WithDefaultIcon[string]("▶"),
-		treeview.WithStyleRule(
-			func(n *treeview.Node[string]) bool { return true },
-			lipgloss.NewStyle().
-				Foreground(whiteText).
-				PaddingLeft(2),
-
-			lipgloss.NewStyle().
-				Foreground(cyberGreen).
-				Background(darkPurple).
-				Bold(true).
-				BorderStyle(lipgloss.NormalBorder()).
-				BorderLeft(true).
-				BorderForeground(hiMagenta).
-				PaddingLeft(1),
-		),
-		treeview.WithFormatter[string](func(node *treeview.Node[string]) (string, bool) {
-			return node.Name(), true
-		}),
-	)
 }

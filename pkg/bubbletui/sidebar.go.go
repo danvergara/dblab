@@ -3,16 +3,54 @@ package bubbletui
 import (
 	"context"
 	"fmt"
+	"io"
+	"strings"
 
 	"github.com/Digital-Shane/treeview"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/google/uuid"
 )
+
+// item implements the Item interface for required for the List Model from bubbles.
+type item string
+
+func (i item) Title() string       { return string(i) }
+func (i item) Description() string { return "" }
+func (i item) FilterValue() string { return string(i) }
+
+// itemDelegate is used to inject styling to the list items.
+// Implements the ItemDelegate interface.
+// It's important to highlight the selected item.
+type itemDelegate struct {
+	styles *styles
+}
+
+func (d itemDelegate) Height() int                             { return 1 }
+func (d itemDelegate) Spacing() int                            { return 0 }
+func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(item)
+	if !ok {
+		return
+	}
+
+	str := fmt.Sprintf("%d. %s", index+1, i)
+
+	fn := d.styles.item.Render
+	if index == m.Index() {
+		fn = func(s ...string) string {
+			return d.styles.selectedItem.Render("> " + strings.Join(s, " "))
+		}
+	}
+
+	fmt.Fprint(w, fn(str))
+}
 
 type selectDatabaseMsg struct {
 	ActiveDatabase string
@@ -294,4 +332,29 @@ func (s SidebarViewport) View() string {
 		sideViewContent = s.dbTree.View()
 	}
 	return sideViewContent
+}
+
+func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
+	return treeview.NewDefaultNodeProvider(
+		treeview.WithIconRule(treeview.PredIsExpanded[string](), "▼"),
+		treeview.WithDefaultIcon[string]("▶"),
+		treeview.WithStyleRule(
+			func(n *treeview.Node[string]) bool { return true },
+			lipgloss.NewStyle().
+				Foreground(whiteText).
+				PaddingLeft(2),
+
+			lipgloss.NewStyle().
+				Foreground(cyberGreen).
+				Background(darkPurple).
+				Bold(true).
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderLeft(true).
+				BorderForeground(hiMagenta).
+				PaddingLeft(1),
+		),
+		treeview.WithFormatter[string](func(node *treeview.Node[string]) (string, bool) {
+			return node.Name(), true
+		}),
+	)
 }

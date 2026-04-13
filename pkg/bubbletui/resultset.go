@@ -16,6 +16,28 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+// tabStyles is for tab styling.
+// The tabs are used to show table metadata.
+type tabStyles struct {
+	inactiveTab lipgloss.Style
+	activeTab   lipgloss.Style
+}
+
+// newTabStyles function retuns a pointer to the tabStyles.
+// It basically defines the default borders for bot active and inactive tabs.
+func newTabStyles() *tabStyles {
+	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
+	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
+	s := new(tabStyles)
+	s.inactiveTab = lipgloss.NewStyle().
+		Border(inactiveTabBorder, true).
+		BorderForeground(darkPurple).
+		Padding(0, 1)
+	s.activeTab = s.inactiveTab.
+		Border(activeTabBorder, true)
+	return s
+}
+
 type ResultSet struct {
 	focused       bool
 	tabs          []string
@@ -266,4 +288,83 @@ func (r *ResultSet) updateTableMetadataOnChange(metadata *client.Metadata) {
 		r.tablesMetadata[3].SetColumns(tableConstraintsColumns)
 		r.tablesMetadata[3].SetRows(tableConstraintsRows)
 	}
+}
+
+// tabBorderWithBottom function is used to define the tab borders.
+// Borders changes whether the tabs is inacative or inactive.
+// Active tab misses the bottom border.
+func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
+	border := lipgloss.RoundedBorder()
+	border.BottomLeft = left
+	border.Bottom = middle
+	border.BottomRight = right
+	return border
+}
+
+// prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
+func setupTable(height int) table.Model {
+	t := table.New(
+		table.WithFocused(true),
+		table.WithHeight(height-2),
+	)
+
+	s := table.DefaultStyles()
+
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(hiMagenta).
+		BorderBottom(true).
+		Foreground(cyberGreen).
+		Bold(true)
+
+	s.Selected = s.Selected.
+		Foreground(black).
+		Background(cyberGreen).
+		Bold(true)
+
+	t.SetStyles(s)
+
+	return t
+}
+
+func populateTable(headers []string, data [][]string) ([]table.Column, []table.Row) {
+	colWidths := make([]int, len(headers))
+
+	var rows []table.Row
+	for _, stringRow := range data {
+		row := make(table.Row, len(stringRow))
+
+		copy(row, stringRow)
+
+		rows = append(rows, row)
+	}
+
+	for _, row := range rows {
+		for i, cell := range row {
+			cellWidth := lipgloss.Width(cell)
+			if cellWidth > colWidths[i] {
+				colWidths[i] = cellWidth
+			}
+		}
+	}
+
+	var columns []table.Column
+	for i, header := range headers {
+		finalWidth := colWidths[i]
+
+		headerWidth := len(header) + 5
+		if finalWidth < headerWidth {
+			finalWidth = headerWidth
+		}
+		if finalWidth < 15 {
+			finalWidth = 15
+		}
+
+		columns = append(columns, table.Column{
+			Title: header,
+			Width: finalWidth,
+		})
+	}
+
+	return columns, rows
 }
