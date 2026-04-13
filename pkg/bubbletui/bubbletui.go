@@ -2,24 +2,18 @@ package bubbletui
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"strings"
 
-	"github.com/Digital-Shane/treeview"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/google/uuid"
 )
 
 type focusState int
@@ -78,7 +72,7 @@ var (
 )
 
 // metadataSucessMsg struct used to retrieve a given table's metadata asynchronously.
-type metadataSucessMsg struct {
+type metadataSuccessMsg struct {
 	metadata *client.Metadata
 }
 
@@ -104,39 +98,6 @@ type querySuccessMsg struct {
 
 // queryErrMsg struct used to report when the query execution fails.
 type queryErrMsg struct{ err error }
-
-// tabStyles is for tab styling.
-// The tabs are used to show table metadata.
-type tabStyles struct {
-	inactiveTab lipgloss.Style
-	activeTab   lipgloss.Style
-}
-
-// newTabStyles function retuns a pointer to the tabStyles.
-// It basically defines the default borders for bot active and inactive tabs.
-func newTabStyles() *tabStyles {
-	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
-	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
-	s := new(tabStyles)
-	s.inactiveTab = lipgloss.NewStyle().
-		Border(inactiveTabBorder, true).
-		BorderForeground(darkPurple).
-		Padding(0, 1)
-	s.activeTab = s.inactiveTab.
-		Border(activeTabBorder, true)
-	return s
-}
-
-// tabBorderWithBottom function is used to define the tab borders.
-// Borders changes whether the tabs is inacative or inactive.
-// Active tab misses the bottom border.
-func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
-	border := lipgloss.RoundedBorder()
-	border.BottomLeft = left
-	border.Bottom = middle
-	border.BottomRight = right
-	return border
-}
 
 // styles struct is for generic styling.
 type styles struct {
@@ -164,75 +125,23 @@ func newStyles() styles {
 	return s
 }
 
-// item implements the Item interface for required for the List Model from bubbles.
-type item string
-
-func (i item) Title() string       { return string(i) }
-func (i item) Description() string { return "" }
-func (i item) FilterValue() string { return string(i) }
-
-// itemDelegate is used to inject styling to the list items.
-// Implements the ItemDelegate interface.
-// It's important to highlight the selected item.
-type itemDelegate struct {
-	styles *styles
-}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := d.styles.item.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return d.styles.selectedItem.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
-}
-
-// Model struct implements the bubbletea's Model interface.
 type Model struct {
 	// database client.
 	c *client.Client
 
-	activeDatabase string
-
-	// tab management.
-	tabs      []string
-	activeTab int
-
 	// models.
-	tablesMetadata  []table.Model
-	viewport        viewport.Model
-	editor          textarea.Model
-	tablesList      list.Model
-	sidebarViewport viewport.Model
-	dbTree          *treeview.TuiTreeModel[string]
+	editor          Editor
+	sidebarViewport SidebarViewport
+	resulstset      ResultSet
+
+	activeDatabase string
 
 	// Manages the focus on the app.
 	focus focusState
 
-	// app dimensions.
-	width  int
-	height int
-
-	// flag used to let the app know that the viewport is ready.
-	ready bool
-
-	// app styles.
-	styles    styles
-	tabStyles *tabStyles
-
 	// widget dimensions.
+	width                 int
+	height                int
 	leftWidth             int
 	rightWidth            int
 	titleHeight           int
@@ -247,10 +156,8 @@ type Model struct {
 	// Key Bindings.
 	bindings *command.TUIKeyBindings
 
-	// Footer string.
 	footer string
 
-	// File used to dump every message for debuggin purposes.
 	dump io.Writer
 }
 
@@ -263,18 +170,21 @@ func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
 			os.Exit(1)
 		}
 	}
-
-	m := &Model{
-		focus:    focusEditor,
-		c:        c,
-		bindings: kb,
-		tabs:     []string{"Data", "Columns", "Indexes", "Constraints"},
-		footer:   footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
-		dump:     dump,
+	ctx := context.Background()
+	svp, err := NewSidebarViewport(ctx, c, kb)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := m.prepare(); err != nil {
-		return nil, err
+	m := &Model{
+		focus:           focusEditor,
+		c:               c,
+		bindings:        kb,
+		editor:          NewEditor(kb),
+		sidebarViewport: svp,
+		resulstset:      NewResultSet(kb),
+		footer:          footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
+		dump:            dump,
 	}
 
 	return m, nil
@@ -288,9 +198,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.dump != nil {
 		spew.Fdump(m.dump, msg)
 	}
-
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
@@ -313,80 +223,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resultSetHeight = availableHeight - m.editorHeight - 6
 		m.resultSetWidth = m.rightWidth - 4
 
-		m.tablesList.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight-2)
-		if m.dbTree != nil {
-			m.dbTree = m.newTuiTreeModel(m.dbTree.Tree, m.sidebarViewportWidth, m.sidebarViewportHeight-2)
-		}
+		m.editor.SetHeight(m.editorHeight)
+		m.editor.SetWidth(m.editorWidth)
 
-		m.sidebarViewport.Height = m.sidebarViewportHeight - 4
-		m.sidebarViewport.Width = m.sidebarViewportWidth - 4
-
-		m.editor.SetWidth(m.editorWidth - 4)
-		m.editor.SetHeight(m.editorHeight - 2)
-
-		if !m.c.ShowDataCatalog() {
-			m.sidebarViewport.SetContent(m.tablesList.View())
-		}
-
-		if !m.ready {
-			m.viewport = viewport.New(m.resultSetWidth-4, m.resultSetHeight)
-			m.ready = true
-		} else {
-			m.viewport.Width = m.resultSetWidth - 4
-			m.viewport.Height = m.resultSetHeight
-		}
-
+		m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
+		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
 		return m, tea.Batch(cmds...)
+
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			return m, tea.Quit
-		case tea.KeyEnter:
-			if m.focus == focusList {
-				if m.c.ShowDataCatalog() {
-					selectedNode := m.dbTree.GetFocusedNode()
-					if selectedNode != nil && selectedNode.Data() != nil {
-						switch *selectedNode.Data() {
-						case "database":
-							m.c.SetActiveDatabase(selectedNode.Name())
-							m.activeDatabase = selectedNode.Name()
-							if selectedNode.IsExpanded() {
-								selectedNode.Collapse()
-								return m, nil
-							} else {
-								selectedNode.Expand()
-								return m, m.fetchTablesCmd(selectedNode.Name())
-							}
-						case "table":
-							return m, m.runTableMetadata(selectedNode.Name())
-						}
-					}
-				} else {
-					return m, m.runTableMetadata("")
-				}
-			}
 		}
+
 		switch {
-		case key.Matches(msg, m.bindings.ExecuteQuery):
-			if m.focus == focusEditor {
-				query := m.editor.Value()
-				if strings.TrimSpace(query) == "" {
-					return m, nil
-				}
-				return m, m.executeQueryCmd(query)
-			}
-		case key.Matches(msg, m.bindings.NextTab):
-			if m.focus == focusTable {
-				m.activeTab = min(m.activeTab+1, len(m.tabs)-1)
-				m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
-				return m, nil
-			}
-		case key.Matches(msg, m.bindings.PrevTab):
-			if m.focus == focusTable {
-				m.activeTab = max(m.activeTab-1, 0)
-				m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
-				return m, nil
-			}
 		case key.Matches(msg, m.bindings.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor
@@ -398,10 +248,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusEditor {
 				m.focus = focusTable
 				m.editor.Blur()
+				m.resulstset.Focus()
 			}
 		case key.Matches(msg, m.bindings.Navigation.Left):
 			if m.focus == focusTable {
 				m.focus = focusList
+				m.resulstset.Blur()
 			}
 
 			if m.focus == focusEditor {
@@ -412,193 +264,46 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusTable {
 				m.focus = focusEditor
 				cmd = m.editor.Focus()
+				m.resulstset.Blur()
 				cmds = append(cmds, cmd)
 			}
 			return m, tea.Batch(cmds...)
-		case key.Matches(msg, m.bindings.BeginningOfLine):
-			if m.focus == focusTable {
-				m.viewport.SetXOffset(0)
-			}
-		case key.Matches(msg, m.bindings.EndOfLine):
-			if m.focus == focusTable {
-				maxWidth := 0
-				// lines := strings.Split(m.tablesMetadata[m.activeTab].View(), "\n")
-				for line := range strings.SplitSeq(m.tablesMetadata[m.activeTab].View(), "\n") {
-					w := lipgloss.Width(line)
-					if w > maxWidth {
-						maxWidth = w
-					}
-				}
-
-				maxOffset := maxWidth - m.viewport.Width
-
-				if maxOffset < 0 {
-					maxOffset = 0
-				}
-
-				m.viewport.SetXOffset(maxOffset)
-			}
-		case key.Matches(msg, m.bindings.PageTop):
-			if m.focus == focusList {
-				if m.c.ShowDataCatalog() {
-					ctx := context.Background()
-
-					for nodeInfo, err := range m.dbTree.AllVisible(ctx) {
-						if err != nil {
-							break
-						}
-
-						_, _ = m.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
-						break
-					}
-					return m, nil
-				} else {
-					m.tablesList.Select(0)
-					m.sidebarViewport.SetContent(m.tablesList.View())
-					return m, nil
-				}
-			}
-		case key.Matches(msg, m.bindings.PageBottom):
-			if m.focus == focusTable {
-				var tableCmd tea.Cmd
-				m.tablesMetadata[m.activeTab], tableCmd = m.tablesMetadata[m.activeTab].Update(msg)
-				m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
-				return m, tableCmd
-			}
-			if m.focus == focusList {
-				if m.c.ShowDataCatalog() {
-					ctx := context.Background()
-
-					var bottomNodeID string
-					var found bool
-
-					for nodeInfo, err := range m.dbTree.AllVisible(ctx) {
-						if err != nil {
-							break
-						}
-
-						bottomNodeID = nodeInfo.Node.ID()
-						found = true
-					}
-
-					if found {
-						_, _ = m.dbTree.SetFocusedID(ctx, bottomNodeID)
-					}
-					return m, nil
-				} else {
-					totalItems := len(m.tablesList.Items())
-					if totalItems > 0 {
-						m.tablesList.Select(totalItems - 1)
-					}
-					m.sidebarViewport.SetContent(m.tablesList.View())
-				}
-			}
-			return m, nil
 		}
-		switch msg.String() {
-		case "left", "h":
-			if m.focus == focusTable {
-				m.viewport.ScrollLeft(4)
-			}
-		case "right", "l":
-			if m.focus == focusTable {
-				m.viewport.ScrollRight(4)
-			}
-		}
+	case selectDatabaseMsg:
+		m.activeDatabase = msg.ActiveDatabase
+		m.c.SetActiveDatabase(msg.ActiveDatabase)
+		return m, m.fetchTablesCmd(msg.ActiveDatabase)
+	case selectTableMsg:
+		return m, m.runTableMetadata(msg.Table)
+	case executeQueryMsg:
+		return m, m.executeQueryCmd(msg.Query)
+	case metadataErrMsg, metadataSuccessMsg, tablesFetchError, tablesFetchedMsg, queryErrMsg, querySuccessMsg:
+		m.resulstset, cmd = m.resulstset.Update(msg)
+		cmds = append(cmds, cmd)
+		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
-		switch m.focus {
-		case focusList:
-			if m.c.ShowDataCatalog() {
-				if m.dbTree != nil {
-					updatedModel, treeCmd := m.dbTree.Update(msg)
-					if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[string]); ok {
-						m.dbTree = newTreeModel
-					}
-					cmd = treeCmd
-				}
-			} else {
-				m.tablesList, cmd = m.tablesList.Update(msg)
-				m.sidebarViewport.SetContent(m.tablesList.View())
-			}
-			cmds = append(cmds, cmd)
-			return m, tea.Batch(cmds...)
-		case focusEditor:
-			m.editor, cmd = m.editor.Update(msg)
-			cmds = append(cmds, cmd)
-			return m, tea.Batch(cmds...)
-		case focusTable:
-			if m.ready {
-				m.viewport, cmd = m.viewport.Update(msg)
-				cmds = append(cmds, cmd)
-			}
-			m.tablesMetadata[m.activeTab], cmd = m.tablesMetadata[m.activeTab].Update(msg)
-			m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
-			cmds = append(cmds, cmd)
-			return m, tea.Batch(cmds...)
-		}
-
-	case querySuccessMsg:
-		m.clearTables()
-		tableContentColumns, tableContentRows := populateTable(msg.columns, msg.rows)
-		m.tablesMetadata[0].SetColumns(tableContentColumns)
-		m.tablesMetadata[0].SetRows(tableContentRows)
-		m.viewport.SetContent(m.tablesMetadata[0].View())
-
-		if len(msg.tables) > 0 {
-			tables := make([]list.Item, 0)
-			for _, ta := range msg.tables {
-				tables = append(tables, item(ta))
-			}
-			m.tablesList.SetItems(tables)
-		}
-
-		m.viewport.GotoTop()
-		m.focus = focusTable
-
-		return m, nil
-	case queryErrMsg:
-		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
-		styledError := errorStyle.Render(errorText)
-		m.viewport.SetContent(styledError)
-		m.viewport.GotoTop()
-	case metadataSucessMsg:
-		m.updateTableMetadataOnChange(msg.metadata)
-		m.viewport.SetContent(m.tablesMetadata[m.activeTab].View())
-		m.viewport.GotoTop()
-		m.focus = focusTable
-	case metadataErrMsg:
-		errorText := fmt.Sprintf("❌ failed to get table metadata\n\n%s", msg.err.Error())
-		styledError := errorStyle.Render(errorText)
-		m.viewport.SetContent(styledError)
-		m.viewport.GotoTop()
-	case tablesFetchedMsg:
-		selectedNode := m.dbTree.GetFocusedNode()
-		if selectedNode != nil {
-			tables := make([]*treeview.Node[string], len(msg.tables))
-			for i, t := range msg.tables {
-				nodeID := uuid.New().String()
-				tables[i] = treeview.NewNode(fmt.Sprintf("%s-%s", t, nodeID), t, "table")
-			}
-			selectedNode.SetChildren(tables)
-		}
-	case tablesFetchError:
-		errorText := fmt.Sprintf("❌ failed to retrieve the current database tables\n\n%s", msg.err.Error())
-		styledError := errorStyle.Render(errorText)
-		m.viewport.SetContent(styledError)
-		m.viewport.GotoTop()
+	switch m.focus {
+	case focusEditor:
+		m.editor, cmd = m.editor.Update(msg)
+		cmds = append(cmds, cmd)
+	case focusList:
+		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
+		cmds = append(cmds, cmd)
+	case focusTable:
+		m.resulstset, cmd = m.resulstset.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	var (
-		renderedTabs []string
-		rightText    string
-	)
+	var rightText string
+
 	listBorder := darkPurple
 	textAreaBorder := darkPurple
-	tableBorder := darkPurple
 
 	switch m.focus {
 	case focusList:
@@ -606,13 +311,12 @@ func (m Model) View() string {
 	case focusEditor:
 		textAreaBorder = neonPurple
 	case focusTable:
-		tableBorder = neonPurple
 	}
 
-	doc := strings.Builder{}
-	s := m.tabStyles
-
-	if m.c.ShowDataCatalog() && m.activeDatabase != "" {
+	if m.c.ShowDataCatalog() {
+		if m.activeDatabase == "" {
+			m.activeDatabase = m.sidebarViewport.ActiveDatabase()
+		}
 		label := activeLabelStyle.Render("Active: ")
 		dbName := dbNameStyle.Render(m.activeDatabase + " ")
 		rightText = label + dbName
@@ -630,7 +334,6 @@ func (m Model) View() string {
 		lipgloss.Left,
 		fullFooter,
 	)
-
 	dblabFigure := figure.NewFigure("dblab", "", true)
 
 	tightBlock := lipgloss.NewStyle().
@@ -642,64 +345,11 @@ func (m Model) View() string {
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
-	sideViewContent := m.sidebarViewport.View()
-	if m.c.ShowDataCatalog() {
-		sideViewContent = m.dbTree.View()
-	}
-	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(sideViewContent)
-
 	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
-	styledResultSet := resultSetStyle.BorderForeground(tableBorder).Width(m.resultSetWidth).Height(m.resultSetHeight).UnsetBorderTop()
-
-	numTabs := len(m.tabs)
-	viewportWidth := m.resultSetWidth - 6
-
-	baseWidth := viewportWidth / numTabs
-	remainder := viewportWidth % numTabs
-
-	for i, t := range m.tabs {
-		tabWidth := baseWidth
-
-		if i < remainder {
-			tabWidth++
-		}
-
-		var style lipgloss.Style
-		isFirst, isLast, isActive := i == 0, i == len(m.tabs)-1, i == m.activeTab
-
-		if isActive {
-			style = s.activeTab.Width(tabWidth)
-			if m.focus == focusTable {
-				style = style.BorderForeground(neonPurple)
-			}
-		} else {
-			style = s.inactiveTab.Width(tabWidth)
-		}
-
-		border, _, _, _, _ := style.GetBorder()
-		if isFirst && isActive {
-			border.BottomLeft = "│"
-		} else if isFirst && !isActive {
-			border.BottomLeft = "│"
-		} else if isLast && isActive {
-			border.BottomRight = "│"
-		} else if isLast && !isActive {
-			border.BottomRight = "┤"
-		}
-
-		style = style.Border(border)
-		renderedTabs = append(renderedTabs, style.Render(t))
-	}
-
-	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
-
-	lipgloss.JoinVertical(lipgloss.Left, row, m.viewport.View())
-	doc.WriteString(row)
-	doc.WriteString("\n")
-	doc.WriteString(styledResultSet.Render(m.viewport.View()))
+	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
 
 	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, styledTableList)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, doc.String())
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
 
@@ -716,202 +366,16 @@ func (m *Model) Run() error {
 	return nil
 }
 
-// updateStyle setup the styles across the client.
-func (m *Model) updateStyles() {
-	m.tabStyles = newTabStyles()
-	m.styles = newStyles()
-	m.tablesList.Styles.Title = m.styles.title
-	m.tablesList.Styles.PaginationStyle = m.styles.pagination
-	m.tablesList.Styles.HelpStyle = m.styles.help
-	m.tablesList.SetDelegate(itemDelegate{styles: &m.styles})
-}
-
-// prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
-func (m *Model) prepare() error {
-	m.setupTable()
-	m.setupTable()
-	m.setupQueries()
-	if err := m.setupDatabaseCatalog(); err != nil {
-		return err
-	}
-	m.updateStyles()
-	return nil
-}
-
-func (m *Model) setupTable() {
-	columns := setupTable(m.resultSetHeight - 2)
-	data := setupTable(m.resultSetHeight - 2)
-	constraints := setupTable(m.resultSetHeight)
-	indexes := setupTable(m.resultSetHeight)
-	m.tablesMetadata = []table.Model{
-		data,
-		columns,
-		indexes,
-		constraints,
-	}
-}
-
-func (m *Model) clearTables() {
-	for i := range m.tablesMetadata {
-		m.tablesMetadata[i] = setupTable(m.resultSetHeight)
-	}
-}
-
-func setupTable(height int) table.Model {
-	t := table.New(
-		table.WithFocused(true),
-		table.WithHeight(height-2),
-	)
-
-	s := table.DefaultStyles()
-
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(hiMagenta).
-		BorderBottom(true).
-		Foreground(cyberGreen).
-		Bold(true)
-
-	s.Selected = s.Selected.
-		Foreground(black).
-		Background(cyberGreen).
-		Bold(true)
-
-	t.SetStyles(s)
-
-	return t
-}
-
-// setupDatabaseCatalog method shows the initial database/tables catalog the user has access to.
-// If the user wants to see the database catalog, the client will present a tree view, with a graph with databases and tables.
-// Otherwise, the user will see a list of tables of the database connected.
-func (m *Model) setupDatabaseCatalog() error {
-	ctx := context.Background()
-	m.sidebarViewport = viewport.New(0, 0)
-	m.sidebarViewport.KeyMap = viewport.KeyMap{}
-
-	if m.c.ShowDataCatalog() {
-		dbs, err := m.c.ShowDatabases()
-		if err != nil {
-			return err
-		}
-		rootID := uuid.New().String()
-		root := treeview.NewNode(fmt.Sprintf("%s-%s", "db", rootID), "db", "root")
-		for _, db := range dbs {
-			nodeID := uuid.New().String()
-			root.AddChild(treeview.NewNode(fmt.Sprintf("%s-%s", db, nodeID), db, "database"))
-		}
-
-		root.Expand()
-
-		treeRoot := treeview.NewTree([]*treeview.Node[string]{root}, treeview.WithProvider(createCyberpunkProvider()))
-
-		m.dbTree = treeview.NewTuiTreeModel(treeRoot,
-			treeview.WithTuiWidth[string](0),
-			treeview.WithTuiHeight[string](80),
-		)
-
-		// If there are databases, choose the first one as the default active one.
-		if len(dbs) > 0 {
-			var i int
-
-			for n, err := range m.dbTree.AllVisible(ctx) {
-				if err != nil {
-					break
-				}
-
-				if i == 1 {
-					m.c.SetActiveDatabase(n.Node.Name())
-					m.activeDatabase = n.Node.Name()
-					_, _ = m.dbTree.SetFocusedID(ctx, n.Node.ID())
-					break
-				}
-				i++
-			}
-		}
-	} else {
-		ts, err := m.c.ShowTables()
-		if err != nil {
-			return err
-		}
-
-		tables := make([]list.Item, 0)
-		for _, ta := range ts {
-			tables = append(tables, item(ta))
-		}
-
-		l := list.New(tables, itemDelegate{}, 0, 0)
-
-		l.Title = "Tables"
-		l.SetShowStatusBar(false)
-		l.SetFilteringEnabled(false)
-		l.SetShowHelp(false)
-		m.tablesList = l
-		m.tablesList.KeyMap.Quit.Unbind()
-	}
-
-	return nil
-}
-
-func (m *Model) setupQueries() {
-	ti := textarea.New()
-	ti.Placeholder = "Search or enter text..."
-	ti.FocusedStyle.Text = lipgloss.NewStyle().Foreground(mutedGreen)
-	ti.BlurredStyle.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
-	ti.Focus()
-	m.editor = ti
-}
-
-// updateTableMetadataOnChange method is used to print the table metadata retrieved asynchronously.
-func (m *Model) updateTableMetadataOnChange(metadata *client.Metadata) {
-	if metadata != nil {
-		m.clearTables()
-
-		// table data.
-		tableContentColumns, tableContentRows := populateTable(metadata.TableContent.Columns, metadata.TableContent.Rows)
-		m.tablesMetadata[0].SetColumns(tableContentColumns)
-		m.tablesMetadata[0].SetRows(tableContentRows)
-
-		// table columns.
-		tableStructureColumns, tableStructureRows := populateTable(metadata.Structure.Columns, metadata.Structure.Rows)
-		m.tablesMetadata[1].SetColumns(tableStructureColumns)
-		m.tablesMetadata[1].SetRows(tableStructureRows)
-
-		// table indexes.
-		tableIndexColumns, tableIndexRows := populateTable(metadata.Indexes.Columns, metadata.Indexes.Rows)
-		m.tablesMetadata[2].SetColumns(tableIndexColumns)
-		m.tablesMetadata[2].SetRows(tableIndexRows)
-
-		// table constraints.
-		tableConstraintsColumns, tableConstraintsRows := populateTable(metadata.Constraints.Columns, metadata.Constraints.Rows)
-		m.tablesMetadata[3].SetColumns(tableConstraintsColumns)
-		m.tablesMetadata[3].SetRows(tableConstraintsRows)
-	}
-}
-
 // runTableMetadata gets the given table's metadata asynchronously.
 // If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
 func (m *Model) runTableMetadata(tableName string) tea.Cmd {
 	return func() tea.Msg {
-		if tableName == "" {
-			if len(m.tablesList.Items()) == 0 {
-				return metadataErrMsg{fmt.Errorf("empty list of tables")}
-			}
-			tableItem := m.tablesList.Items()[m.tablesList.Index()]
-			i, ok := tableItem.(item)
-			if !ok {
-				return metadataErrMsg{fmt.Errorf("not valid tables list item %d", m.tablesList.Index())}
-			}
-
-			tableName = i.Title()
-		}
-
 		metadata, err := m.c.Metadata(tableName)
 		if err != nil {
 			return metadataErrMsg{err}
 		}
 
-		return metadataSucessMsg{metadata}
+		return metadataSuccessMsg{metadata}
 	}
 }
 
@@ -955,86 +419,4 @@ func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
 			tables: ts,
 		}
 	}
-}
-
-func (m *Model) newTuiTreeModel(tree *treeview.Tree[string], width, height int) *treeview.TuiTreeModel[string] {
-	// Create custom key map to avoid key conflicts
-	keyMap := treeview.DefaultKeyMap()
-	keyMap.SearchStart = []string{"/"}
-	keyMap.Up = []string{"up", "k", "w"}
-	keyMap.Down = []string{"down", "j", "s"}
-
-	return treeview.NewTuiTreeModel(tree,
-		treeview.WithTuiWidth[string](width),
-		treeview.WithTuiHeight[string](height),
-		treeview.WithTuiKeyMap[string](keyMap),
-		treeview.WithTuiDisableNavBar[string](true),
-	)
-}
-
-func populateTable(headers []string, data [][]string) ([]table.Column, []table.Row) {
-	colWidths := make([]int, len(headers))
-
-	var rows []table.Row
-	for _, stringRow := range data {
-		row := make(table.Row, len(stringRow))
-
-		copy(row, stringRow)
-
-		rows = append(rows, row)
-	}
-
-	for _, row := range rows {
-		for i, cell := range row {
-			cellWidth := lipgloss.Width(cell)
-			if cellWidth > colWidths[i] {
-				colWidths[i] = cellWidth
-			}
-		}
-	}
-
-	var columns []table.Column
-	for i, header := range headers {
-		finalWidth := colWidths[i]
-
-		headerWidth := len(header) + 5
-		if finalWidth < headerWidth {
-			finalWidth = headerWidth
-		}
-		if finalWidth < 15 {
-			finalWidth = 15
-		}
-
-		columns = append(columns, table.Column{
-			Title: header,
-			Width: finalWidth,
-		})
-	}
-
-	return columns, rows
-}
-
-func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
-	return treeview.NewDefaultNodeProvider(
-		treeview.WithIconRule(treeview.PredIsExpanded[string](), "▼"),
-		treeview.WithDefaultIcon[string]("▶"),
-		treeview.WithStyleRule(
-			func(n *treeview.Node[string]) bool { return true },
-			lipgloss.NewStyle().
-				Foreground(whiteText).
-				PaddingLeft(2),
-
-			lipgloss.NewStyle().
-				Foreground(cyberGreen).
-				Background(darkPurple).
-				Bold(true).
-				BorderStyle(lipgloss.NormalBorder()).
-				BorderLeft(true).
-				BorderForeground(hiMagenta).
-				PaddingLeft(1),
-		),
-		treeview.WithFormatter[string](func(node *treeview.Node[string]) (string, bool) {
-			return node.Name(), true
-		}),
-	)
 }
