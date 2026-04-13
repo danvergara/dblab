@@ -11,7 +11,7 @@ import (
 type App struct {
 	c  *client.Client
 	sc *sshdb.SSHConfig
-	m  *bubbletui.ModelV2
+	m  *bubbletui.Model
 }
 
 // New bootstrap a new application.
@@ -40,7 +40,7 @@ func New(opts command.Options) (*App, error) {
 		return nil, err
 	}
 
-	m, err := bubbletui.NewModelV2(c, &opts.TUIKeyBindings)
+	m, err := bubbletui.NewModel(c, &opts.TUIKeyBindings)
 	if err != nil {
 		return nil, err
 	}
