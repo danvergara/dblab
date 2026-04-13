@@ -376,6 +376,9 @@ func (m ModelV2) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.executeQueryCmd(msg.Query)
 	case metadataErrMsg, metadataSuccessMsg, tablesFetchError, tablesFetchedMsg, queryErrMsg, querySuccessMsg:
 		m.resulstset, cmd = m.resulstset.Update(msg)
+		cmds = append(cmds, cmd)
+		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	switch m.focus {

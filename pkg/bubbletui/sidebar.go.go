@@ -260,6 +260,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 			s.tablesList, cmd = s.tablesList.Update(msg)
 			s.sidebarViewport.SetContent(s.tablesList.View())
 		}
+		cmds = append(cmds, cmd)
 
 	case tablesFetchedMsg:
 		selectedNode := s.dbTree.GetFocusedNode()
@@ -271,11 +272,19 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 			}
 			selectedNode.SetChildren(tables)
 		}
-
-		cmds = append(cmds, cmd)
-		return s, tea.Batch(cmds...)
+		return s, nil
+	case querySuccessMsg:
+		if len(msg.tables) > 0 {
+			tables := make([]list.Item, 0)
+			for _, ta := range msg.tables {
+				tables = append(tables, item(ta))
+			}
+			s.tablesList.SetItems(tables)
+		}
+		return s, nil
 	}
-	return s, nil
+
+	return s, tea.Batch(cmds...)
 }
 
 func (s SidebarViewport) View() string {
