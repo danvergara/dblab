@@ -72,3 +72,10 @@ keybindings:
     down: 'ctrl+j'
     left: 'ctrl+h'
     right: 'ctrl+l'
+  editor:
+    insert: 'i'
+    normal: 'esc'
+    up: 'k'
+    down: 'j'
+    left: 'h'
+    right: 'l'
