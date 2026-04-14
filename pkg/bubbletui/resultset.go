@@ -45,14 +45,14 @@ type ResultSet struct {
 	width, height int
 	tabStyles     *tabStyles
 
-	bindings *command.TUIKeyBindings
+	bindings *command.TUIKeyMap
 
 	viewport       viewport.Model
 	tablesMetadata []table.Model
 	dump           io.Writer
 }
 
-func NewResultSet(kb *command.TUIKeyBindings) ResultSet {
+func NewResultSet(kb *command.TUIKeyMap) ResultSet {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error

@@ -30,7 +30,7 @@ type Config struct {
 	Limit    uint `fig:"limit" default:"100"`
 }
 
-type KeyBindingsConfig struct {
+type KeyMapConfig struct {
 	KeyBindings KeyBindings
 }
 
@@ -170,9 +170,9 @@ func Init(configName string) (command.Options, error) {
 	return opts, nil
 }
 
-func SetupKeybindings() (command.TUIKeyBindings, error) {
-	var kbc KeyBindingsConfig
-	var tkb command.TUIKeyBindings
+func SetupKeyMap() (command.TUIKeyMap, error) {
+	var kbc KeyMapConfig
+	var tkb command.TUIKeyMap
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
@@ -188,7 +188,7 @@ func SetupKeybindings() (command.TUIKeyBindings, error) {
 		return tkb, err
 	}
 
-	tkb = command.TUIKeyBindings{
+	tkb = command.TUIKeyMap{
 		ExecuteQuery:    key.NewBinding(key.WithKeys(kbc.KeyBindings.ExecuteQuery), key.WithHelp(kbc.KeyBindings.ExecuteQuery, "execute query")),
 		NextTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab")),
 		PrevTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab")),

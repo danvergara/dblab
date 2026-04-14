@@ -67,13 +67,13 @@ type SidebarViewport struct {
 	sidebarViewport viewport.Model
 	dbTree          *treeview.TuiTreeModel[string]
 
-	bindings *command.TUIKeyBindings
+	bindings *command.TUIKeyMap
 
 	activeDatabase string
 	width, height  int
 }
 
-func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKeyBindings) (SidebarViewport, error) {
+func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKeyMap) (SidebarViewport, error) {
 	svp := SidebarViewport{c: c, bindings: kb}
 
 	svp.sidebarViewport = viewport.New(0, 0)

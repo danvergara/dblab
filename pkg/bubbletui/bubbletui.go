@@ -154,14 +154,14 @@ type Model struct {
 	editorWidth           int
 
 	// Key Bindings.
-	bindings *command.TUIKeyBindings
+	bindings *command.TUIKeyMap
 
 	footer string
 
 	dump io.Writer
 }
 
-func NewModel(c *client.Client, kb *command.TUIKeyBindings) (*Model, error) {
+func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error

@@ -41,15 +41,15 @@ type Options struct {
 	TrustServerCertificate string
 	ConnectionTimeout      string
 	// TUI keybidings.
-	TUIKeyBindings TUIKeyBindings
+	TUIKeyBindings TUIKeyMap
 }
 
 // UpdateKeybindings method updates the TUIKeyBindings field, since the keybidings configuration parted ways with the connection configuration.
-func (o *Options) UpdateKeybindings(k TUIKeyBindings) {
+func (o *Options) UpdateKeybindings(k TUIKeyMap) {
 	o.TUIKeyBindings = k
 }
 
-type TUIKeyBindings struct {
+type TUIKeyMap struct {
 	ExecuteQuery    key.Binding
 	NextTab         key.Binding
 	PrevTab         key.Binding

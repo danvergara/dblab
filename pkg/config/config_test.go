@@ -173,7 +173,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestSetupKeybindings(t *testing.T) {
-	kb, err := config.SetupKeybindings()
+	kb, err := config.SetupKeyMap()
 	assert.NoError(t, err)
 
 	assert.Contains(t, kb.ExecuteQuery.Keys(), "ctrl+e")
