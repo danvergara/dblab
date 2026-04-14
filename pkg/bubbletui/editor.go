@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,17 +14,25 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+type Mode int
+
+const (
+	NormalMode Mode = iota // 0
+	InsertMode             // 1
+)
+
 type executeQueryMsg struct {
 	Query string
 }
 
 type Editor struct {
 	editor   textarea.Model
-	bindings *command.TUIKeyBindings
+	bindings *command.TUIKeyMap
+	mode     Mode
 	dump     io.Writer
 }
 
-func NewEditor(kb *command.TUIKeyBindings) Editor {
+func NewEditor(kb *command.TUIKeyMap) Editor {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -68,8 +77,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, e.bindings.ExecuteQuery):
+		if key.Matches(msg, e.bindings.ExecuteQuery) {
 			query := e.editor.Value()
 			if strings.TrimSpace(query) == "" {
 				return e, nil
@@ -82,9 +90,45 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			return e, fireQueryCmd
 		}
 
-		e.editor, cmd = e.editor.Update(msg)
+		switch e.mode {
+		case NormalMode:
+			switch {
+			case key.Matches(msg, e.bindings.Editor.Insert):
+				e.mode = InsertMode
+				e.editor.Cursor.SetMode(cursor.CursorBlink)
+				return e, nil
+
+			case key.Matches(msg, e.bindings.Editor.Left):
+				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyLeft})
+				return e, cmd
+
+			case key.Matches(msg, e.bindings.Editor.Right):
+				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyRight})
+				return e, cmd
+
+			case key.Matches(msg, e.bindings.Editor.Down):
+				e.editor.CursorDown()
+				return e, nil
+
+			case key.Matches(msg, e.bindings.Editor.Up):
+				e.editor.CursorUp()
+				return e, nil
+			}
+
+			return e, nil
+		case InsertMode:
+			switch {
+			case key.Matches(msg, e.bindings.Editor.Normal):
+				e.mode = NormalMode
+				e.editor.Cursor.SetMode(cursor.CursorStatic)
+				// Optional: move back one space on escape
+				e.editor, _ = e.editor.Update(tea.KeyMsg{Type: tea.KeyLeft})
+				return e, nil
+			}
+		}
 	}
 
+	e.editor, cmd = e.editor.Update(msg)
 	return e, cmd
 }
 
