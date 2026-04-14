@@ -26,10 +26,12 @@ type executeQueryMsg struct {
 }
 
 type Editor struct {
-	editor   textarea.Model
-	bindings *command.TUIKeyMap
-	mode     Mode
-	dump     io.Writer
+	editor     textarea.Model
+	bindings   *command.TUIKeyMap
+	mode       Mode
+	register   string
+	pendingCmd string
+	dump       io.Writer
 }
 
 func NewEditor(kb *command.TUIKeyMap) Editor {
@@ -92,6 +94,43 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 
 		switch e.mode {
 		case NormalMode:
+			char := msg.String()
+			if e.pendingCmd != "" {
+				switch e.pendingCmd {
+				case "d":
+					if char == "d" {
+						e.deleteCurrentLine()
+					}
+					e.pendingCmd = ""
+					return e, nil
+
+				case "y":
+					if char == "y" {
+						e.yankCurrentLine()
+					}
+					e.pendingCmd = ""
+					return e, nil
+				}
+			}
+
+			switch char {
+			case "d", "y":
+				e.pendingCmd = char
+				return e, nil
+			case "p":
+				e.pasteAfter()
+				return e, nil
+			case "x":
+				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyDelete})
+				return e, cmd
+			case "0":
+				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyHome})
+				return e, cmd
+			case "$":
+				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyEnd})
+				return e, cmd
+			}
+
 			switch {
 			case key.Matches(msg, e.bindings.Editor.Insert):
 				e.mode = InsertMode
@@ -134,4 +173,40 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 
 func (e Editor) View() string {
 	return e.editor.View()
+}
+
+func (e *Editor) yankCurrentLine() {
+	lines := strings.Split(e.editor.Value(), "\n")
+	row := e.editor.Line()
+
+	if row >= 0 && row < len(lines) {
+		e.register = lines[row]
+	}
+}
+
+func (e *Editor) deleteCurrentLine() {
+	lines := strings.Split(e.editor.Value(), "\n")
+	row := e.editor.Line()
+
+	if row >= 0 && row < len(lines) {
+		e.register = lines[row]
+
+		lines = append(lines[:row], lines[row+1:]...)
+
+		e.editor.SetValue(strings.Join(lines, "\n"))
+	}
+}
+
+func (e *Editor) pasteAfter() {
+	if e.register == "" {
+		return
+	}
+
+	lines := strings.Split(e.editor.Value(), "\n")
+	row := e.editor.Line()
+
+	if row >= 0 && row < len(lines) {
+		lines = append(lines[:row+1], append([]string{e.register}, lines[row+1:]...)...)
+		e.editor.SetValue(strings.Join(lines, "\n"))
+	}
 }
