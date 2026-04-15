@@ -50,7 +50,6 @@ func (o *Options) UpdateKeybindings(k TUIKeyMap) {
 }
 
 type TUIKeyMap struct {
-	ExecuteQuery    key.Binding
 	NextTab         key.Binding
 	PrevTab         key.Binding
 	PageTop         key.Binding
@@ -85,10 +84,6 @@ type TUINavigationKeyMap struct {
 
 func DefaultKeyMap() TUIKeyMap {
 	return TUIKeyMap{
-		ExecuteQuery: key.NewBinding(
-			key.WithKeys("ctrl+e"),
-			key.WithHelp("ctrl+e", "execute query"),
-		),
 		NextTab: key.NewBinding(
 			key.WithKeys("tab"),
 			key.WithHelp("tab", "next tab"),

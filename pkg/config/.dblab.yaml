@@ -64,7 +64,6 @@ database:
     ssh-key-pass: "hiuwiewnc092"
 limit: 50
 keybindings:
-  execute-query: 'ctrl+e'
   next-tab: 'tab'
   prev-tab: 'shift+tab'
   navigation:
@@ -73,6 +72,7 @@ keybindings:
     left: 'ctrl+h'
     right: 'ctrl+l'
   editor:
+    execute-query: 'ctrl+e'
     insert: 'i'
     normal: 'esc'
     up: 'k'

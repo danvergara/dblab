@@ -176,7 +176,6 @@ func TestSetupKeybindings(t *testing.T) {
 	kb, err := config.SetupKeyMap()
 	assert.NoError(t, err)
 
-	assert.Contains(t, kb.ExecuteQuery.Keys(), "ctrl+e")
 	assert.Contains(t, kb.NextTab.Keys(), "tab")
 	assert.Contains(t, kb.PrevTab.Keys(), "shift+tab")
 	assert.Contains(t, kb.Navigation.Up.Keys(), "ctrl+k")
@@ -187,4 +186,12 @@ func TestSetupKeybindings(t *testing.T) {
 	assert.Contains(t, kb.PageTop.Keys(), "g")
 	assert.Contains(t, kb.EndOfLine.Keys(), "$")
 	assert.Contains(t, kb.BeginningOfLine.Keys(), "0")
+
+	assert.Contains(t, kb.Editor.ExecuteQuery.Keys(), "ctrl+e")
+	assert.Contains(t, kb.Editor.Up.Keys(), "k")
+	assert.Contains(t, kb.Editor.Down.Keys(), "j")
+	assert.Contains(t, kb.Editor.Right.Keys(), "l")
+	assert.Contains(t, kb.Editor.Left.Keys(), "h")
+	assert.Contains(t, kb.Editor.Insert.Keys(), "i")
+	assert.Contains(t, kb.Editor.Normal.Keys(), "esc")
 }

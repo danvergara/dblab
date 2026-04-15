@@ -73,7 +73,6 @@ type Database struct {
 }
 
 type KeyBindings struct {
-	ExecuteQuery    string `fig:"execute-query" default:"ctrl+e"`
 	NextTab         string `fig:"next-tab"      default:"tab"`
 	PrevTab         string `fig:"prev-tab"      default:"shift+tab"`
 	PageTop         string `fig:"page-top"      default:"g"`
@@ -205,7 +204,6 @@ func SetupKeyMap() (command.TUIKeyMap, error) {
 	}
 
 	tkb = command.TUIKeyMap{
-		ExecuteQuery:    key.NewBinding(key.WithKeys(kbc.KeyBindings.ExecuteQuery), key.WithHelp(kbc.KeyBindings.ExecuteQuery, "execute query")),
 		NextTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab")),
 		PrevTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab")),
 		PageTop:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PageTop), key.WithHelp(kbc.KeyBindings.PageTop, "go to top")),

@@ -79,7 +79,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if key.Matches(msg, e.bindings.ExecuteQuery) {
+		if key.Matches(msg, e.bindings.Editor.ExecuteQuery) {
 			query := e.editor.Value()
 			if strings.TrimSpace(query) == "" {
 				return e, nil
