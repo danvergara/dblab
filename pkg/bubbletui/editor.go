@@ -17,8 +17,8 @@ import (
 type Mode int
 
 const (
-	NormalMode Mode = iota // 0
-	InsertMode             // 1
+	NormalMode Mode = iota
+	InsertMode
 )
 
 type executeQueryMsg struct {
