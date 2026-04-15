@@ -112,7 +112,7 @@ func NewRootCmd() *cobra.Command {
 			// If the --keybindings flag is set, fill the keybindings with the ones fonud in the config file.
 			// This is safe to do even if they're missing in the config files, because the config package has default values for it.
 			if keybindings {
-				kb, err = config.SetupKeybindings()
+				kb, err = config.SetupKeyMap()
 				if err != nil {
 					return err
 				}

@@ -41,38 +41,49 @@ type Options struct {
 	TrustServerCertificate string
 	ConnectionTimeout      string
 	// TUI keybidings.
-	TUIKeyBindings TUIKeyBindings
+	TUIKeyBindings TUIKeyMap
 }
 
 // UpdateKeybindings method updates the TUIKeyBindings field, since the keybidings configuration parted ways with the connection configuration.
-func (o *Options) UpdateKeybindings(k TUIKeyBindings) {
+func (o *Options) UpdateKeybindings(k TUIKeyMap) {
 	o.TUIKeyBindings = k
 }
 
-type TUIKeyBindings struct {
-	ExecuteQuery    key.Binding
+type TUIKeyMap struct {
 	NextTab         key.Binding
 	PrevTab         key.Binding
 	PageTop         key.Binding
 	PageBottom      key.Binding
 	EndOfLine       key.Binding
 	BeginningOfLine key.Binding
-	Navigation      TUINavigationBindgins
+	Navigation      TUINavigationKeyMap
+	Editor          EditorKeyMap
 }
 
-type TUINavigationBindgins struct {
+type EditorKeyMap struct {
+	// Normal Mode Navigation.
+	Up    key.Binding
+	Down  key.Binding
+	Left  key.Binding
+	Right key.Binding
+
+	// Mode Switching.
+	Insert key.Binding
+	Normal key.Binding
+
+	// Actions.
+	ExecuteQuery key.Binding
+}
+
+type TUINavigationKeyMap struct {
 	Up    key.Binding
 	Down  key.Binding
 	Left  key.Binding
 	Right key.Binding
 }
 
-func DefaultKeyMap() TUIKeyBindings {
-	return TUIKeyBindings{
-		ExecuteQuery: key.NewBinding(
-			key.WithKeys("ctrl+e"),
-			key.WithHelp("ctrl+e", "execute query"),
-		),
+func DefaultKeyMap() TUIKeyMap {
+	return TUIKeyMap{
 		NextTab: key.NewBinding(
 			key.WithKeys("tab"),
 			key.WithHelp("tab", "next tab"),
@@ -97,7 +108,7 @@ func DefaultKeyMap() TUIKeyBindings {
 			key.WithKeys("$"),
 			key.WithHelp("$", "navigate all the way to the right of the table"),
 		),
-		Navigation: TUINavigationBindgins{
+		Navigation: TUINavigationKeyMap{
 			Up: key.NewBinding(
 				key.WithKeys("ctrl+k"),
 				key.WithKeys("ctrl+k", "Toggle to the panel above"),
@@ -113,6 +124,40 @@ func DefaultKeyMap() TUIKeyBindings {
 			Right: key.NewBinding(
 				key.WithKeys("ctrl+l"),
 				key.WithHelp("ctrl+l", "Toggle to the panel on the right"),
+			),
+		},
+		Editor: EditorKeyMap{
+			Up: key.NewBinding(
+				key.WithKeys("k"),
+				key.WithHelp("k", "up"),
+			),
+			Down: key.NewBinding(
+				key.WithKeys("j"),
+				key.WithHelp("j", "down"),
+			),
+			Left: key.NewBinding(
+				key.WithKeys("h"),
+				key.WithHelp("h", "left"),
+			),
+			Right: key.NewBinding(
+				key.WithKeys("l"),
+				key.WithHelp("l", "right"),
+			),
+
+			// --- Mode Switching ---
+			Insert: key.NewBinding(
+				key.WithKeys("i"),
+				key.WithHelp("i", "insert mode"),
+			),
+			Normal: key.NewBinding(
+				key.WithKeys("esc"),
+				key.WithHelp("esc", "normal mode"),
+			),
+
+			// --- Actions ---
+			ExecuteQuery: key.NewBinding(
+				key.WithKeys("ctrl+e"),
+				key.WithHelp("ctrl+e", "execute query"),
 			),
 		},
 	}

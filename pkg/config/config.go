@@ -30,7 +30,7 @@ type Config struct {
 	Limit    uint `fig:"limit" default:"100"`
 }
 
-type KeyBindingsConfig struct {
+type KeyMapConfig struct {
 	KeyBindings KeyBindings
 }
 
@@ -73,7 +73,6 @@ type Database struct {
 }
 
 type KeyBindings struct {
-	ExecuteQuery    string `fig:"execute-query" default:"ctrl+e"`
 	NextTab         string `fig:"next-tab"      default:"tab"`
 	PrevTab         string `fig:"prev-tab"      default:"shift+tab"`
 	PageTop         string `fig:"page-top"      default:"g"`
@@ -81,6 +80,22 @@ type KeyBindings struct {
 	EndOfLine       string `fig:"end-of-line"   default:"$"`
 	BeginningOfLine string `fig:"beginning-of-line"   default:"0"`
 	Navigation      NavigationBindgins
+	Editor          EditorKeyMap
+}
+
+type EditorKeyMap struct {
+	// Normal Mode Navigation.
+	Up    string `fig:"up" default:"k"`
+	Down  string `fig:"down" default:"j"`
+	Left  string `fig:"left" default:"h"`
+	Right string `fig:"right" default:"l"`
+
+	// Mode Switching.
+	Insert string `fig:"insert" default:"i"`
+	Normal string `fig:"normal" default:"esc"`
+
+	// Actions.
+	ExecuteQuery string `fig:"execute-query" default:"ctrl+e"`
 }
 
 type NavigationBindgins struct {
@@ -170,9 +185,9 @@ func Init(configName string) (command.Options, error) {
 	return opts, nil
 }
 
-func SetupKeybindings() (command.TUIKeyBindings, error) {
-	var kbc KeyBindingsConfig
-	var tkb command.TUIKeyBindings
+func SetupKeyMap() (command.TUIKeyMap, error) {
+	var kbc KeyMapConfig
+	var tkb command.TUIKeyMap
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
@@ -188,19 +203,27 @@ func SetupKeybindings() (command.TUIKeyBindings, error) {
 		return tkb, err
 	}
 
-	tkb = command.TUIKeyBindings{
-		ExecuteQuery:    key.NewBinding(key.WithKeys(kbc.KeyBindings.ExecuteQuery), key.WithHelp(kbc.KeyBindings.ExecuteQuery, "execute query")),
+	tkb = command.TUIKeyMap{
 		NextTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab")),
 		PrevTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab")),
 		PageTop:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PageTop), key.WithHelp(kbc.KeyBindings.PageTop, "go to top")),
 		PageBottom:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PageBottom), key.WithHelp(kbc.KeyBindings.PageBottom, "go to bottom")),
 		EndOfLine:       key.NewBinding(key.WithKeys(kbc.KeyBindings.EndOfLine), key.WithHelp(kbc.KeyBindings.EndOfLine, "end of current line")),
 		BeginningOfLine: key.NewBinding(key.WithKeys(kbc.KeyBindings.BeginningOfLine), key.WithHelp(kbc.KeyBindings.BeginningOfLine, "beginning of current line")),
-		Navigation: command.TUINavigationBindgins{
+		Navigation: command.TUINavigationKeyMap{
 			Up:    key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Up), key.WithHelp(kbc.KeyBindings.Navigation.Up, "Toggle to the panel above")),
 			Down:  key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Down), key.WithHelp(kbc.KeyBindings.Navigation.Down, "Toggle to the panel below")),
 			Left:  key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Left), key.WithHelp(kbc.KeyBindings.Navigation.Left, "Toggle to the panel on the left")),
 			Right: key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Right), key.WithHelp(kbc.KeyBindings.Navigation.Right, "Toggle to the panel on the right")),
+		},
+		Editor: command.EditorKeyMap{
+			Up:           key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Up), key.WithHelp(kbc.KeyBindings.Editor.Up, "move up")),
+			Down:         key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Down), key.WithHelp(kbc.KeyBindings.Editor.Down, "move down")),
+			Left:         key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Left), key.WithHelp(kbc.KeyBindings.Editor.Left, "move left")),
+			Right:        key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Right), key.WithHelp(kbc.KeyBindings.Editor.Right, "move right")),
+			Insert:       key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Insert), key.WithHelp(kbc.KeyBindings.Editor.Insert, "insert mode")),
+			Normal:       key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Normal), key.WithHelp(kbc.KeyBindings.Editor.Normal, "normal mode")),
+			ExecuteQuery: key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.ExecuteQuery), key.WithHelp(kbc.KeyBindings.Editor.ExecuteQuery, "execute query")),
 		},
 	}
 

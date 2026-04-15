@@ -38,3 +38,5 @@ site/
 
 # file to dump messages for debugging
 messages.log
+editor_messages.log
+results_messages.log
