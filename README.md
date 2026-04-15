@@ -29,6 +29,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
     - [Configuration](#configuration)
         - [Key bindings configuration](#key-bindings-configuration) 
 - [Navigation](#navigation)
+    - [Query editor](#query-editor)
     - [Key Bindings](#key-bindings)
 - [Contribute](#contribute)
 - [License](#license)
@@ -46,6 +47,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Cross-platform support for macOS/Linux/Windows (32/64-bit)
 - Simple installation (distributed as a single binary)
 - Zero dependencies.
+- Vim-style query editor (normal and insert modes, line-oriented editing commands).
 
 ## Installation
 
@@ -261,7 +263,9 @@ $ dblab --config --cfg-name "prod"
 
 #### Key bindings configuration
 
-Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. By default, the keybindings are not loaded, so you need to use the `--keybindings` or `-k` flag to load them. See the example to see the full list of the key bindings subject to change. The file shows the default values. The list of the available key bindings belongs to the [bubbletea](https://github.com/charmbracelet/bubbletea) library. Specifically, see the [KeyNames map](https://github.com/charmbracelet/bubbletea/blob/1ed724a2d1316ace504f87a2f0bbbcc189d280f6/key.go#L15) for an accurate reference.
+Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. Under `keybindings`, an `editor` section configures the Vim-style query editor (movement between normal and insert mode, cursor motion in normal mode, and the editor’s execute-query shortcut). By default, the keybindings are not loaded, so you need to use the `--keybindings` or `-k` flag to load them. See the example to see the full list of the key bindings subject to change. The file shows the default values. The list of the available key bindings belongs to the [bubbletea](https://github.com/charmbracelet/bubbletea) library. Specifically, see the [KeyNames map](https://github.com/charmbracelet/bubbletea/blob/1ed724a2d1316ace504f87a2f0bbbcc189d280f6/key.go#L15) for an accurate reference.
+
+**Deprecated:** the top-level `execute-query` field under `keybindings`. Use `execute-query` under `keybindings.editor` instead.
 
 #### .dblab.yaml example
 
@@ -336,7 +340,6 @@ database:
 # should be greater than 0, otherwise the app will error out
 limit: 50
 keybindings:
-  execute-query: 'ctrl+e'
   next-tab: 'tab'
   prev-tab: 'shift+tab'
   page-top: 'g'
@@ -348,6 +351,14 @@ keybindings:
     down: 'ctrl+j'
     left: 'ctrl+h'
     right: 'ctrl+l'
+  editor:
+    up: 'k'
+    down: 'j'
+    left: 'h'
+    right: 'l'
+    insert: 'i'
+    normal: 'esc'
+    execute-query: 'ctrl+e'
 ```
 
 Or for SQLite:
@@ -365,7 +376,9 @@ Only the `host` and `ssl` fields are optional. They default to `127.0.0.1` and `
 
 Key bindings are now configurable; see [Key bindings configuration](#key-bindings-configuration) to learn how to replace existing key bindings. It's worth noting that key bindings are only configurable through the configuration file; there are no flags to do so. If you don't replace them through the configuration file, the information below remains the same; otherwise, just replace the new key binding with the existing information for the default one.
 
-If the query panel is active, type the desired query and press <kbd>ctrl+e</kbd> to see the results on the rows panel below.
+### Query editor
+
+The query editor uses **normal** and **insert** modes (similar to Vim). When you focus the query editor, it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim). In insert mode, use the arrow keys to move the cursor; in normal mode, use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>l</kbd> instead (configurable in `.dblab.yaml` with `--keybindings` or `-k`; see [Key bindings configuration](#key-bindings-configuration)). In normal mode, <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks the current line into an internal register, <kbd>p</kbd> pastes that line after the current line, and <kbd>x</kbd> deletes the character under the cursor. <kbd>0</kbd> and <kbd>$</kbd> move to the beginning or end of the current line in the query buffer. Press <kbd>ctrl+e</kbd> to execute the query (this uses the `keybindings.editor.execute-query` binding); whitespace-only queries are ignored.
 
 Otherwise, you might be located at the tables panel, where you can navigate using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the schema of a table, locate yourself on the `tables` panel and press <kbd>tab</kbd> to switch to the `columns` panel, then use <kbd>shift+tab</kbd> to switch back.
 
@@ -385,27 +398,32 @@ When navigating query result sets, the cell will be highlighted so the user can 
 ### Key Bindings
 | Key                                    | Description                           |
 |----------------------------------------|----------------------------------------|
-|<kbd>ctrl+e</kbd>                       | If the query editor is active, execute the query |
-|<kbd>Ctrl+D</kbd>                       | Clears all text from the query editor when it is selected |
-|<kbd>Enter</kbd>                        | If the tables panel is active, list all rows as a result set on the rows panel and display the structure of the table on the structure panel |
-|<kbd>tab</kbd>                          | If the result set panel is active, press tab to navigate to the next metadata tab |
-|<kbd>shift+tab</kbd>                    | If the result set panel is active, press shift+tab to navigate to the previous metadata tab |
+|<kbd>ctrl+e</kbd>                       | If the query editor is focused, execute the query (also works in insert and normal mode) |
+|<kbd>i</kbd>                            | If the query editor is focused in normal mode, enter insert mode |
+|<kbd>Escape</kbd>                       | If the query editor is focused in insert mode, return to normal mode |
+|<kbd>dd</kbd>                           | If the query editor is focused in normal mode, delete the current line |
+|<kbd>yy</kbd>                           | If the query editor is focused in normal mode, yank the current line |
+|<kbd>p</kbd>                            | If the query editor is focused in normal mode, paste the yanked or deleted line after the current line |
+|<kbd>x</kbd>                            | If the query editor is focused in normal mode, delete the character under the cursor |
+|<kbd>Enter</kbd>                        | If the tables panel is focused, list all rows as a result set on the rows panel and display the structure of the table on the structure panel |
+|<kbd>tab</kbd>                          | If the result set panel is focused, press tab to navigate to the next metadata tab |
+|<kbd>shift+tab</kbd>                    | If the result set panel is focused, press shift+tab to navigate to the previous metadata tab |
 |<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left |
 |<kbd>Ctrl+J</kbd>                       | Toggle to the panel below |
 |<kbd>Ctrl+K</kbd>                       | Toggle to the panel above |
 |<kbd>Ctrl+L</kbd>                       | Toggle to the panel on the right |
-|<kbd>Arrow Up</kbd>                     | Vertical scrolling on the panel. Views: rows, table, constraints, structure, and indexes |
-|<kbd>k</kbd>                            | Vertical scrolling on the panel. Views: rows, table, constraints, structure, and indexes |
-|<kbd>Arrow Down</kbd>                   | Vertical scrolling on the panel. Views: rows, table, constraints, structure, and indexes |
-|<kbd>j</kbd>                            | Vertical scrolling on the panel. Views: rows, table, constraints, structure, and indexes |
-|<kbd>Arrow Right</kbd>                  | Horizontal scrolling on the panel. Views: rows, constraints, structure, and indexes |
-|<kbd>l</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure, and indexes |
-|<kbd>Arrow Left</kbd>                   | Horizontal scrolling on the panel. Views: rows, constraints, structure, and indexes |
-|<kbd>h</kbd>                            | Horizontal scrolling on the panel. Views: rows, constraints, structure, and indexes |
-|<kbd>g</kbd>                            | Move cursor to the top of the panel's dataset. Views: rows, constraints, structure, and indexes |
-|<kbd>G</kbd>                            | Move cursor to the bottom of the panel's dataset. Views: rows, constraints, structure, and indexes |
-|<kbd>0</kbd>                            | Naviagate all the way to the left of the table. Views: rows, constraints, structure, and indexes |
-|<kbd>$</kbd>                            | Naviagate all the way to the right of the table. Views: rows, constraints, structure, and indexes |
+|<kbd>Arrow Up</kbd>                     | If the query editor is focused in insert mode, move the cursor up. If the results panel is focused, navigate the table upward (all tabs on the results panel). |
+|<kbd>k</kbd>                            | If the query editor is focused in normal mode, move the cursor up. If the results panel is focused, navigate the table upward (all tabs on the results panel). |
+|<kbd>Arrow Down</kbd>                   | If the query editor is focused in insert mode, move the cursor down. If the results panel is focused, navigate the table downward (all tabs on the results panel). |
+|<kbd>j</kbd>                            | If the query editor is focused in normal mode, move the cursor down. If the results panel is focused, navigate the table downward (all tabs on the results panel). |
+|<kbd>Arrow Right</kbd>                  | If the query editor is focused in insert mode, move the cursor right. If the results panel is focused, navigate the table to the right (all tabs on the results panel). |
+|<kbd>l</kbd>                            | If the query editor is focused in normal mode, move the cursor right. If the results panel is focused, navigate the table to the right (all tabs on the results panel). |
+|<kbd>Arrow Left</kbd>                   | If the query editor is focused in insert mode, move the cursor left. If the results panel is focused, navigate the table to the left (all tabs on the results panel). |
+|<kbd>h</kbd>                            | If the query editor is focused in normal mode, move the cursor left. If the results panel is focused, navigate the table to the left (all tabs on the results panel). |
+|<kbd>g</kbd>                            | If the results panel is focused, move to the top of the dataset (all tabs on the results panel). |
+|<kbd>G</kbd>                            | If the results panel is focused, move to the bottom of the dataset (all tabs on the results panel). |
+|<kbd>0</kbd>                            | If the query editor is focused in normal mode, move to the start of the current line. If the results panel is focused, move to the left edge of the row (all tabs on the results panel). |
+|<kbd>$</kbd>                            | If the query editor is focused in normal mode, move to the end of the current line. If the results panel is focused, move to the right edge of the row (all tabs on the results panel). |
 |<kbd>Ctrl+c</kbd>                       | Quit |
 
 ## Contribute
