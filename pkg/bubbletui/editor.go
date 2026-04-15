@@ -160,7 +160,6 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			case key.Matches(msg, e.bindings.Editor.Normal):
 				e.mode = NormalMode
 				e.editor.Cursor.SetMode(cursor.CursorStatic)
-				// Optional: move back one space on escape
 				e.editor, _ = e.editor.Update(tea.KeyMsg{Type: tea.KeyLeft})
 				return e, nil
 			}
