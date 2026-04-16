@@ -1,4 +1,4 @@
-Output dblab-demo.gif
+Output screenshots/dblab-demo.gif
 
 Set FontSize 14
 Set Width 1920
