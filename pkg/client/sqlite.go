@@ -23,7 +23,17 @@ func (s *sqlite) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
 	return "", nil, nil
 }
 
-func (s *sqlite) ShowDatabases() (string, []interface{}, error) {
+func (s *sqlite) GetDBHierarchy() Node {
+	return Node{
+		Type: "Table",
+	}
+}
+
+func (s *sqlite) GetDatabases() (string, []interface{}, error) {
+	return "", nil, nil
+}
+
+func (s *sqlite) GetChildren(_, _ string) (string, []any, error) {
 	return "", nil, nil
 }
 

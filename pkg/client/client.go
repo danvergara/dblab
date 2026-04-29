@@ -18,18 +18,27 @@ import (
 	"github.com/danvergara/dblab/pkg/pagination"
 )
 
+type Node struct {
+	Type  string
+	Nodes []Node
+}
+
 // databaseQuerier is an interface that indicates the methods
 // a given type has to implement to interact with a database,
 // to get specific data.
 // This allows us to decouple the client from the database implementation and
 // make adding new databases easier.
 type databaseQuerier interface {
-	ShowTables() (string, []interface{}, error)
-	TableStructure(tableName string) (string, []interface{}, error)
-	Constraints(tableName string) (string, []interface{}, error)
-	Indexes(tableName string) (string, []interface{}, error)
-	ShowDatabases() (string, []interface{}, error)
-	ShowTablesPerDB(database string) (string, []interface{}, error)
+	ShowTables() (string, []any, error)
+	TableStructure(tableName string) (string, []any, error)
+	Constraints(tableName string) (string, []any, error)
+	Indexes(tableName string) (string, []any, error)
+
+	GetDatabases() (string, []any, error)
+	GetChildren(parent, parentType string) (string, []any, error)
+	GetDBHierarchy() Node
+
+	ShowTablesPerDB(database string) (string, []any, error)
 }
 
 // Client is used to store the pool of db connection.
@@ -154,7 +163,7 @@ func (c *Client) ShowDataCatalog() bool {
 }
 
 // Query returns performs the query and returns the result set and the column names.
-func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, error) {
+func (c *Client) Query(q string, args ...any) ([][]string, []string, error) {
 	var (
 		resultSet = [][]string{}
 		db        *sqlx.DB
@@ -189,13 +198,13 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 	}
 
 	for rows.Next() {
-		// cols is an []interface{} of all of the column results.
+		// cols is an []any of all of the column results.
 		cols, err := rows.SliceScan()
 		if err != nil {
 			return nil, nil, err
 		}
 
-		// Convert []interface{} into []string.
+		// Convert []any into []string.
 		s := make([]string, len(cols))
 		for i, v := range cols {
 			switch v.(type) {
@@ -285,7 +294,7 @@ func (c *Client) ShowTablesPerDB(database string) ([]string, error) {
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
 		db    *sqlx.DB
 		ok    bool
 	)
@@ -332,7 +341,7 @@ func (c *Client) ShowTables() ([]string, error) {
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
 	)
 
 	tables := make([]string, 0)
@@ -367,12 +376,12 @@ func (c *Client) ShowDatabases() ([]string, error) {
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
 	)
 
 	databases := make([]string, 0)
 
-	query, args, err = c.databaseQuerier.ShowDatabases()
+	query, args, err = c.databaseQuerier.GetDatabases()
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +449,7 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
 	)
 
 	query, args, err = c.databaseQuerier.TableStructure(tableName)
