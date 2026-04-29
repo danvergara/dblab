@@ -17,6 +17,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type DBObject struct {
+	ID       string
+	Name     string
+	Type     string
+	Level    int
+	Children []DBObject
+}
+
+func dbObjectHasType(nodeType string) func(*treeview.Node[DBObject]) bool {
+	return func(n *treeview.Node[DBObject]) bool {
+		return n.Data().Type == nodeType
+	}
+}
+
 // item implements the Item interface for required for the List Model from bubbles.
 type item string
 
@@ -85,7 +99,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 			return svp, err
 		}
 		rootID := uuid.New().String()
-		root := treeview.NewNode(fmt.Sprintf("%s-%s", "db", rootID), "db", "root")
+		root := treeview.NewNode(fmt.Sprintf("%s-%s", "databases", rootID), "databases", "root")
 		for _, db := range dbs {
 			nodeID := uuid.New().String()
 			root.AddChild(treeview.NewNode(fmt.Sprintf("%s-%s", db, nodeID), db, "database"))
