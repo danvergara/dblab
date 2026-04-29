@@ -18,14 +18,36 @@ func newMSSQL() *mssql {
 }
 
 func (m *mssql) ShowTablesPerDB(database string) (string, []interface{}, error) {
+
 	return fmt.Sprintf(
 		"SELECT table_name FROM information_schema.tables WHERE table_schema = %s",
 		database,
 	), nil, nil
 }
 
-func (m *mssql) ShowDatabases() (string, []interface{}, error) {
+func (m *mssql) GetDBHierarchy() Node {
+	return Node{
+		Type: "Database",
+		Nodes: []Node{
+			{
+				Type: "Schema",
+				Nodes: []Node{
+					{Type: "Table"},
+				},
+			},
+		},
+	}
+}
+
+func (m *mssql) GetDatabases() (string, []interface{}, error) {
 	return "SELECT name FROM master.dbo.sysdatabases", nil, nil
+}
+
+func (m *mssql) GetChildren(database, _ string) (string, []any, error) {
+	return fmt.Sprintf(
+		"SELECT table_name FROM information_schema.tables WHERE table_schema = %s",
+		database,
+	), nil, nil
 }
 
 func (m *mssql) ShowTables() (string, []interface{}, error) {

@@ -30,7 +30,22 @@ func (o *oracle) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
 	return "", nil, nil
 }
 
-func (o *oracle) ShowDatabases() (string, []interface{}, error) {
+func (o *oracle) GetDBHierarchy() Node {
+	return Node{
+		Type: "Schema",
+		Nodes: []Node{
+			{
+				Type: "Table",
+			},
+		},
+	}
+}
+
+func (o *oracle) GetDatabases() (string, []interface{}, error) {
+	return "", nil, nil
+}
+
+func (o *oracle) GetChildren(_, _ string) (string, []any, error) {
 	return "", nil, nil
 }
 

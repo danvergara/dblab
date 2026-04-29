@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -22,11 +24,25 @@ func newPostgres(schema string) *postgres {
 	return &p
 }
 
-func (p *postgres) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
+func (p *postgres) GetDBHierarchy() Node {
+	return Node{
+		Type: "Database",
+		Nodes: []Node{
+			{
+				Type: "Schema",
+				Nodes: []Node{
+					{Type: "Table"},
+				},
+			},
+		},
+	}
+}
+
+func (p *postgres) ShowTablesPerDB(database string) (string, []any, error) {
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
 	)
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query, args, err = psql.Select("table_name").
@@ -34,7 +50,8 @@ func (p *postgres) ShowTablesPerDB(dabase string) (string, []interface{}, error)
 		Where(sq.Eq{"table_type": "BASE TABLE"}).
 		Where(
 			sq.And{
-				sq.Eq{"table_schema": "public"},
+				// sq.Eq{"table_schema": "public"},
+				sq.Eq{"table_schema": p.schema},
 				sq.Eq{"table_type": "BASE TABLE"},
 			},
 		).
@@ -47,11 +64,11 @@ func (p *postgres) ShowTablesPerDB(dabase string) (string, []interface{}, error)
 	return query, args, nil
 }
 
-func (p *postgres) ShowDatabases() (string, []interface{}, error) {
+func (p *postgres) GetDatabases() (string, []any, error) {
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
 	)
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query, args, err = psql.Select("datname").
@@ -66,12 +83,57 @@ func (p *postgres) ShowDatabases() (string, []interface{}, error) {
 	return query, args, nil
 }
 
-// ShowTables returns a query to retrieve all the tables under a specific schema.
-func (p *postgres) ShowTables() (string, []interface{}, error) {
+func (p *postgres) GetChildren(parent, parentType string) (string, []any, error) {
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
+	)
+	switch parentType {
+	case "database":
+		query, args, err = sq.Select("schema_name").
+			From("information_schema.schemata").
+			Where(sq.Eq{"table_type": "BASE TABLE"}).
+			Where(sq.NotEq{
+				"schema_name": []string{"information_schema", "pg_catalog", "pg_toast"},
+			}).
+			OrderBy("schema_name").
+			PlaceholderFormat(sq.Dollar).
+			ToSql()
+		if err != nil {
+			return "", nil, err
+		}
+
+		return query, args, nil
+	case "schema":
+		query, args, err = sq.Select("table_name").
+			From("information_schema.tables").
+			Where(sq.Eq{"table_type": "BASE TABLE"}).
+			Where(
+				sq.And{
+					sq.Eq{"table_schema": parent},
+					sq.Eq{"table_type": "BASE TABLE"},
+				},
+			).
+			OrderBy("table_name").
+			PlaceholderFormat(sq.Dollar).
+			ToSql()
+		if err != nil {
+			return "", nil, err
+		}
+
+		return query, args, nil
+	default:
+		return "", nil, fmt.Errorf("not supported parent db object type: %s", parentType)
+	}
+}
+
+// ShowTables returns a query to retrieve all the tables under a specific schema.
+func (p *postgres) ShowTables() (string, []any, error) {
+	var (
+		query string
+		err   error
+		args  []any
 	)
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query, args, err = psql.Select("table_name").
@@ -88,7 +150,7 @@ func (p *postgres) ShowTables() (string, []interface{}, error) {
 
 // TableStructure returns a query string to get all the relevant information of a given table,
 // under a schema.
-func (p *postgres) TableStructure(tableName string) (string, []interface{}, error) {
+func (p *postgres) TableStructure(tableName string) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	query, args, err := psql.Select(
@@ -125,7 +187,7 @@ func (p *postgres) TableStructure(tableName string) (string, []interface{}, erro
 }
 
 // Constraints returns all the constraints of a given table, under a schema.
-func (p *postgres) Constraints(tableName string) (string, []interface{}, error) {
+func (p *postgres) Constraints(tableName string) (string, []any, error) {
 	var (
 		query sq.SelectBuilder
 		sql   string
@@ -149,7 +211,7 @@ func (p *postgres) Constraints(tableName string) (string, []interface{}, error) 
 }
 
 // Indexes returns the indexes of a table, under a schema.
-func (p *postgres) Indexes(tableName string) (string, []interface{}, error) {
+func (p *postgres) Indexes(tableName string) (string, []any, error) {
 	query := sq.Select("*").
 		From("pg_indexes").
 		Where(sq.Eq{"tableName": tableName}).
