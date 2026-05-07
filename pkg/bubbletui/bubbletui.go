@@ -215,7 +215,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.titleWidth = m.leftWidth - 2
 
 		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
-		m.sidebarViewportWidth = m.leftWidth - 2
+		m.sidebarViewportWidth = m.leftWidth
 
 		m.editorWidth = m.rightWidth - 4
 		m.editorHeight = availableHeight/3 - 2
@@ -302,12 +302,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var rightText string
 
-	listBorder := darkPurple
+	// listBorder := darkPurple
 	textAreaBorder := darkPurple
 
 	switch m.focus {
 	case focusList:
-		listBorder = neonPurple
+		// listBorder = neonPurple
 	case focusEditor:
 		textAreaBorder = neonPurple
 	case focusTable:
@@ -345,10 +345,11 @@ func (m Model) View() string {
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
-	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
-	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
+	// styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, m.sidebarViewport.View())
+	leftColumn = lipgloss.NewStyle().Width(m.leftWidth).MaxWidth(m.leftWidth).Render(leftColumn)
 
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, styledTableList)
+	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
 	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
@@ -420,3 +421,10 @@ func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
 		}
 	}
 }
+
+// func (m *Model) fetchChildren(dbObjectType string) tea.Cmd {
+//
+// 	return func() tea.Msg {
+//
+// 	}
+// }

@@ -46,6 +46,7 @@ type Client struct {
 	db                *sqlx.DB
 	databaseQuerier   databaseQuerier
 	driver, schema    string
+	host              string
 	paginationManager *pagination.Manager
 	activeDatabase    string
 	limit             uint
@@ -67,6 +68,7 @@ func New(opts command.Options) (*Client, error) {
 
 	c := &Client{
 		db:     db,
+		host:   opts.Host,
 		driver: opts.Driver,
 		limit:  opts.Limit,
 		dbs:    make(map[string]*sqlx.DB),
@@ -156,6 +158,9 @@ func (c *Client) DB() *sqlx.DB {
 // Driver returns the driver of the database.
 func (c *Client) Driver() string {
 	return c.driver
+}
+func (c *Client) Host() string {
+	return c.host
 }
 
 func (c *Client) ShowDataCatalog() bool {
@@ -288,6 +293,58 @@ func (c *Client) Metadata(tableName string) (*Metadata, error) {
 	}
 
 	return &m, nil
+}
+
+func (c *Client) GetChildren(parent, parentType string) ([]string, error) {
+	var (
+		query string
+		err   error
+		args  []any
+		db    *sqlx.DB
+		ok    bool
+	)
+
+	children := make([]string, 0)
+
+	query, args, err = c.databaseQuerier.GetChildren(parent, parentType)
+	if err != nil {
+		return nil, err
+	}
+
+	activeDatabase := c.activeDatabase
+	if parentType == "database" {
+		activeDatabase = parent
+	}
+
+	switch c.driver {
+	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
+		db, ok = c.dbs[activeDatabase]
+		if !ok {
+			return nil, fmt.Errorf("connection with %s database not found", activeDatabase)
+		}
+	default:
+		db = c.db
+	}
+
+	rows, err := db.Queryx(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var table string
+		if err := rows.Scan(&table); err != nil {
+			return nil, err
+		}
+
+		children = append(children, table)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return children, nil
 }
 
 func (c *Client) ShowTablesPerDB(database string) ([]string, error) {
