@@ -248,7 +248,7 @@ func (suite *ClientTestSuite) TestQuery() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.Query("SELECT * FROM products;")
+	r, co, err := c.Query("SELECT * FROM public.products;")
 	suite.Len(r, 100)
 	suite.Len(co, 3)
 	suite.NoError(err)
@@ -269,7 +269,7 @@ func (suite *ClientTestSuite) TestTableContent() {
 
 	c, _ := New(opts)
 
-	tableRef := TableRef{Name: "products"}
+	tableRef := TableRef{Name: "products", Schema: "public"}
 	r, co, err := c.tableContent(tableRef)
 
 	suite.Len(r, int(opts.Limit))
@@ -292,7 +292,7 @@ func (suite *ClientTestSuite) TestConstraints() {
 
 	c, _ := New(opts)
 
-	tableRef := TableRef{Name: "products"}
+	tableRef := TableRef{Name: "products", Schema: "public"}
 	r, co, err := c.constraints(tableRef)
 
 	suite.T().Logf("constraints columns %v", co)
@@ -318,7 +318,7 @@ func (suite *ClientTestSuite) TestIndexes() {
 
 	c, _ := New(opts)
 
-	tableRef := TableRef{Name: "products"}
+	tableRef := TableRef{Name: "products", Schema: "public"}
 	r, co, err := c.indexes(tableRef)
 	suite.NoError(err)
 	suite.NotEmpty(r)
@@ -340,7 +340,7 @@ func (suite *ClientTestSuite) TestMetadata() {
 
 	c, _ := New(opts)
 
-	tableRef := TableRef{Name: "products"}
+	tableRef := TableRef{Name: "products", Schema: "public"}
 	m, err := c.Metadata(tableRef)
 	suite.NoError(err)
 	suite.NotNil(m)
