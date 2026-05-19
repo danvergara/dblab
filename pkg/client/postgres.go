@@ -1,14 +1,19 @@
 package client
 
 import (
+	"context"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 // postgres struct is in charge of perform all the postgres related queries,
 // without the client knowing.
 type postgres struct {
+	db     *sqlx.DB
+	dbName string
 	schema string
 }
 
@@ -22,130 +27,6 @@ func newPostgres(schema string) *postgres {
 	}
 
 	return &p
-}
-
-func (p *postgres) GetDBHierarchy() Node {
-	return Node{
-		Type: "Database",
-		Nodes: []Node{
-			{
-				Type: "Schema",
-				Nodes: []Node{
-					{Type: "Table"},
-				},
-			},
-		},
-	}
-}
-
-func (p *postgres) ShowTablesPerDB(database string) (string, []any, error) {
-	var (
-		query string
-		err   error
-		args  []any
-	)
-	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	query, args, err = psql.Select("table_name").
-		From("information_schema.tables").
-		Where(sq.Eq{"table_type": "BASE TABLE"}).
-		Where(
-			sq.And{
-				// sq.Eq{"table_schema": "public"},
-				sq.Eq{"table_schema": p.schema},
-				sq.Eq{"table_type": "BASE TABLE"},
-			},
-		).
-		OrderBy("table_name").
-		ToSql()
-	if err != nil {
-		return "", nil, err
-	}
-
-	return query, args, nil
-}
-
-func (p *postgres) GetDatabases() (string, []any, error) {
-	var (
-		query string
-		err   error
-		args  []any
-	)
-	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	query, args, err = psql.Select("datname").
-		From("pg_database").
-		Where(sq.Eq{"datistemplate": "false"}).
-		OrderBy("datname").
-		ToSql()
-	if err != nil {
-		return "", nil, err
-	}
-
-	return query, args, nil
-}
-
-func (p *postgres) GetChildren(parent, parentType string) (string, []any, error) {
-	var (
-		query string
-		err   error
-		args  []any
-	)
-	switch parentType {
-	case "database":
-		query, args, err = sq.Select("schema_name").
-			From("information_schema.schemata").
-			Where(sq.Eq{"table_type": "BASE TABLE"}).
-			Where(sq.NotEq{
-				"schema_name": []string{"information_schema", "pg_catalog", "pg_toast"},
-			}).
-			OrderBy("schema_name").
-			PlaceholderFormat(sq.Dollar).
-			ToSql()
-		if err != nil {
-			return "", nil, err
-		}
-
-		return query, args, nil
-	case "schema":
-		query, args, err = sq.Select("table_name").
-			From("information_schema.tables").
-			Where(sq.Eq{"table_type": "BASE TABLE"}).
-			Where(
-				sq.And{
-					sq.Eq{"table_schema": parent},
-					sq.Eq{"table_type": "BASE TABLE"},
-				},
-			).
-			OrderBy("table_name").
-			PlaceholderFormat(sq.Dollar).
-			ToSql()
-		if err != nil {
-			return "", nil, err
-		}
-
-		return query, args, nil
-	default:
-		return "", nil, fmt.Errorf("not supported parent db object type: %s", parentType)
-	}
-}
-
-// ShowTables returns a query to retrieve all the tables under a specific schema.
-func (p *postgres) ShowTables() (string, []any, error) {
-	var (
-		query string
-		err   error
-		args  []any
-	)
-	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	query, args, err = psql.Select("table_name").
-		From("information_schema.tables").
-		Where(sq.Eq{"table_schema": p.schema}).
-		OrderBy("table_name").
-		ToSql()
-	if err != nil {
-		return "", nil, err
-	}
-
-	return query, args, nil
 }
 
 // TableStructure returns a query string to get all the relevant information of a given table,
@@ -223,4 +104,78 @@ func (p *postgres) Indexes(tableName string) (string, []any, error) {
 	}
 
 	return sql, args, err
+}
+
+func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
+	// root := DBNode{
+	// 	ID:   "databases-postgres",
+	// 	Name: "users",
+	// 	Type: "database",
+	// 	Children: []DBNode{
+	// 		{
+	// 			ID:   "schemas-public",
+	// 			Name: "Public",
+	// 			Type: "schema",
+	// 			Children: []DBNode{
+	// 				{
+	// 					ID:   "schemas-public-users",
+	// 					Name: "users",
+	// 					Type: "table",
+	// 				},
+	// 				{
+	// 					ID:   "schemas-public-employees",
+	// 					Name: "employees",
+	// 					Type: "table",
+	// 				},
+	// 			},
+	// 		},
+	// 		{
+	// 			ID:   "schemas-products",
+	// 			Name: "Products",
+	// 			Type: "schema",
+	// 			Children: []DBNode{
+	// 				{
+	// 					ID:   "schemas-products-products",
+	// 					Name: "products",
+	// 					Type: "table",
+	// 				},
+	// 				{
+	// 					ID:   "schemas-products-prices",
+	// 					Name: "prices",
+	// 					Type: "table",
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// }
+	rootID := fmt.Sprintf("db:%s-%s", uuid.New().String(), "")
+	root := &DBNode{ID: rootID, Name: p.dbName, Type: "database"}
+	queue := []*DBNode{root}
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		var children []*DBNode
+		var err error
+		switch current.Type {
+		case "database":
+			children, err = p.fetchSchemas(ctx, current.Name)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, child := range children {
+			current.Children = append(current.Children, child)
+			queue = append(queue, child)
+		}
+
+	}
+
+	return root, nil
+}
+
+func (p *postgres) fetchSchemas(ctx context.Context, parentName string) ([]*DBNode, error) {
+	return nil, nil
 }

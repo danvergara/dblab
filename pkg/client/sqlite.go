@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -17,38 +18,6 @@ var _ databaseQuerier = (*sqlite)(nil)
 func newSQLite() *sqlite {
 	s := sqlite{}
 	return &s
-}
-
-func (s *sqlite) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
-	return "", nil, nil
-}
-
-func (s *sqlite) GetDBHierarchy() Node {
-	return Node{
-		Type: "Table",
-	}
-}
-
-func (s *sqlite) GetDatabases() (string, []interface{}, error) {
-	return "", nil, nil
-}
-
-func (s *sqlite) GetChildren(_, _ string) (string, []any, error) {
-	return "", nil, nil
-}
-
-// ShowTables returns a query to retrieve all the tables.
-func (s *sqlite) ShowTables() (string, []interface{}, error) {
-	query := `
-		SELECT
-			name
-		FROM
-			sqlite_schema
-		WHERE
-			type ='table' AND
-			name NOT LIKE 'sqlite_%';`
-
-	return query, nil, nil
 }
 
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
@@ -83,3 +52,5 @@ func (s *sqlite) Indexes(tableName string) (string, []interface{}, error) {
 
 	return query, nil, nil
 }
+
+func (s *sqlite) Catalog(ctx context.Context) (*DBNode, error) { return nil, nil }

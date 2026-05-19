@@ -12,40 +12,26 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
-	"github.com/danvergara/dblab/pkg/drivers"
+	// "github.com/danvergara/dblab/pkg/drivers"
 	// "github.com/google/uuid"
 )
 
 type dbObjectType string
 
 const (
-	typeDatabase   dbObjectType = "database"
-	typeSchema     dbObjectType = "schema"
-	typeTable      dbObjectType = "table"
-	typeConnection dbObjectType = "connection"
+	dbObjectDatabase dbObjectType = "database"
+	dbOjbectSchema   dbObjectType = "schema"
+	dbObjectTable    dbObjectType = "table"
+	dbObjectHost     dbObjectType = "host"
 )
 
-type DBObject struct {
-	ID       string
-	Name     string
-	Type     dbObjectType
-	Driver   string
-	Children []DBObject
-}
-
-func dbObjectHasType(nodeType string) func(*treeview.Node[DBObject]) bool {
-	return func(n *treeview.Node[DBObject]) bool {
-		return string(n.Data().Type) == nodeType
-	}
-}
-
-func dbObjectIsConnection(nodeType, driver string) func(*treeview.Node[DBObject]) bool {
-	return func(n *treeview.Node[DBObject]) bool {
-		return string(n.Data().Type) == nodeType && n.Data().Driver == driver
+func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool {
+	return func(n *treeview.Node[*client.DBNode]) bool {
+		return (*n.Data()).Type == nodeType
 	}
 }
 
@@ -92,12 +78,18 @@ type selectTableMsg struct {
 	Table string
 }
 
+type getChildrenMsg struct {
+	parent     string
+	parentType string
+}
+type getChildrenErrMsg struct{ err error }
+
 type SidebarViewport struct {
 	c *client.Client
 
 	tablesList      list.Model
 	sidebarViewport viewport.Model
-	dbTree          *treeview.TuiTreeModel[DBObject]
+	dbTree          *treeview.TuiTreeModel[*client.DBNode]
 
 	bindings *command.TUIKeyMap
 
@@ -107,14 +99,14 @@ type SidebarViewport struct {
 
 type DBGraphTreeBuilderProvider struct{}
 
-func (d DBGraphTreeBuilderProvider) ID(do DBObject) string {
+func (d DBGraphTreeBuilderProvider) ID(do *client.DBNode) string {
 	return do.ID
 }
 
-func (d *DBGraphTreeBuilderProvider) Name(do DBObject) string {
+func (d *DBGraphTreeBuilderProvider) Name(do *client.DBNode) string {
 	return do.Name
 }
-func (p *DBGraphTreeBuilderProvider) Children(do DBObject) []DBObject {
+func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNode {
 	return do.Children
 }
 
@@ -124,164 +116,44 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 	svp.sidebarViewport = viewport.New(0, 0)
 	svp.sidebarViewport.KeyMap = viewport.KeyMap{}
 
-	_ = DBObject{
-		ID:     "databases",
-		Name:   "localhost:5432",
-		Type:   "connection",
-		Driver: drivers.Postgres,
-		Children: []DBObject{
-			{
-				ID:   "databases-postgres",
-				Name: "postgres",
-				Type: "database",
-				Children: []DBObject{
-					{
-						ID:   "schemas-public",
-						Name: "Public",
-						Type: "schema",
-						Children: []DBObject{
-							{
-								ID:   "schemas-public-users",
-								Name: "users",
-								Type: "table",
-							},
-							{
-								ID:   "schemas-public-employees",
-								Name: "employees",
-								Type: "table",
-							},
-						},
-					},
-					{
-						ID:   "schemas-products",
-						Name: "Products",
-						Type: "schema",
-						Children: []DBObject{
-							{
-								ID:   "schemas-products-products",
-								Name: "products",
-								Type: "table",
-							},
-							{
-								ID:   "schemas-products-prices",
-								Name: "prices",
-								Type: "table",
-							},
-						},
-					},
-				},
-			},
-			{
-				ID:   "databases-users",
-				Name: "users",
-				Type: "database",
-				Children: []DBObject{
-					{
-						ID:   "users-schemas-public",
-						Name: "Public",
-						Type: "schema",
-						Children: []DBObject{
-							{
-								ID:   "users-schemas-public-employees",
-								Name: "employees",
-								Type: "table",
-							},
-							{
-								ID:   "users-schemas-public-families",
-								Name: "families",
-								Type: "table",
-							},
-						},
-					},
-				},
-			},
-			{
-				ID:   "databases-films",
-				Name: "films",
-				Type: "database",
-			},
-		},
+	root, err := c.Catalog()
+	if err != nil {
+		return SidebarViewport{}, err
 	}
 
-	if svp.c.ShowDataCatalog() {
-		dbs, err := svp.c.ShowDatabases()
-		if err != nil {
-			return svp, err
-		}
-		rootID := uuid.New().String()
-
-		root := DBObject{
-			ID:       rootID,
-			Name:     c.Host(),
-			Driver:   c.Driver(),
-			Type:     typeConnection,
-			Children: make([]DBObject, 0, len(dbs)),
-		}
-
-		for _, db := range dbs {
-			nodeID := uuid.New().String()
-			dbNode := DBObject{
-				ID:       fmt.Sprintf("%s-%s", db, nodeID),
-				Name:     db,
-				Type:     typeDatabase,
-				Children: []DBObject{},
-			}
-			root.Children = append(root.Children, dbNode)
-		}
-		tree, err := treeview.NewTreeFromNestedData(
-			ctx,
-			[]DBObject{root},
-			&DBGraphTreeBuilderProvider{},
-			treeview.WithExpandFunc(func(n *treeview.Node[DBObject]) bool {
-				return string(n.Data().Type) == string(typeConnection)
-			}),
-			treeview.WithProvider(createCyberpunkProvider()),
-		)
-		if err != nil {
-			return svp, err
-		}
-
-		svp.dbTree = svp.newTuiTreeModel(tree, 0, 80)
-
-		// If there are databases, choose the first one as the default active one.
-		if len(dbs) > 0 {
-			var i int
-
-			for n, err := range svp.dbTree.AllVisible(ctx) {
-				if err != nil {
-					break
-				}
-
-				if i == 1 {
-					svp.c.SetActiveDatabase(n.Node.Name())
-					svp.activeDatabase = n.Node.Name()
-					_, _ = svp.dbTree.SetFocusedID(ctx, n.Node.ID())
-					break
-				}
-				i++
-			}
-		}
-
-	} else {
-		ts, err := svp.c.ShowTables()
-		if err != nil {
-			return svp, err
-		}
-
-		tables := make([]list.Item, 0)
-		for _, ta := range ts {
-			tables = append(tables, item(ta))
-		}
-
-		l := list.New(tables, itemDelegate{}, 0, 0)
-		l.Title = "Tables"
-		l.SetShowStatusBar(false)
-		l.SetFilteringEnabled(false)
-		l.SetShowHelp(false)
-		l.KeyMap.Quit.Unbind()
-		svp.tablesList = l
-		svp.updateStyles()
+	tree, err := treeview.NewTreeFromNestedData[*client.DBNode](
+		ctx,
+		[]*client.DBNode{root},
+		&DBGraphTreeBuilderProvider{},
+		// treeview.WithProvider(createCyberpunkProvider()),
+	)
+	if err != nil {
+		return svp, err
 	}
+
+	svp.dbTree = svp.newTuiTreeModel(tree, 0, 80)
+
+	// if svp.c.ShowDataCatalog() {
+	// } else {
+	// 	ts, err := svp.c.ShowTables()
+	// 	if err != nil {
+	// 		return svp, err
+	// 	}
+	//
+	// 	tables := make([]list.Item, 0)
+	// 	for _, ta := range ts {
+	// 		tables = append(tables, item(ta))
+	// 	}
+	//
+	// 	l := list.New(tables, itemDelegate{}, 0, 0)
+	// 	l.Title = "Tables"
+	// 	l.SetShowStatusBar(false)
+	// 	l.SetFilteringEnabled(false)
+	// 	l.SetShowHelp(false)
+	// 	l.KeyMap.Quit.Unbind()
+	// 	svp.tablesList = l
+	// 	svp.updateStyles()
+	// }
 
 	return svp, nil
 }
@@ -306,16 +178,12 @@ func (s *SidebarViewport) SetSize(w, h int) {
 	s.sidebarViewport.Width = s.width
 	s.sidebarViewport.Height = s.height
 
-	if s.c.ShowDataCatalog() {
-		if s.dbTree != nil {
-			s.dbTree = s.newTuiTreeModel(s.dbTree.Tree, 0, s.height)
-		}
-	} else {
-		s.tablesList.SetSize(w, s.height)
+	if s.dbTree != nil {
+		s.dbTree = s.newTuiTreeModel(s.dbTree.Tree, 0, s.height)
 	}
 }
 
-func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[DBObject], width, height int) *treeview.TuiTreeModel[DBObject] {
+func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], width, height int) *treeview.TuiTreeModel[*client.DBNode] {
 	// Create custom key map to avoid key conflicts
 	keyMap := treeview.DefaultKeyMap()
 	keyMap.SearchStart = []string{"/"}
@@ -324,11 +192,11 @@ func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[DBObject], width, 
 	keyMap.Toggle = []string{"enter"}
 
 	return treeview.NewTuiTreeModel(tree,
-		treeview.WithTuiWidth[DBObject](width),
-		treeview.WithTuiHeight[DBObject](height),
-		treeview.WithTuiKeyMap[DBObject](keyMap),
-		treeview.WithTuiDisableNavBar[DBObject](true),
-		treeview.WithTuiAllowResize[DBObject](false),
+		treeview.WithTuiWidth[*client.DBNode](width),
+		treeview.WithTuiHeight[*client.DBNode](height),
+		treeview.WithTuiKeyMap[*client.DBNode](keyMap),
+		treeview.WithTuiDisableNavBar[*client.DBNode](true),
+		treeview.WithTuiAllowResize[*client.DBNode](false),
 	)
 }
 
@@ -343,95 +211,54 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			if s.c.ShowDataCatalog() {
-				selectedNode := s.dbTree.GetFocusedNode()
-				if selectedNode != nil && selectedNode.Data() != nil {
-					switch *&selectedNode.Data().Type {
-					case typeDatabase:
-						s.c.SetActiveDatabase(selectedNode.Name())
-						if selectedNode.IsExpanded() {
-							selectedNode.Collapse()
-						} else {
-							selectedNode.Expand()
-						}
-						selectDatabaseCmd := func() tea.Msg {
-							s.activeDatabase = selectedNode.Name()
-							return selectDatabaseMsg{ActiveDatabase: selectedNode.Name()}
-						}
-						return s, selectDatabaseCmd
-					case typeTable:
-						selectTableCmd := func() tea.Msg {
-							return selectTableMsg{Table: selectedNode.Name()}
-						}
-
-						return s, selectTableCmd
+			selectedNode := s.dbTree.GetFocusedNode()
+			if selectedNode != nil && selectedNode.Data() != nil {
+				switch (*selectedNode.Data()).Type {
+				case "table":
+					selectTableCmd := func() tea.Msg {
+						return selectTableMsg{Table: selectedNode.Name()}
 					}
+
+					return s, selectTableCmd
 				}
-			} else {
-				tableItem := s.tablesList.Items()[s.tablesList.Index()]
-
-				i := tableItem.(item)
-				tableName := i.Title()
-
-				selectTableCmd := func() tea.Msg {
-					return selectTableMsg{Table: tableName}
-				}
-
-				return s, selectTableCmd
 			}
 		}
 
 		switch {
 		case key.Matches(msg, s.bindings.PageTop):
-			if s.c.ShowDataCatalog() {
-				ctx := context.Background()
+			ctx := context.Background()
 
-				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-					if err != nil {
-						break
-					}
-
-					_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+				if err != nil {
 					break
 				}
-				return s, nil
-			} else {
-				s.tablesList.Select(0)
-				s.sidebarViewport.SetContent(s.tablesList.View())
-				return s, nil
+
+				_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+				break
 			}
+			return s, nil
 		case key.Matches(msg, s.bindings.PageBottom):
-			if s.c.ShowDataCatalog() {
-				ctx := context.Background()
+			ctx := context.Background()
 
-				var bottomNodeID string
-				var found bool
+			var bottomNodeID string
+			var found bool
 
-				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-					if err != nil {
-						break
-					}
-
-					bottomNodeID = nodeInfo.Node.ID()
-					found = true
+			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+				if err != nil {
+					break
 				}
 
-				if found {
-					_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
-				}
-				return s, nil
-			} else {
-				totalItems := len(s.tablesList.Items())
-				if totalItems > 0 {
-					s.tablesList.Select(totalItems - 1)
-				}
-				s.sidebarViewport.SetContent(s.tablesList.View())
-				return s, nil
+				bottomNodeID = nodeInfo.Node.ID()
+				found = true
 			}
+
+			if found {
+				_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
+			}
+			return s, nil
 		}
-		if s.c.ShowDataCatalog() {
-			s.sidebarViewport.SetContent(s.dbTree.View())
-		}
+
+		s.sidebarViewport.SetContent(s.dbTree.View())
 
 		switch msg.String() {
 		case "left", "h":
@@ -442,39 +269,15 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 			return s, nil
 		}
 
-		if s.c.ShowDataCatalog() {
-			if s.dbTree != nil {
-				updatedModel, treeCmd := s.dbTree.Update(msg)
-				if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[DBObject]); ok {
-					s.dbTree = newTreeModel
-				}
-				cmd = treeCmd
+		if s.dbTree != nil {
+			updatedModel, treeCmd := s.dbTree.Update(msg)
+			if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[*client.DBNode]); ok {
+				s.dbTree = newTreeModel
 			}
-		} else {
-			s.tablesList, cmd = s.tablesList.Update(msg)
-			s.sidebarViewport.SetContent(s.tablesList.View())
+			cmd = treeCmd
 		}
-		cmds = append(cmds, cmd)
 
-		// case tablesFetchedMsg:
-		// 	selectedNode := s.dbTree.GetFocusedNode()
-		// 	if selectedNode != nil {
-		// 		tables := make([]*treeview.Node[DBObject], len(msg.tables))
-		// 		for i, t := range msg.tables {
-		// 			nodeID := uuid.New().String()
-		// 			tables[i] = treeview.NewNode(fmt.Sprintf("%s-%s", t, nodeID), t, "table")
-		// 		}
-		// 		selectedNode.SetChildren(tables)
-		// 	}
-		return s, nil
-	case querySuccessMsg:
-		if len(msg.tables) > 0 {
-			tables := make([]list.Item, 0)
-			for _, ta := range msg.tables {
-				tables = append(tables, item(ta))
-			}
-			s.tablesList.SetItems(tables)
-		}
+		cmds = append(cmds, cmd)
 		return s, nil
 	}
 
@@ -482,10 +285,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 }
 
 func (s SidebarViewport) View() string {
-	s.sidebarViewport.SetContent(s.tablesList.View())
-	if s.c.ShowDataCatalog() {
-		s.sidebarViewport.SetContent(s.dbTree.View())
-	}
+	s.sidebarViewport.SetContent(s.dbTree.View())
 	sideViewContent := s.sidebarViewport.View()
 
 	listBorder := darkPurple
@@ -494,30 +294,30 @@ func (s SidebarViewport) View() string {
 	return sideViewContent
 }
 
-func createCyberpunkProvider() *treeview.DefaultNodeProvider[DBObject] {
+func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
 	// Icons for database connections.
-	postgresIconRule := treeview.WithIconRule(dbObjectIsConnection("connection", drivers.Postgres), "🐘")
-	mysqlIconRule := treeview.WithIconRule(dbObjectIsConnection("connection", drivers.MySQL), "🐬")
-	sqliteIconRule := treeview.WithIconRule(dbObjectIsConnection("connection", drivers.SQLite), "🪶")
-	oracleIconRule := treeview.WithIconRule(dbObjectIsConnection("connection", drivers.Oracle), "☀ ")
-	sqlServerIconRule := treeview.WithIconRule(dbObjectIsConnection("connection", drivers.SQLServer), "🔷")
+	// postgresIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.Postgres), "🐘")
+	// mysqlIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.MySQL), "🐬")
+	// sqliteIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.SQLite), "🪶")
+	// oracleIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.Oracle), "☀ ")
+	// sqlServerIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.SQLServer), "🔷")
 
 	// Icons for database entities.
 	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), "⛃")
 	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), "📁")
 	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), "📄")
 
-	return treeview.NewDefaultNodeProvider(
-		postgresIconRule,
-		mysqlIconRule,
-		sqliteIconRule,
-		oracleIconRule,
-		sqlServerIconRule,
+	return treeview.NewDefaultNodeProvider[*client.DBNode](
+		// postgresIconRule,
+		// mysqlIconRule,
+		// sqliteIconRule,
+		// oracleIconRule,
+		// sqlServerIconRule,
 		databaseIconRule,
 		schemaIconRule,
 		tableIconRule,
 		treeview.WithStyleRule(
-			func(n *treeview.Node[DBObject]) bool { return true },
+			func(n *treeview.Node[*client.DBNode]) bool { return true },
 			lipgloss.NewStyle().
 				Foreground(whiteText).
 				PaddingLeft(2),
@@ -531,7 +331,7 @@ func createCyberpunkProvider() *treeview.DefaultNodeProvider[DBObject] {
 				BorderForeground(hiMagenta).
 				PaddingLeft(1),
 		),
-		treeview.WithFormatter(func(node *treeview.Node[DBObject]) (string, bool) {
+		treeview.WithFormatter(func(node *treeview.Node[*client.DBNode]) (string, bool) {
 			return node.Name(), true
 		}),
 	)

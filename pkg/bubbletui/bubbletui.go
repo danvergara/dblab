@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -78,15 +77,6 @@ type metadataSuccessMsg struct {
 
 // metadataErrMsg struct used to report error to user at the time to retrieve metadata.
 type metadataErrMsg struct{ err error }
-
-// tablesFetchedMsg struct used to get a given database's tables asynchronously.
-type tablesFetchedMsg struct {
-	dbName string
-	tables []string
-}
-
-// tablesFetchError struct used to report errors to the user at the time to get the list of tables.
-type tablesFetchError struct{ err error }
 
 // querySuccessMsg struct used to get result sets from executed queries asynchronously.
 // Sometimes, tables can be created, altered of deleted, so the this returns a refreshed list of tables.
@@ -269,15 +259,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmds...)
 		}
-	case selectDatabaseMsg:
-		m.activeDatabase = msg.ActiveDatabase
-		m.c.SetActiveDatabase(msg.ActiveDatabase)
-		return m, m.fetchTablesCmd(msg.ActiveDatabase)
 	case selectTableMsg:
 		return m, m.runTableMetadata(msg.Table)
 	case executeQueryMsg:
 		return m, m.executeQueryCmd(msg.Query)
-	case metadataErrMsg, metadataSuccessMsg, tablesFetchError, tablesFetchedMsg, queryErrMsg, querySuccessMsg:
+	case metadataErrMsg, metadataSuccessMsg, queryErrMsg, querySuccessMsg:
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
 		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
@@ -300,7 +286,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	var rightText string
 
 	// listBorder := darkPurple
 	textAreaBorder := darkPurple
@@ -313,23 +298,7 @@ func (m Model) View() string {
 	case focusTable:
 	}
 
-	if m.c.ShowDataCatalog() {
-		if m.activeDatabase == "" {
-			m.activeDatabase = m.sidebarViewport.ActiveDatabase()
-		}
-		label := activeLabelStyle.Render("Active: ")
-		dbName := dbNameStyle.Render(m.activeDatabase + " ")
-		rightText = label + dbName
-	}
-
-	gapWidth := m.width - lipgloss.Width(m.footer) - lipgloss.Width(rightText)
-
-	if gapWidth < 0 {
-		gapWidth = 0
-	}
-
-	spacer := strings.Repeat(" ", gapWidth)
-	fullFooter := m.footer + spacer + rightText
+	fullFooter := m.footer
 	lipgloss.JoinVertical(
 		lipgloss.Left,
 		fullFooter,
@@ -390,41 +359,18 @@ func (m *Model) executeQueryCmd(query string) tea.Cmd {
 			return queryErrMsg{err}
 		}
 
-		switch {
-		case strings.Contains(strings.ToLower(query), "alter table"):
-			fallthrough
-		case strings.Contains(strings.ToLower(query), "drop table"):
-			fallthrough
-		case strings.Contains(strings.ToLower(query), "create table"):
-			ts, err = m.c.ShowTables()
-			if err != nil {
-				return queryErrMsg{err}
-			}
-		}
-
+		// switch {
+		// case strings.Contains(strings.ToLower(query), "alter table"):
+		// 	fallthrough
+		// case strings.Contains(strings.ToLower(query), "drop table"):
+		// 	fallthrough
+		// case strings.Contains(strings.ToLower(query), "create table"):
+		// 	ts, err = m.c.ShowTables()
+		// 	if err != nil {
+		// 		return queryErrMsg{err}
+		// 	}
+		// }
+		//
 		return querySuccessMsg{columns: columns, rows: rows, tables: ts}
 	}
 }
-
-// fetchTablesCmd method gets the list from a given database asynchronously.
-// If it succeeds, returns tablesFetchedMsg. Otherwise, it returns tablesFetchError with the error.
-func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
-	return func() tea.Msg {
-		ts, err := m.c.ShowTablesPerDB(dbName)
-		if err != nil {
-			return tablesFetchError{err}
-		}
-
-		return tablesFetchedMsg{
-			dbName: dbName,
-			tables: ts,
-		}
-	}
-}
-
-// func (m *Model) fetchChildren(dbObjectType string) tea.Cmd {
-//
-// 	return func() tea.Msg {
-//
-// 	}
-// }

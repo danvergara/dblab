@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -18,9 +19,12 @@ import (
 	"github.com/danvergara/dblab/pkg/pagination"
 )
 
-type Node struct {
-	Type  string
-	Nodes []Node
+type DBNode struct {
+	ID       string
+	Name     string
+	Type     string
+	Driver   string
+	Children []*DBNode
 }
 
 // databaseQuerier is an interface that indicates the methods
@@ -29,29 +33,21 @@ type Node struct {
 // This allows us to decouple the client from the database implementation and
 // make adding new databases easier.
 type databaseQuerier interface {
-	ShowTables() (string, []any, error)
 	TableStructure(tableName string) (string, []any, error)
 	Constraints(tableName string) (string, []any, error)
 	Indexes(tableName string) (string, []any, error)
-
-	GetDatabases() (string, []any, error)
-	GetChildren(parent, parentType string) (string, []any, error)
-	GetDBHierarchy() Node
-
-	ShowTablesPerDB(database string) (string, []any, error)
+	Catalog(context.Context) (*DBNode, error)
 }
 
 // Client is used to store the pool of db connection.
 type Client struct {
 	db                *sqlx.DB
+	dbName            string
 	databaseQuerier   databaseQuerier
 	driver, schema    string
 	host              string
 	paginationManager *pagination.Manager
-	activeDatabase    string
 	limit             uint
-	showDataCatalog   bool
-	dbs               map[string]*sqlx.DB
 }
 
 // New return an instance of the client.
@@ -71,7 +67,6 @@ func New(opts command.Options) (*Client, error) {
 		host:   opts.Host,
 		driver: opts.Driver,
 		limit:  opts.Limit,
-		dbs:    make(map[string]*sqlx.DB),
 	}
 
 	if opts.Schema == "" {
@@ -99,26 +94,6 @@ func New(opts command.Options) (*Client, error) {
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}
 
-	if opts.DBName == "" {
-		switch c.driver {
-		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
-			c.showDataCatalog = true
-			dbs, err := c.ShowDatabases()
-			if err != nil {
-				return nil, err
-			}
-
-			for _, d := range dbs {
-				db, err := getDB(c.driver, conn, d)
-				if err != nil {
-					continue
-				}
-
-				c.dbs[d] = db
-			}
-		}
-	}
-
 	switch c.driver {
 	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
 		if _, err = db.Exec(fmt.Sprintf("set search_path = '%s'", c.schema)); err != nil {
@@ -142,14 +117,6 @@ func New(opts command.Options) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) SetActiveDatabase(database string) {
-	c.activeDatabase = database
-}
-
-func (c *Client) ActiveDatabase() string {
-	return c.activeDatabase
-}
-
 // DB Return the db attribute.
 func (c *Client) DB() *sqlx.DB {
 	return c.db
@@ -163,35 +130,14 @@ func (c *Client) Host() string {
 	return c.host
 }
 
-func (c *Client) ShowDataCatalog() bool {
-	return c.showDataCatalog
-}
-
 // Query returns performs the query and returns the result set and the column names.
 func (c *Client) Query(q string, args ...any) ([][]string, []string, error) {
 	var (
 		resultSet = [][]string{}
-		db        *sqlx.DB
-		ok        bool
 	)
 
-	db = c.db
-
-	if c.activeDatabase != "" {
-		switch c.driver {
-		case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH, drivers.MySQL:
-			db, ok = c.dbs[c.activeDatabase]
-			if !ok {
-				return nil, nil, fmt.Errorf(
-					"connection with %s database not found",
-					c.activeDatabase,
-				)
-			}
-		}
-	}
-
 	// Runs the query extracting the content of the view calling the Buffer method.
-	rows, err := db.Queryx(q, args...)
+	rows, err := c.db.Queryx(q, args...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -295,174 +241,6 @@ func (c *Client) Metadata(tableName string) (*Metadata, error) {
 	return &m, nil
 }
 
-func (c *Client) GetChildren(parent, parentType string) ([]string, error) {
-	var (
-		query string
-		err   error
-		args  []any
-		db    *sqlx.DB
-		ok    bool
-	)
-
-	children := make([]string, 0)
-
-	query, args, err = c.databaseQuerier.GetChildren(parent, parentType)
-	if err != nil {
-		return nil, err
-	}
-
-	activeDatabase := c.activeDatabase
-	if parentType == "database" {
-		activeDatabase = parent
-	}
-
-	switch c.driver {
-	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
-		db, ok = c.dbs[activeDatabase]
-		if !ok {
-			return nil, fmt.Errorf("connection with %s database not found", activeDatabase)
-		}
-	default:
-		db = c.db
-	}
-
-	rows, err := db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			return nil, err
-		}
-
-		children = append(children, table)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return children, nil
-}
-
-func (c *Client) ShowTablesPerDB(database string) ([]string, error) {
-	var (
-		query string
-		err   error
-		args  []any
-		db    *sqlx.DB
-		ok    bool
-	)
-
-	tables := make([]string, 0)
-
-	query, args, err = c.databaseQuerier.ShowTablesPerDB(database)
-	if err != nil {
-		return nil, err
-	}
-
-	switch c.driver {
-	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
-		db, ok = c.dbs[database]
-		if !ok {
-			return nil, fmt.Errorf("connection with %s database not found", database)
-		}
-	default:
-		db = c.db
-	}
-
-	rows, err := db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			return nil, err
-		}
-
-		tables = append(tables, table)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tables, nil
-}
-
-// ShowTables list all the tables in the database on the tables panel.
-func (c *Client) ShowTables() ([]string, error) {
-	var (
-		query string
-		err   error
-		args  []any
-	)
-
-	tables := make([]string, 0)
-
-	query, args, err = c.databaseQuerier.ShowTables()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := c.db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			return nil, err
-		}
-
-		tables = append(tables, table)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tables, nil
-}
-
-// ShowDatabases returns a list of the databases the user has access to.
-func (c *Client) ShowDatabases() ([]string, error) {
-	var (
-		query string
-		err   error
-		args  []any
-	)
-
-	databases := make([]string, 0)
-
-	query, args, err = c.databaseQuerier.GetDatabases()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := c.db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var database string
-		if err := rows.Scan(&database); err != nil {
-			return nil, err
-		}
-
-		databases = append(databases, database)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return databases, nil
-}
-
 // TableContent returns all the rows of a table.
 func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 	var query string
@@ -535,6 +313,10 @@ func (c *Client) indexes(tableName string) ([][]string, []string, error) {
 	}
 
 	return c.Query(query, args...)
+}
+
+func (c *Client) Catalog() (*DBNode, error) {
+	return c.databaseQuerier.Catalog()
 }
 
 func getDB(driver, connString, database string) (*sqlx.DB, error) {

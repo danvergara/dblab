@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -15,53 +16,6 @@ var _ databaseQuerier = (*mssql)(nil)
 func newMSSQL() *mssql {
 	m := mssql{}
 	return &m
-}
-
-func (m *mssql) ShowTablesPerDB(database string) (string, []interface{}, error) {
-
-	return fmt.Sprintf(
-		"SELECT table_name FROM information_schema.tables WHERE table_schema = %s",
-		database,
-	), nil, nil
-}
-
-func (m *mssql) GetDBHierarchy() Node {
-	return Node{
-		Type: "Database",
-		Nodes: []Node{
-			{
-				Type: "Schema",
-				Nodes: []Node{
-					{Type: "Table"},
-				},
-			},
-		},
-	}
-}
-
-func (m *mssql) GetDatabases() (string, []interface{}, error) {
-	return "SELECT name FROM master.dbo.sysdatabases", nil, nil
-}
-
-func (m *mssql) GetChildren(database, _ string) (string, []any, error) {
-	return fmt.Sprintf(
-		"SELECT table_name FROM information_schema.tables WHERE table_schema = %s",
-		database,
-	), nil, nil
-}
-
-func (m *mssql) ShowTables() (string, []interface{}, error) {
-	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
-
-	query, args, err := psql.Select("table_name").
-		From("INFORMATION_SCHEMA.TABLES").
-		Where(sq.Eq{"table_type": "BASE TABLE"}).
-		ToSql()
-	if err != nil {
-		return "", nil, err
-	}
-
-	return query, args, nil
 }
 
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
@@ -144,3 +98,5 @@ func (m *mssql) Indexes(tableName string) (string, []interface{}, error) {
 
 	return query, args, nil
 }
+
+func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) { return nil, nil }

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
@@ -24,50 +25,6 @@ func newOracle(schema string) *oracle {
 	o := oracle{schema: schema}
 
 	return &o
-}
-
-func (o *oracle) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
-	return "", nil, nil
-}
-
-func (o *oracle) GetDBHierarchy() Node {
-	return Node{
-		Type: "Schema",
-		Nodes: []Node{
-			{
-				Type: "Table",
-			},
-		},
-	}
-}
-
-func (o *oracle) GetDatabases() (string, []interface{}, error) {
-	return "", nil, nil
-}
-
-func (o *oracle) GetChildren(_, _ string) (string, []any, error) {
-	return "", nil, nil
-}
-
-// ShowTables returns a query to retrieve all the tables.
-func (o *oracle) ShowTables() (string, []interface{}, error) {
-	var query sq.SelectBuilder
-
-	query = sq.Select("TABLE_NAME").
-		From("USER_TABLES")
-
-	if o.schema != "" {
-		query = sq.Select("TABLE_NAME").
-			From("ALL_TABLES").
-			Where(sq.Eq{"OWNER": strings.ToUpper(o.schema)})
-	}
-
-	sql, args, err := query.OrderBy("1").PlaceholderFormat(sq.Colon).ToSql()
-	if err != nil {
-		return "", nil, err
-	}
-
-	return sql, args, nil
 }
 
 // TableStructure returns a query string to get all the relevant information of a given table.
@@ -141,3 +98,5 @@ func (o *oracle) Indexes(tableName string) (string, []interface{}, error) {
 
 	return sql, args, nil
 }
+
+func (o *oracle) Catalog(ctx context.Context) (*DBNode, error) { return nil, nil }
