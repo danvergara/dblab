@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -65,7 +65,7 @@ var (
 			PaddingRight(1)
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF0000")). // Bright Red
+			Foreground(lipgloss.Color("#FF0000")).
 			Bold(true).
 			Padding(1, 2)
 )
@@ -89,32 +89,6 @@ type querySuccessMsg struct {
 // queryErrMsg struct used to report when the query execution fails.
 type queryErrMsg struct{ err error }
 
-// styles struct is for generic styling.
-type styles struct {
-	title        lipgloss.Style
-	item         lipgloss.Style
-	selectedItem lipgloss.Style
-	pagination   lipgloss.Style
-	help         lipgloss.Style
-	quitText     lipgloss.Style
-}
-
-// newStyles function retunrs a styles with defaults.
-func newStyles() styles {
-	var s styles
-
-	s.title = lipgloss.NewStyle().MarginLeft(2)
-	s.item = lipgloss.NewStyle().PaddingLeft(4)
-	s.selectedItem = lipgloss.NewStyle().PaddingLeft(2).Foreground(cyberGreen).
-		Background(darkPurple).
-		BorderLeftForeground(neonPurple)
-	s.pagination = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	s.help = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	s.quitText = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-
-	return s
-}
-
 type Model struct {
 	// database client.
 	c *client.Client
@@ -123,8 +97,6 @@ type Model struct {
 	editor          Editor
 	sidebarViewport SidebarViewport
 	resulstset      ResultSet
-
-	activeDatabase string
 
 	// Manages the focus on the app.
 	focus focusState
@@ -230,6 +202,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor
+				m.sidebarViewport.selected = false
 				cmd = m.editor.Focus()
 				cmds = append(cmds, cmd)
 			}
@@ -243,12 +216,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.Navigation.Left):
 			if m.focus == focusTable {
 				m.focus = focusList
+				m.sidebarViewport.selected = true
 				m.resulstset.Blur()
 			}
 
 			if m.focus == focusEditor {
 				m.editor.Blur()
 				m.focus = focusList
+				m.sidebarViewport.selected = true
 			}
 		case key.Matches(msg, m.bindings.Navigation.Up):
 			if m.focus == focusTable {
@@ -260,7 +235,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(cmds...)
 		}
 	case selectTableMsg:
-		return m, m.runTableMetadata(msg.Table)
+		tableRef := client.TableRef{Name: msg.Table}
+		switch m.c.Driver() {
+		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+			tableRef.Schema = msg.Schema
+		}
+		return m, m.runTableMetadata(tableRef)
 	case executeQueryMsg:
 		return m, m.executeQueryCmd(msg.Query)
 	case metadataErrMsg, metadataSuccessMsg, queryErrMsg, querySuccessMsg:
@@ -287,12 +267,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 
-	// listBorder := darkPurple
 	textAreaBorder := darkPurple
 
 	switch m.focus {
-	case focusList:
-		// listBorder = neonPurple
 	case focusEditor:
 		textAreaBorder = neonPurple
 	case focusTable:
@@ -338,9 +315,9 @@ func (m *Model) Run() error {
 
 // runTableMetadata gets the given table's metadata asynchronously.
 // If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
-func (m *Model) runTableMetadata(tableName string) tea.Cmd {
+func (m *Model) runTableMetadata(table client.TableRef) tea.Cmd {
 	return func() tea.Msg {
-		metadata, err := m.c.Metadata(tableName)
+		metadata, err := m.c.Metadata(table)
 		if err != nil {
 			return metadataErrMsg{err}
 		}
@@ -359,18 +336,6 @@ func (m *Model) executeQueryCmd(query string) tea.Cmd {
 			return queryErrMsg{err}
 		}
 
-		// switch {
-		// case strings.Contains(strings.ToLower(query), "alter table"):
-		// 	fallthrough
-		// case strings.Contains(strings.ToLower(query), "drop table"):
-		// 	fallthrough
-		// case strings.Contains(strings.ToLower(query), "create table"):
-		// 	ts, err = m.c.ShowTables()
-		// 	if err != nil {
-		// 		return queryErrMsg{err}
-		// 	}
-		// }
-		//
 		return querySuccessMsg{columns: columns, rows: rows, tables: ts}
 	}
 }

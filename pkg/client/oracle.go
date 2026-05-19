@@ -28,17 +28,17 @@ func newOracle(schema string) *oracle {
 }
 
 // TableStructure returns a query string to get all the relevant information of a given table.
-func (o *oracle) TableStructure(tableName string) (string, []interface{}, error) {
+func (o *oracle) TableStructure(table TableRef) (string, []interface{}, error) {
 	var query sq.SelectBuilder
 
 	query = sq.Select("*").
 		From("USER_TAB_COLUMNS").
-		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
+		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(table.Name)})
 
-	if o.schema != "" {
+	if table.Schema != "" {
 		query = sq.Select("*").
 			From("ALL_TAB_COLUMNS").
-			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName), "OWNER": strings.ToUpper(o.schema)})
+			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(table.Name), "OWNER": strings.ToUpper(table.Schema)})
 	}
 
 	sql, args, err := query.OrderBy("1").PlaceholderFormat(sq.Colon).ToSql()
@@ -50,7 +50,7 @@ func (o *oracle) TableStructure(tableName string) (string, []interface{}, error)
 }
 
 // Constraints returns all the constraints of a given table.
-func (o *oracle) Constraints(tableName string) (string, []interface{}, error) {
+func (o *oracle) Constraints(table TableRef) (string, []interface{}, error) {
 	var query sq.SelectBuilder
 
 	query = sq.Select(
@@ -58,15 +58,15 @@ func (o *oracle) Constraints(tableName string) (string, []interface{}, error) {
 		`CONSTRAINT_TYPE`,
 	).
 		From("USER_CONSTRAINTS").
-		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
+		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(table.Name)})
 
-	if o.schema != "" {
+	if table.Schema != "" {
 		query = sq.Select(
 			`CONSTRAINT_NAME`,
 			`CONSTRAINT_TYPE`,
 		).
 			From("ALL_CONSTRAINTS").
-			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName), "OWNER": strings.ToUpper(o.schema)})
+			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(table.Name), "OWNER": strings.ToUpper(table.Schema)})
 	}
 
 	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()
@@ -78,17 +78,17 @@ func (o *oracle) Constraints(tableName string) (string, []interface{}, error) {
 }
 
 // Indexes returns the indexes of a table.
-func (o *oracle) Indexes(tableName string) (string, []interface{}, error) {
+func (o *oracle) Indexes(table TableRef) (string, []interface{}, error) {
 	var query sq.SelectBuilder
 
 	query = sq.Select("*").
 		From("USER_INDEXES").
-		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName)})
+		Where(sq.Eq{"TABLE_NAME": strings.ToUpper(table.Name)})
 
-	if o.schema != "" {
+	if table.Schema != "" {
 		query = sq.Select("*").
 			From("ALL_INDEXES").
-			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(tableName), "OWNER": strings.ToUpper(o.schema)})
+			Where(sq.Eq{"TABLE_NAME": strings.ToUpper(table.Name), "OWNER": strings.ToUpper(table.Schema)})
 	}
 
 	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()

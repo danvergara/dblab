@@ -20,20 +20,20 @@ func newMySQL() *mysql {
 }
 
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
-func (m *mysql) TableStructure(tableName string) (string, []any, error) {
-	query := fmt.Sprintf("DESCRIBE %s;", tableName)
+func (m *mysql) TableStructure(table TableRef) (string, []any, error) {
+	query := fmt.Sprintf("DESCRIBE %s;", table.Name)
 	return query, nil, nil
 }
 
 // Constraints returns all the constraints of a given table.
-func (m *mysql) Constraints(tableName string) (string, []any, error) {
+func (m *mysql) Constraints(table TableRef) (string, []any, error) {
 	query := sq.Select(
 		`tc.constraint_name`,
 		`tc.table_name`,
 		`tc.constraint_type`,
 	).
 		From("information_schema.table_constraints AS tc").
-		Where("tc.table_name = ?", tableName)
+		Where("tc.table_name = ?", table.Name)
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -44,8 +44,8 @@ func (m *mysql) Constraints(tableName string) (string, []any, error) {
 }
 
 // Indexes returns a query to get all the indexes of a table.
-func (m *mysql) Indexes(tableName string) (string, []any, error) {
-	query := fmt.Sprintf("SHOW INDEX FROM %s", tableName)
+func (m *mysql) Indexes(table TableRef) (string, []any, error) {
+	query := fmt.Sprintf("SHOW INDEX FROM %s", table.Name)
 	return query, nil, nil
 }
 

@@ -21,13 +21,13 @@ func newSQLite() *sqlite {
 }
 
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
-func (s *sqlite) TableStructure(tableName string) (string, []interface{}, error) {
-	query := fmt.Sprintf("PRAGMA table_info(%s);", tableName)
+func (s *sqlite) TableStructure(table TableRef) (string, []interface{}, error) {
+	query := fmt.Sprintf("PRAGMA table_info(%s);", table.Name)
 	return query, nil, nil
 }
 
 // Constraints returns all the constraints of a given table.
-func (s *sqlite) Constraints(tableName string) (string, []interface{}, error) {
+func (s *sqlite) Constraints(table TableRef) (string, []interface{}, error) {
 	query := sq.Select(
 		"*",
 	).
@@ -35,7 +35,7 @@ func (s *sqlite) Constraints(tableName string) (string, []interface{}, error) {
 		Where(
 			sq.And{
 				sq.Eq{"type": "table"},
-				sq.Eq{"name": tableName},
+				sq.Eq{"name": table.Name},
 			})
 
 	sql, args, err := query.ToSql()
@@ -47,8 +47,8 @@ func (s *sqlite) Constraints(tableName string) (string, []interface{}, error) {
 }
 
 // Indexes returns a query to get all the indexes of a table.
-func (s *sqlite) Indexes(tableName string) (string, []interface{}, error) {
-	query := fmt.Sprintf(`PRAGMA index_list(%s);`, tableName)
+func (s *sqlite) Indexes(table TableRef) (string, []interface{}, error) {
+	query := fmt.Sprintf(`PRAGMA index_list(%s);`, table.Name)
 
 	return query, nil, nil
 }

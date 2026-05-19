@@ -19,12 +19,18 @@ import (
 	"github.com/danvergara/dblab/pkg/pagination"
 )
 
+type TableRef struct {
+	Schema string
+	Name   string
+}
+
 type DBNode struct {
-	ID       string
-	Name     string
-	Type     string
-	ParentID string
-	Children []*DBNode
+	ID         string
+	Name       string
+	Type       string
+	ParentID   string
+	ParentName string
+	Children   []*DBNode
 }
 
 // databaseQuerier is an interface that indicates the methods
@@ -33,9 +39,9 @@ type DBNode struct {
 // This allows us to decouple the client from the database implementation and
 // make adding new databases easier.
 type databaseQuerier interface {
-	TableStructure(tableName string) (string, []any, error)
-	Constraints(tableName string) (string, []any, error)
-	Indexes(tableName string) (string, []any, error)
+	TableStructure(table TableRef) (string, []any, error)
+	Constraints(table TableRef) (string, []any, error)
+	Indexes(table TableRef) (string, []any, error)
 	Catalog(context.Context) (*DBNode, error)
 }
 
@@ -70,19 +76,14 @@ func New(opts command.Options) (*Client, error) {
 		limit:  opts.Limit,
 	}
 
-	if opts.Schema == "" {
-		switch c.driver {
-		case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
-			c.schema = "public"
-		}
-	} else {
+	if opts.Schema != "" {
 		c.schema = opts.Schema
 	}
 
 	// This is where an implementation of databaseQuerier is getting picked up.
 	switch c.driver {
 	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
-		c.databaseQuerier = newPostgres(c.dbName, c.db)
+		c.databaseQuerier = newPostgres(c.dbName, c.schema, c.db)
 	case drivers.MySQL:
 		c.databaseQuerier = newMySQL()
 	case drivers.SQLite:
@@ -127,6 +128,7 @@ func (c *Client) DB() *sqlx.DB {
 func (c *Client) Driver() string {
 	return c.driver
 }
+
 func (c *Client) Host() string {
 	return c.host
 }
@@ -200,23 +202,23 @@ type Metadata struct {
 }
 
 // Metadata returns the most relevant data from a given table.
-func (c *Client) Metadata(tableName string) (*Metadata, error) {
-	tcRows, tcColumns, err := c.tableContent(tableName)
+func (c *Client) Metadata(table TableRef) (*Metadata, error) {
+	tcRows, tcColumns, err := c.tableContent(table)
 	if err != nil {
 		return nil, err
 	}
 
-	sRows, sColumns, err := c.tableStructure(tableName)
+	sRows, sColumns, err := c.tableStructure(table)
 	if err != nil {
 		return nil, err
 	}
 
-	cRows, cColumns, err := c.constraints(tableName)
+	cRows, cColumns, err := c.constraints(table)
 	if err != nil {
 		return nil, err
 	}
 
-	iRows, iColumns, err := c.indexes(tableName)
+	iRows, iColumns, err := c.indexes(table)
 	if err != nil {
 		return nil, err
 	}
@@ -244,35 +246,36 @@ func (c *Client) Metadata(tableName string) (*Metadata, error) {
 }
 
 // TableContent returns all the rows of a table.
-func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
+func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 	var query string
 
 	switch c.driver {
 	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
 		query = fmt.Sprintf(
-			"SELECT * FROM %q LIMIT %d OFFSET %d;",
-			tableName,
+			"SELECT * FROM %s.%s LIMIT %d OFFSET %d;",
+			table.Schema,
+			table.Name,
 			c.paginationManager.Limit(),
 			c.paginationManager.Offset(),
 		)
 	case drivers.Oracle:
 		query = fmt.Sprintf(
 			"SELECT * FROM %s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			tableName,
+			table.Name,
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
 		)
 	case drivers.SQLServer:
 		query = fmt.Sprintf(
 			"SELECT * FROM %s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			tableName,
+			table.Name,
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
 		)
 	default:
 		query = fmt.Sprintf(
 			"SELECT * FROM %s LIMIT %d OFFSET %d;",
-			tableName,
+			table.Name,
 			c.paginationManager.Limit(),
 			c.paginationManager.Offset(),
 		)
@@ -282,14 +285,14 @@ func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 }
 
 // tableStructure returns the structure of the table columns.
-func (c *Client) tableStructure(tableName string) ([][]string, []string, error) {
+func (c *Client) tableStructure(table TableRef) ([][]string, []string, error) {
 	var (
 		query string
 		err   error
 		args  []any
 	)
 
-	query, args, err = c.databaseQuerier.TableStructure(tableName)
+	query, args, err = c.databaseQuerier.TableStructure(table)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -298,8 +301,8 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 }
 
 // constraints returns the resultet of from information_schema.table_constraints.
-func (c *Client) constraints(tableName string) ([][]string, []string, error) {
-	sql, args, err := c.databaseQuerier.Constraints(tableName)
+func (c *Client) constraints(table TableRef) ([][]string, []string, error) {
+	sql, args, err := c.databaseQuerier.Constraints(table)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -308,8 +311,8 @@ func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 }
 
 // indexes returns a resulset with the information of the indexes given a table name.
-func (c *Client) indexes(tableName string) ([][]string, []string, error) {
-	query, args, err := c.databaseQuerier.Indexes(tableName)
+func (c *Client) indexes(table TableRef) ([][]string, []string, error) {
+	query, args, err := c.databaseQuerier.Indexes(table)
 	if err != nil {
 		return nil, nil, err
 	}

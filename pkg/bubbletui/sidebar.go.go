@@ -11,15 +11,7 @@ import (
 
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
-)
-
-type dbObjectType string
-
-const (
-	dbObjectDatabase dbObjectType = "database"
-	dbOjbectSchema   dbObjectType = "schema"
-	dbObjectTable    dbObjectType = "table"
-	dbObjectHost     dbObjectType = "host"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
 func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool {
@@ -29,7 +21,8 @@ func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool 
 }
 
 type selectTableMsg struct {
-	Table string
+	Schema string
+	Table  string
 }
 
 type SidebarViewport struct {
@@ -39,6 +32,8 @@ type SidebarViewport struct {
 	sidebarViewport viewport.Model
 	dbTree          *treeview.TuiTreeModel[*client.DBNode]
 	width, height   int
+
+	selected bool
 }
 
 type DBGraphTreeBuilderProvider struct{}
@@ -124,7 +119,12 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 				switch (*selectedNode.Data()).Type {
 				case "table":
 					selectTableCmd := func() tea.Msg {
-						return selectTableMsg{Table: selectedNode.Name()}
+						stm := selectTableMsg{Table: selectedNode.Name()}
+						switch s.c.Driver() {
+						case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+							stm.Schema = (*selectedNode.Data()).ParentName
+						}
+						return stm
 					}
 
 					return s, selectTableCmd
@@ -196,6 +196,9 @@ func (s SidebarViewport) View() string {
 	sideViewContent := s.sidebarViewport.View()
 
 	listBorder := darkPurple
+	if s.selected {
+		listBorder = neonPurple
+	}
 	sideViewContent = tablesListStyle.BorderForeground(listBorder).Width(s.width).Height(s.height).Render(sideViewContent)
 
 	return sideViewContent

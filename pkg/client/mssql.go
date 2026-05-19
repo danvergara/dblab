@@ -19,7 +19,7 @@ func newMSSQL() *mssql {
 }
 
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
-func (m *mssql) TableStructure(tableName string) (string, []interface{}, error) {
+func (m *mssql) TableStructure(table TableRef) (string, []interface{}, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 	query, args, err := psql.Select(
 		"c.name AS ColumnName",
@@ -31,7 +31,7 @@ func (m *mssql) TableStructure(tableName string) (string, []interface{}, error) 
 	).
 		From("sys.columns c").
 		InnerJoin("sys.types t ON c.user_type_id = t.user_type_id").
-		Where(sq.Eq{"c.object_id": fmt.Sprintf("OBJECT_ID('%s')", tableName)}).
+		Where(sq.Eq{"c.object_id": fmt.Sprintf("OBJECT_ID('%s')", table.Name)}).
 		ToSql()
 	if err != nil {
 		return "", nil, err
@@ -41,7 +41,7 @@ func (m *mssql) TableStructure(tableName string) (string, []interface{}, error) 
 }
 
 // Constraints returns all the constraints of a given table.
-func (m *mssql) Constraints(tableName string) (string, []interface{}, error) {
+func (m *mssql) Constraints(table TableRef) (string, []interface{}, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 
 	query, args, err := psql.Select(
@@ -50,7 +50,7 @@ func (m *mssql) Constraints(tableName string) (string, []interface{}, error) {
 		`constraint_type`,
 	).
 		From("INFORMATION_SCHEMA.TABLE_CONSTRAINTS").
-		Where(sq.Eq{"TABLE_NAME": tableName}).
+		Where(sq.Eq{"TABLE_NAME": table.Name}).
 		ToSql()
 	if err != nil {
 		return "", nil, err
@@ -60,7 +60,7 @@ func (m *mssql) Constraints(tableName string) (string, []interface{}, error) {
 }
 
 // Indexes returns the indexes of a table.
-func (m *mssql) Indexes(tableName string) (string, []interface{}, error) {
+func (m *mssql) Indexes(table TableRef) (string, []interface{}, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 	query, args, err := psql.Select(
 		"ind.name AS IndexName",
@@ -86,7 +86,7 @@ func (m *mssql) Indexes(tableName string) (string, []interface{}, error) {
           AND ic.column_id = col.column_id`,
 		).
 		InnerJoin("sys.tables t ON ind.object_id = t.object_id").
-		Where(sq.Eq{"t.name": tableName}).
+		Where(sq.Eq{"t.name": table.Name}).
 		OrderBy(
 			"ind.name",
 			"ic.index_column_id",

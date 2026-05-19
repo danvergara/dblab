@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	// "github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,11 +20,11 @@ type postgres struct {
 var _ databaseQuerier = (*postgres)(nil)
 
 // returns a pointer to a postgres, it receives an schema as a parameter.
-func newPostgres(dbName string, db *sqlx.DB) *postgres {
+func newPostgres(dbName, schema string, db *sqlx.DB) *postgres {
 	p := postgres{
 		dbName: dbName,
 		db:     db,
-		// schema: schema,
+		schema: schema,
 	}
 
 	return &p
@@ -33,7 +32,7 @@ func newPostgres(dbName string, db *sqlx.DB) *postgres {
 
 // TableStructure returns a query string to get all the relevant information of a given table,
 // under a schema.
-func (p *postgres) TableStructure(tableName string) (string, []any, error) {
+func (p *postgres) TableStructure(table TableRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	query, args, err := psql.Select(
@@ -60,8 +59,8 @@ func (p *postgres) TableStructure(tableName string) (string, []any, error) {
 		).
 		Where(
 			sq.And{
-				// sq.Eq{"c.table_schema": p.schema},
-				sq.Eq{"c.table_name": tableName},
+				sq.Eq{"c.table_schema": table.Schema},
+				sq.Eq{"c.table_name": table.Name},
 			},
 		).
 		ToSql()
@@ -70,7 +69,7 @@ func (p *postgres) TableStructure(tableName string) (string, []any, error) {
 }
 
 // Constraints returns all the constraints of a given table, under a schema.
-func (p *postgres) Constraints(tableName string) (string, []any, error) {
+func (p *postgres) Constraints(table TableRef) (string, []any, error) {
 	var (
 		query sq.SelectBuilder
 		sql   string
@@ -82,8 +81,8 @@ func (p *postgres) Constraints(tableName string) (string, []any, error) {
 		`tc.constraint_type`,
 	).
 		From("information_schema.table_constraints AS tc").
-		Where(sq.Eq{"tc.table_name": tableName}).
-		// Where(sq.Eq{"tc.table_schema": p.schema}).
+		Where(sq.Eq{"tc.table_name": table.Name}).
+		Where(sq.Eq{"tc.table_schema": table.Schema}).
 		PlaceholderFormat(sq.Dollar)
 
 	sql, args, err := query.ToSql()
@@ -94,10 +93,13 @@ func (p *postgres) Constraints(tableName string) (string, []any, error) {
 }
 
 // Indexes returns the indexes of a table, under a schema.
-func (p *postgres) Indexes(tableName string) (string, []any, error) {
+func (p *postgres) Indexes(table TableRef) (string, []any, error) {
 	query := sq.Select("*").
 		From("pg_indexes").
-		Where(sq.Eq{"tableName": tableName}).
+		Where(sq.And{
+			sq.Eq{"schemaname": table.Schema},
+			sq.Eq{"tablename": table.Name},
+		}).
 		PlaceholderFormat(sq.Dollar)
 
 	sql, args, err := query.ToSql()
@@ -120,7 +122,16 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 		var err error
 		switch current.Type {
 		case "database":
-			children, err = p.fetchSchemas(ctx, current.Name)
+			if p.schema != "" {
+				children = append(children, &DBNode{
+					ID:       fmt.Sprintf("%s.s:%s", rootID, p.schema),
+					Name:     p.schema,
+					Type:     "schema",
+					ParentID: rootID,
+				})
+			} else {
+				children, err = p.fetchSchemas(ctx, current.Name)
+			}
 		case "schema":
 			children, err = p.fetchTables(ctx, current.Name, current.ID)
 		}
@@ -164,6 +175,7 @@ func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode
 			return nil, err
 		}
 		schemas = append(schemas, &DBNode{
+
 			ID:       fmt.Sprintf("%s.s:%s", parentID, name),
 			Name:     name,
 			Type:     "schema",
@@ -202,10 +214,11 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 			return nil, err
 		}
 		tables = append(tables, &DBNode{
-			ID:       fmt.Sprintf("%s.t:%s", parentID, name),
-			Name:     name,
-			Type:     "table",
-			ParentID: parentID,
+			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
+			Name:       name,
+			Type:       "table",
+			ParentName: parentName,
+			ParentID:   parentID,
 		})
 	}
 

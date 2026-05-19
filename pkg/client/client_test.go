@@ -269,7 +269,8 @@ func (suite *ClientTestSuite) TestTableContent() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.tableContent("products")
+	tableRef := TableRef{Name: "products"}
+	r, co, err := c.tableContent(tableRef)
 
 	suite.Len(r, int(opts.Limit))
 	suite.Len(co, 3)
@@ -291,7 +292,8 @@ func (suite *ClientTestSuite) TestConstraints() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.constraints("products")
+	tableRef := TableRef{Name: "products"}
+	r, co, err := c.constraints(tableRef)
 
 	suite.T().Logf("constraints columns %v", co)
 	suite.T().Logf("constraints content %v", r)
@@ -316,7 +318,8 @@ func (suite *ClientTestSuite) TestIndexes() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.indexes("products")
+	tableRef := TableRef{Name: "products"}
+	r, co, err := c.indexes(tableRef)
 	suite.NoError(err)
 	suite.NotEmpty(r)
 	suite.NotEmpty(co)
@@ -337,7 +340,8 @@ func (suite *ClientTestSuite) TestMetadata() {
 
 	c, _ := New(opts)
 
-	m, err := c.Metadata("products")
+	tableRef := TableRef{Name: "products"}
+	m, err := c.Metadata(tableRef)
 	suite.NoError(err)
 	suite.NotNil(m)
 
