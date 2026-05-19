@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,9 +21,11 @@ type postgres struct {
 var _ databaseQuerier = (*postgres)(nil)
 
 // returns a pointer to a postgres, it receives an schema as a parameter.
-func newPostgres(schema string) *postgres {
+func newPostgres(dbName string, db *sqlx.DB) *postgres {
 	p := postgres{
-		schema: schema,
+		dbName: dbName,
+		db:     db,
+		// schema: schema,
 	}
 
 	return &p
@@ -58,7 +60,7 @@ func (p *postgres) TableStructure(tableName string) (string, []any, error) {
 		).
 		Where(
 			sq.And{
-				sq.Eq{"c.table_schema": p.schema},
+				// sq.Eq{"c.table_schema": p.schema},
 				sq.Eq{"c.table_name": tableName},
 			},
 		).
@@ -81,7 +83,7 @@ func (p *postgres) Constraints(tableName string) (string, []any, error) {
 	).
 		From("information_schema.table_constraints AS tc").
 		Where(sq.Eq{"tc.table_name": tableName}).
-		Where(sq.Eq{"tc.table_schema": p.schema}).
+		// Where(sq.Eq{"tc.table_schema": p.schema}).
 		PlaceholderFormat(sq.Dollar)
 
 	sql, args, err := query.ToSql()
@@ -107,48 +109,7 @@ func (p *postgres) Indexes(tableName string) (string, []any, error) {
 }
 
 func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
-	// root := DBNode{
-	// 	ID:   "databases-postgres",
-	// 	Name: "users",
-	// 	Type: "database",
-	// 	Children: []DBNode{
-	// 		{
-	// 			ID:   "schemas-public",
-	// 			Name: "Public",
-	// 			Type: "schema",
-	// 			Children: []DBNode{
-	// 				{
-	// 					ID:   "schemas-public-users",
-	// 					Name: "users",
-	// 					Type: "table",
-	// 				},
-	// 				{
-	// 					ID:   "schemas-public-employees",
-	// 					Name: "employees",
-	// 					Type: "table",
-	// 				},
-	// 			},
-	// 		},
-	// 		{
-	// 			ID:   "schemas-products",
-	// 			Name: "Products",
-	// 			Type: "schema",
-	// 			Children: []DBNode{
-	// 				{
-	// 					ID:   "schemas-products-products",
-	// 					Name: "products",
-	// 					Type: "table",
-	// 				},
-	// 				{
-	// 					ID:   "schemas-products-prices",
-	// 					Name: "prices",
-	// 					Type: "table",
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// }
-	rootID := fmt.Sprintf("db:%s-%s", uuid.New().String(), "")
+	rootID := fmt.Sprintf("db:%s", p.dbName)
 	root := &DBNode{ID: rootID, Name: p.dbName, Type: "database"}
 	queue := []*DBNode{root}
 	for len(queue) > 0 {
@@ -160,6 +121,8 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 		switch current.Type {
 		case "database":
 			children, err = p.fetchSchemas(ctx, current.Name)
+		case "schema":
+			children, err = p.fetchTables(ctx, current.Name, current.ID)
 		}
 
 		if err != nil {
@@ -176,6 +139,79 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
-func (p *postgres) fetchSchemas(ctx context.Context, parentName string) ([]*DBNode, error) {
-	return nil, nil
+func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
+	query, args, err := sq.Select("schema_name").
+		From("information_schema.schemata").
+		Where(sq.NotEq{
+			"schema_name ": []string{"information_schema", "pg_catalog"},
+		}).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := p.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var schemas []*DBNode
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		schemas = append(schemas, &DBNode{
+			ID:       fmt.Sprintf("%s.s:%s", parentID, name),
+			Name:     name,
+			Type:     "schema",
+			ParentID: parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return schemas, nil
+}
+
+func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query, args, err := sq.Select("table_name").
+		From("information_schema.tables").
+		Where(sq.Eq{"table_schema": parentName}).
+		OrderBy("table_name").
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := p.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tables []*DBNode
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		tables = append(tables, &DBNode{
+			ID:       fmt.Sprintf("%s.t:%s", parentID, name),
+			Name:     name,
+			Type:     "table",
+			ParentID: parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tables, nil
 }

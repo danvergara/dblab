@@ -23,7 +23,7 @@ type DBNode struct {
 	ID       string
 	Name     string
 	Type     string
-	Driver   string
+	ParentID string
 	Children []*DBNode
 }
 
@@ -64,6 +64,7 @@ func New(opts command.Options) (*Client, error) {
 
 	c := &Client{
 		db:     db,
+		dbName: opts.DBName,
 		host:   opts.Host,
 		driver: opts.Driver,
 		limit:  opts.Limit,
@@ -81,7 +82,7 @@ func New(opts command.Options) (*Client, error) {
 	// This is where an implementation of databaseQuerier is getting picked up.
 	switch c.driver {
 	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
-		c.databaseQuerier = newPostgres(c.schema)
+		c.databaseQuerier = newPostgres(c.dbName, c.db)
 	case drivers.MySQL:
 		c.databaseQuerier = newMySQL()
 	case drivers.SQLite:
@@ -141,6 +142,7 @@ func (c *Client) Query(q string, args ...any) ([][]string, []string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	defer rows.Close()
 
 	// Gets the names of the columns of the result set.
 	columnNames, err := rows.Columns()
@@ -315,8 +317,8 @@ func (c *Client) indexes(tableName string) ([][]string, []string, error) {
 	return c.Query(query, args...)
 }
 
-func (c *Client) Catalog() (*DBNode, error) {
-	return c.databaseQuerier.Catalog()
+func (c *Client) Catalog(ctx context.Context) (*DBNode, error) {
+	return c.databaseQuerier.Catalog(ctx)
 }
 
 func getDB(driver, connString, database string) (*sqlx.DB, error) {

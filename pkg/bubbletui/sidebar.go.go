@@ -2,22 +2,15 @@ package bubbletui
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"strings"
 
 	"github.com/Digital-Shane/treeview"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	// "github.com/google/uuid"
 
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
-	// "github.com/danvergara/dblab/pkg/drivers"
-	// "github.com/google/uuid"
 )
 
 type dbObjectType string
@@ -35,66 +28,17 @@ func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool 
 	}
 }
 
-// item implements the Item interface for required for the List Model from bubbles.
-type item string
-
-func (i item) Title() string       { return string(i) }
-func (i item) Description() string { return "" }
-func (i item) FilterValue() string { return string(i) }
-
-// itemDelegate is used to inject styling to the list items.
-// Implements the ItemDelegate interface.
-// It's important to highlight the selected item.
-type itemDelegate struct {
-	styles *styles
-}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := d.styles.item.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return d.styles.selectedItem.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
-}
-
-type selectDatabaseMsg struct {
-	ActiveDatabase string
-}
-
 type selectTableMsg struct {
 	Table string
 }
 
-type getChildrenMsg struct {
-	parent     string
-	parentType string
-}
-type getChildrenErrMsg struct{ err error }
-
 type SidebarViewport struct {
-	c *client.Client
-
-	tablesList      list.Model
-	sidebarViewport viewport.Model
-	dbTree          *treeview.TuiTreeModel[*client.DBNode]
-
+	c        *client.Client
 	bindings *command.TUIKeyMap
 
-	activeDatabase string
-	width, height  int
+	sidebarViewport viewport.Model
+	dbTree          *treeview.TuiTreeModel[*client.DBNode]
+	width, height   int
 }
 
 type DBGraphTreeBuilderProvider struct{}
@@ -116,7 +60,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 	svp.sidebarViewport = viewport.New(0, 0)
 	svp.sidebarViewport.KeyMap = viewport.KeyMap{}
 
-	root, err := c.Catalog()
+	root, err := c.Catalog(ctx)
 	if err != nil {
 		return SidebarViewport{}, err
 	}
@@ -125,7 +69,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 		ctx,
 		[]*client.DBNode{root},
 		&DBGraphTreeBuilderProvider{},
-		// treeview.WithProvider(createCyberpunkProvider()),
+		treeview.WithProvider(createCyberpunkProvider()),
 	)
 	if err != nil {
 		return svp, err
@@ -133,42 +77,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 
 	svp.dbTree = svp.newTuiTreeModel(tree, 0, 80)
 
-	// if svp.c.ShowDataCatalog() {
-	// } else {
-	// 	ts, err := svp.c.ShowTables()
-	// 	if err != nil {
-	// 		return svp, err
-	// 	}
-	//
-	// 	tables := make([]list.Item, 0)
-	// 	for _, ta := range ts {
-	// 		tables = append(tables, item(ta))
-	// 	}
-	//
-	// 	l := list.New(tables, itemDelegate{}, 0, 0)
-	// 	l.Title = "Tables"
-	// 	l.SetShowStatusBar(false)
-	// 	l.SetFilteringEnabled(false)
-	// 	l.SetShowHelp(false)
-	// 	l.KeyMap.Quit.Unbind()
-	// 	svp.tablesList = l
-	// 	svp.updateStyles()
-	// }
-
 	return svp, nil
-}
-
-// updateStyle setup the styles across the client.
-func (s *SidebarViewport) updateStyles() {
-	styles := newStyles()
-	s.tablesList.Styles.Title = styles.title
-	s.tablesList.Styles.PaginationStyle = styles.pagination
-	s.tablesList.Styles.HelpStyle = styles.help
-	s.tablesList.SetDelegate(itemDelegate{styles: &styles})
-}
-
-func (s *SidebarViewport) ActiveDatabase() string {
-	return s.activeDatabase
 }
 
 func (s *SidebarViewport) SetSize(w, h int) {
@@ -205,7 +114,6 @@ func (s SidebarViewport) Init() tea.Cmd {
 }
 
 func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
-	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -277,11 +185,10 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 			cmd = treeCmd
 		}
 
-		cmds = append(cmds, cmd)
-		return s, nil
+		return s, cmd
 	}
 
-	return s, tea.Batch(cmds...)
+	return s, cmd
 }
 
 func (s SidebarViewport) View() string {
@@ -295,24 +202,12 @@ func (s SidebarViewport) View() string {
 }
 
 func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
-	// Icons for database connections.
-	// postgresIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.Postgres), "🐘")
-	// mysqlIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.MySQL), "🐬")
-	// sqliteIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.SQLite), "🪶")
-	// oracleIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.Oracle), "☀ ")
-	// sqlServerIconRule := treeview.WithIconRule(dbObjectIsConnection("host", drivers.SQLServer), "🔷")
-
-	// Icons for database entities.
+	// Icons for database objects.
 	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), "⛃")
 	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), "📁")
-	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), "📄")
+	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), "📋")
 
 	return treeview.NewDefaultNodeProvider[*client.DBNode](
-		// postgresIconRule,
-		// mysqlIconRule,
-		// sqliteIconRule,
-		// oracleIconRule,
-		// sqlServerIconRule,
 		databaseIconRule,
 		schemaIconRule,
 		tableIconRule,
