@@ -19,8 +19,8 @@ database:
     password: "postgres"
     user: "postgres"
     driver: "postgres"
-    # optional
-    # postgres only, schema default value: public
+    # optional for postgres and oracle
+    # if omitted, all accessible schemas are shown
     # schema: "public"
 limit: 50
 

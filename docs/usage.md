@@ -35,7 +35,7 @@ Flags:
       --cfg-name string                   Database config name section
       --config                            Get the connection data from a config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)
       --keybindings, -k                   Get the keybindings configuration from the config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)
-      --db string                         Database name (optional)
+      --db string                         Database name
       --driver string                     Database driver
       --encrypt string                    [strict|disable|false|true] whether data sent between client and server is encrypted
   -h, --help                              help for dblab
@@ -43,7 +43,7 @@ Flags:
       --limit uint                        Size of the result set for the table content query (should be greater than zero, otherwise the app will error out) (default 100)
       --pass string                       Password for user
       --port string                       Server port
-      --schema string                     Database schema (postgres and oracle only)
+      --schema string                     Database schema (optional for postgres and oracle only)
       --socket string                     Path to a Unix socket file
       --ssh-host string                   SSH Server Hostname/IP
       --ssh-key string                    File with private key for SSH authentication
@@ -85,7 +85,7 @@ Otherwise, you might be located at the tables panel, where you can navigate usin
 
 The navigation buttons were removed since they are too slow to navigate the content of a table effectively. The user is better off typing a `SELECT` statement with proper `OFFSET` and `LIMIT`.
 
-The `--db` flag is now optional (except for Oracle), meaning that the user will be able to see the list of databases they have access to. The regular list of tables will be replaced with a tree structure showing a list of databases and their respective list of tables, branching off each database. Due to the nature of the vast majority of DBMSs that don't allow cross-database queries, dblab has to open an independent connection for each database. The side effect of this decision is that the user has to press `Enter` on the specific database of interest. An indicator showing the current active database will appear at the bottom-right of the screen. To change the focus, just hit enter on another database. Once a database is selected, the usual behavior of inspecting tables remains the same.
+The `--db` flag is mandatory. dblab connects to a single database and displays its catalog as a tree in the sidebar. For PostgreSQL and Oracle, the tree shows the database, its schemas, and the tables under each schema. For MySQL, SQLite, and SQL Server, the tree shows the database and its tables directly. If the `--schema` flag is provided for PostgreSQL or Oracle, only that schema is shown; otherwise, all accessible schemas are listed.
 
 <img src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/tree-view.png" />
 
@@ -162,7 +162,7 @@ dblab --url 'oracle://user:password@localhost:1521/db'
 dblab --url 'sqlserver://SA:myStrong(!)Password@localhost:1433?database=tempdb&encrypt=true&trustservercertificate=false&connection+timeout=30'
 ```
 
-If you're using PostgreSQL or Oracle, you have the option to define the schema you want to work with; the default value is `public` for Postgres, and empty for Oracle.
+If you're using PostgreSQL or Oracle, you have the option to define the schema you want to work with. The `--schema` flag is optional: if omitted, dblab will display all schemas the connected user has access to in the sidebar tree. If provided, only that specific schema will be shown.
 
 **Postgres**
 
@@ -298,9 +298,8 @@ database:
     password: "password"
     user: "postgres"
     driver: "postgres"
-    # optional
-    # postgres only
-    # default value: public
+    # optional for postgres and oracle
+    # if omitted, all accessible schemas are shown
     schema: "myschema"
   - name: "prod"
     # example endpoint
@@ -390,4 +389,4 @@ database:
     driver: "sqlite"
 ```
 
-Only the `host` and `ssl` fields are optional. They default to `127.0.0.1` and `disable`, respectively.
+Only the `host`, `ssl`, and `schema` fields are optional. `host` defaults to `127.0.0.1`, `ssl` defaults to `disable`. The `schema` field is only applicable to PostgreSQL and Oracle; if omitted, all accessible schemas are shown.
