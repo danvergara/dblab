@@ -248,7 +248,12 @@ func (suite *ClientTestSuite) TestQuery() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.Query("SELECT * FROM public.products;")
+	query := "SELECT * FROM public.products;"
+	if suite.driver == "mysql" {
+		query = "SELECT * FROM products;"
+	}
+
+	r, co, err := c.Query(query)
 	suite.Len(r, 100)
 	suite.Len(co, 3)
 	suite.NoError(err)
