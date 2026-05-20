@@ -199,7 +199,7 @@ func (s SidebarViewport) View() string {
 	if s.selected {
 		listBorder = neonPurple
 	}
-	sideViewContent = tablesListStyle.BorderForeground(listBorder).Width(s.width).Height(s.height).Render(sideViewContent)
+	sideViewContent = tablesListStyle.BorderForeground(listBorder).Height(s.height).Render(sideViewContent)
 
 	return sideViewContent
 }
