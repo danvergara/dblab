@@ -291,9 +291,13 @@ func (m Model) View() string {
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
-	// styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
 	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, m.sidebarViewport.View())
-	leftColumn = lipgloss.NewStyle().Width(m.leftWidth).MaxWidth(m.leftWidth).Render(leftColumn)
+	leftColumn = lipgloss.NewStyle().
+		Width(m.leftWidth).
+		MaxWidth(m.leftWidth).
+		Height(m.height - lipgloss.Height(m.footer)).
+		MaxHeight(m.height - lipgloss.Height(m.footer)).
+		Render(leftColumn)
 
 	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
 	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
