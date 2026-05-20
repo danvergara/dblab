@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -323,28 +322,4 @@ func (c *Client) indexes(table TableRef) ([][]string, []string, error) {
 
 func (c *Client) Catalog(ctx context.Context) (*DBNode, error) {
 	return c.databaseQuerier.Catalog(ctx)
-}
-
-func getDB(driver, connString, database string) (*sqlx.DB, error) {
-	var newConnString string
-
-	switch driver {
-	case drivers.MySQL:
-		newConnString = strings.Replace(connString, "/", fmt.Sprintf("/%s", database), 1)
-	default:
-		u, err := url.Parse(connString)
-		if err != nil {
-			return nil, err
-		}
-
-		u.Path = "/" + database
-		newConnString = u.String()
-	}
-
-	db, err := sqlx.Open(driver, newConnString)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }

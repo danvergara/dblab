@@ -55,15 +55,6 @@ var (
 	footerStyle = lipgloss.NewStyle().
 			Foreground(green)
 
-	activeLabelStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#B200FF")).
-				Bold(true)
-
-	dbNameStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF9D00")).
-			Bold(true).
-			PaddingRight(1)
-
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000")).
 			Bold(true).
