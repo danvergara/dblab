@@ -114,6 +114,7 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 	rootID := fmt.Sprintf("db:%s", p.dbName)
 	root := &DBNode{ID: rootID, Name: p.dbName, Type: "database"}
 	queue := []*DBNode{root}
+
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
@@ -135,7 +136,6 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 		case "schema":
 			children, err = p.fetchTables(ctx, current.Name, current.ID)
 		}
-
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +144,6 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 			current.Children = append(current.Children, child)
 			queue = append(queue, child)
 		}
-
 	}
 
 	return root, nil

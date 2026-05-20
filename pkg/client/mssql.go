@@ -5,16 +5,23 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jmoiron/sqlx"
 )
 
 // mssql struct is in charge of perform all the SQL Server related queries.
-type mssql struct{}
+type mssql struct {
+	db     *sqlx.DB
+	dbName string
+}
 
 var _ databaseQuerier = (*mssql)(nil)
 
 // returns a pointer to a mysql.
-func newMSSQL() *mssql {
-	m := mssql{}
+func newMSSQL(dbName string, db *sqlx.DB) *mssql {
+	m := mssql{
+		dbName: dbName,
+		db:     db,
+	}
 	return &m
 }
 
@@ -99,4 +106,62 @@ func (m *mssql) Indexes(table TableRef) (string, []interface{}, error) {
 	return query, args, nil
 }
 
-func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) { return nil, nil }
+func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) {
+	rootID := fmt.Sprintf("db:%s", m.dbName)
+	root := &DBNode{ID: rootID, Name: m.dbName, Type: "database"}
+
+	queue := []*DBNode{root}
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		var children []*DBNode
+		var err error
+		switch current.Type {
+		case "database":
+			children, err = m.fetchTables(ctx, current.Name, current.ID)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		for _, child := range children {
+			current.Children = append(current.Children, child)
+			queue = append(queue, child)
+		}
+	}
+
+	return root, nil
+}
+
+func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query := "SHOW TABLES;"
+
+	rows, err := m.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var tables []*DBNode
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+
+		tables = append(tables, &DBNode{
+			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
+			Name:       name,
+			Type:       "table",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tables, nil
+}

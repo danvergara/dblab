@@ -85,13 +85,13 @@ func New(opts command.Options) (*Client, error) {
 	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
 		c.databaseQuerier = newPostgres(c.dbName, c.schema, c.db)
 	case drivers.MySQL:
-		c.databaseQuerier = newMySQL()
+		c.databaseQuerier = newMySQL(c.dbName, c.db)
 	case drivers.SQLite:
-		c.databaseQuerier = newSQLite()
+		c.databaseQuerier = newSQLite(c.dbName, c.db)
 	case drivers.Oracle:
-		c.databaseQuerier = newOracle(c.schema)
+		c.databaseQuerier = newOracle(c.dbName, c.schema, c.db)
 	case drivers.SQLServer:
-		c.databaseQuerier = newMSSQL()
+		c.databaseQuerier = newMSSQL(c.dbName, c.db)
 	default:
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}
@@ -260,8 +260,9 @@ func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 		)
 	case drivers.Oracle:
 		query = fmt.Sprintf(
-			"SELECT * FROM %s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			table.Name,
+			"SELECT * FROM %s.%s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			strings.ToUpper(table.Schema),
+			strings.ToUpper(table.Name),
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
 		)
