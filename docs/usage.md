@@ -80,8 +80,8 @@ Otherwise, you might be located at the tables panel, where you can navigate usin
 
 ![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/rows-view.png){ width="700" : .center }
 ![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/structure-view.png){ width="700" : .center }
-![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/constraints-view.png){ width="700" : .center }
 ![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/indexes-view.png){ width="700" : .center }
+![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/constraints-view.png){ width="700" : .center }
 
 The navigation buttons were removed since they are too slow to navigate the content of a table effectively. The user is better off typing a `SELECT` statement with proper `OFFSET` and `LIMIT`.
 

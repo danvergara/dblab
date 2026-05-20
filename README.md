@@ -383,8 +383,8 @@ Otherwise, you might be located at the tables panel, where you can navigate usin
 
 <img src="screenshots/rows-view.png" />
 <img src="screenshots/structure-view.png" />
-<img src="screenshots/constraints-view.png" />
 <img src="screenshots/indexes-view.png" />
+<img src="screenshots/constraints-view.png" />
 
 The navigation buttons were removed since they are too slow to navigate the content of a table effectively. The user is better off typing a `SELECT` statement with proper `OFFSET` and `LIMIT`.
 
