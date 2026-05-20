@@ -3,6 +3,20 @@
 -- Example connection: sqlplus sys/password@//localhost:1521/FREEPDB1 as sysdba
 
 -- Drop users if they exist, to make the script re-runnable
+
+-- How to use:
+
+-- Step 1: Make sure the Oracle container is running:
+
+-- docker compose up -d oracle
+
+-- Step 2: Run the script via docker exec:
+
+-- docker exec -i dblab-oracle-1 sqlplus sys/password@//localhost:1521/FREEPDB1 as sysdba < scripts/oracle_test_setup.sql
+
+-- If the container name is different, check it with:
+-- docker compose ps
+
 BEGIN
    EXECUTE IMMEDIATE 'DROP USER user1 CASCADE';
 EXCEPTION

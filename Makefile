@@ -75,7 +75,7 @@ run-postgres-socket: build
 .PHONY: run-oracle
 ## run-oracle: Runs the application making a connection to the Oracle database
 run-oracle: build
-	./dblab --host localhost --user system --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50
+	./dblab --host localhost --user sys --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50
 
 .PHONY: run-sql-server
 ## run-sql-server: Runs the application making a connection to the SQL Server database
