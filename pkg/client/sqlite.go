@@ -1,54 +1,41 @@
 package client
 
 import (
+	"context"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jmoiron/sqlx"
 )
 
 // sqlite  is in charge of perform all the sqlite related queries,
 // without the client knowing.
-type sqlite struct{}
+type sqlite struct {
+	db     *sqlx.DB
+	dbName string
+}
 
 // a validation to see if sqlite is implementing databaseQuerier.
 var _ databaseQuerier = (*sqlite)(nil)
 
 // returns a pointer to a sqlite.
-func newSQLite() *sqlite {
-	s := sqlite{}
+func newSQLite(dbName string, db *sqlx.DB) *sqlite {
+	s := sqlite{
+		dbName: dbName,
+		db:     db,
+	}
+
 	return &s
 }
 
-func (s *sqlite) ShowTablesPerDB(dabase string) (string, []interface{}, error) {
-	return "", nil, nil
-}
-
-func (s *sqlite) ShowDatabases() (string, []interface{}, error) {
-	return "", nil, nil
-}
-
-// ShowTables returns a query to retrieve all the tables.
-func (s *sqlite) ShowTables() (string, []interface{}, error) {
-	query := `
-		SELECT
-			name
-		FROM
-			sqlite_schema
-		WHERE
-			type ='table' AND
-			name NOT LIKE 'sqlite_%';`
-
-	return query, nil, nil
-}
-
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
-func (s *sqlite) TableStructure(tableName string) (string, []interface{}, error) {
-	query := fmt.Sprintf("PRAGMA table_info(%s);", tableName)
+func (s *sqlite) TableStructure(table TableRef) (string, []interface{}, error) {
+	query := fmt.Sprintf("PRAGMA table_info(%s);", table.Name)
 	return query, nil, nil
 }
 
 // Constraints returns all the constraints of a given table.
-func (s *sqlite) Constraints(tableName string) (string, []interface{}, error) {
+func (s *sqlite) Constraints(table TableRef) (string, []interface{}, error) {
 	query := sq.Select(
 		"*",
 	).
@@ -56,7 +43,7 @@ func (s *sqlite) Constraints(tableName string) (string, []interface{}, error) {
 		Where(
 			sq.And{
 				sq.Eq{"type": "table"},
-				sq.Eq{"name": tableName},
+				sq.Eq{"name": table.Name},
 			})
 
 	sql, args, err := query.ToSql()
@@ -68,8 +55,76 @@ func (s *sqlite) Constraints(tableName string) (string, []interface{}, error) {
 }
 
 // Indexes returns a query to get all the indexes of a table.
-func (s *sqlite) Indexes(tableName string) (string, []interface{}, error) {
-	query := fmt.Sprintf(`PRAGMA index_list(%s);`, tableName)
+func (s *sqlite) Indexes(table TableRef) (string, []interface{}, error) {
+	query := fmt.Sprintf(`PRAGMA index_list(%s);`, table.Name)
 
 	return query, nil, nil
+}
+
+func (s *sqlite) Catalog(ctx context.Context) (*DBNode, error) {
+	rootID := fmt.Sprintf("db:%s", s.dbName)
+	root := &DBNode{ID: rootID, Name: s.dbName, Type: "database"}
+
+	queue := []*DBNode{root}
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		var children []*DBNode
+		var err error
+		switch current.Type {
+		case "database":
+			children, err = s.fetchTables(ctx, current.Name, current.ID)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		for _, child := range children {
+			current.Children = append(current.Children, child)
+			queue = append(queue, child)
+		}
+	}
+
+	return root, nil
+}
+
+func (s *sqlite) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query := `
+		SELECT
+			name
+		FROM
+			sqlite_schema
+		WHERE
+			type ='table' AND
+			name NOT LIKE 'sqlite_%';`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var tables []*DBNode
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+
+		tables = append(tables, &DBNode{
+			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
+			Name:       name,
+			Type:       "table",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tables, nil
 }

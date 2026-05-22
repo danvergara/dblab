@@ -2,75 +2,51 @@ package bubbletui
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"strings"
 
 	"github.com/Digital-Shane/treeview"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
-	"github.com/google/uuid"
+	"github.com/danvergara/dblab/pkg/drivers"
 )
 
-// item implements the Item interface for required for the List Model from bubbles.
-type item string
-
-func (i item) Title() string       { return string(i) }
-func (i item) Description() string { return "" }
-func (i item) FilterValue() string { return string(i) }
-
-// itemDelegate is used to inject styling to the list items.
-// Implements the ItemDelegate interface.
-// It's important to highlight the selected item.
-type itemDelegate struct {
-	styles *styles
-}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
+func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool {
+	return func(n *treeview.Node[*client.DBNode]) bool {
+		return (*n.Data()).Type == nodeType
 	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := d.styles.item.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return d.styles.selectedItem.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
-}
-
-type selectDatabaseMsg struct {
-	ActiveDatabase string
 }
 
 type selectTableMsg struct {
-	Table string
+	Schema string
+	Table  string
 }
 
 type SidebarViewport struct {
-	c *client.Client
-
-	tablesList      list.Model
-	sidebarViewport viewport.Model
-	dbTree          *treeview.TuiTreeModel[string]
-
+	c        *client.Client
 	bindings *command.TUIKeyMap
 
-	activeDatabase string
-	width, height  int
+	sidebarViewport viewport.Model
+	dbTree          *treeview.TuiTreeModel[*client.DBNode]
+	width, height   int
+
+	selected bool
+}
+
+type DBGraphTreeBuilderProvider struct{}
+
+func (d DBGraphTreeBuilderProvider) ID(do *client.DBNode) string {
+	return do.ID
+}
+
+func (d *DBGraphTreeBuilderProvider) Name(do *client.DBNode) string {
+	return do.Name
+}
+func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNode {
+	return do.Children
 }
 
 func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKeyMap) (SidebarViewport, error) {
@@ -79,111 +55,52 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 	svp.sidebarViewport = viewport.New(0, 0)
 	svp.sidebarViewport.KeyMap = viewport.KeyMap{}
 
-	if svp.c.ShowDataCatalog() {
-		dbs, err := svp.c.ShowDatabases()
-		if err != nil {
-			return svp, err
-		}
-		rootID := uuid.New().String()
-		root := treeview.NewNode(fmt.Sprintf("%s-%s", "db", rootID), "db", "root")
-		for _, db := range dbs {
-			nodeID := uuid.New().String()
-			root.AddChild(treeview.NewNode(fmt.Sprintf("%s-%s", db, nodeID), db, "database"))
-		}
-
-		root.Expand()
-
-		treeRoot := treeview.NewTree([]*treeview.Node[string]{root}, treeview.WithProvider(createCyberpunkProvider()))
-
-		svp.dbTree = treeview.NewTuiTreeModel(treeRoot,
-			treeview.WithTuiWidth[string](0),
-			treeview.WithTuiHeight[string](80),
-		)
-
-		// If there are databases, choose the first one as the default active one.
-		if len(dbs) > 0 {
-			var i int
-
-			for n, err := range svp.dbTree.AllVisible(ctx) {
-				if err != nil {
-					break
-				}
-
-				if i == 1 {
-					svp.c.SetActiveDatabase(n.Node.Name())
-					svp.activeDatabase = n.Node.Name()
-					_, _ = svp.dbTree.SetFocusedID(ctx, n.Node.ID())
-					break
-				}
-				i++
-			}
-		}
-
-	} else {
-		ts, err := svp.c.ShowTables()
-		if err != nil {
-			return svp, err
-		}
-
-		tables := make([]list.Item, 0)
-		for _, ta := range ts {
-			tables = append(tables, item(ta))
-		}
-
-		l := list.New(tables, itemDelegate{}, 0, 0)
-		l.Title = "Tables"
-		l.SetShowStatusBar(false)
-		l.SetFilteringEnabled(false)
-		l.SetShowHelp(false)
-		l.KeyMap.Quit.Unbind()
-		svp.tablesList = l
-		svp.updateStyles()
+	root, err := c.Catalog(ctx)
+	if err != nil {
+		return SidebarViewport{}, err
 	}
+
+	tree, err := treeview.NewTreeFromNestedData[*client.DBNode](
+		ctx,
+		[]*client.DBNode{root},
+		&DBGraphTreeBuilderProvider{},
+		treeview.WithProvider(createCyberpunkProvider()),
+	)
+	if err != nil {
+		return svp, err
+	}
+
+	svp.dbTree = svp.newTuiTreeModel(tree, 0, 80)
 
 	return svp, nil
 }
 
-// updateStyle setup the styles across the client.
-func (s *SidebarViewport) updateStyles() {
-	styles := newStyles()
-	s.tablesList.Styles.Title = styles.title
-	s.tablesList.Styles.PaginationStyle = styles.pagination
-	s.tablesList.Styles.HelpStyle = styles.help
-	s.tablesList.SetDelegate(itemDelegate{styles: &styles})
-}
-
-func (s *SidebarViewport) ActiveDatabase() string {
-	return s.activeDatabase
-}
-
 func (s *SidebarViewport) SetSize(w, h int) {
-	s.width = w
-	s.height = h
+	s.width = w - 4
+	s.height = h - 2
 
-	if s.c.ShowDataCatalog() {
-		if s.dbTree != nil {
-			s.dbTree = s.newTuiTreeModel(s.dbTree.Tree, w, h-2)
-		}
-	} else {
-		s.tablesList.SetSize(w, h-2)
+	s.sidebarViewport.Width = s.width
+	s.sidebarViewport.Height = s.height
+
+	if s.dbTree != nil {
+		s.dbTree = s.newTuiTreeModel(s.dbTree.Tree, 0, s.height-2)
 	}
-
-	s.sidebarViewport.Height = h - 4
-	s.sidebarViewport.Width = w - 4
 }
 
-func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[string], width, height int) *treeview.TuiTreeModel[string] {
+func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], width, height int) *treeview.TuiTreeModel[*client.DBNode] {
 	// Create custom key map to avoid key conflicts
 	keyMap := treeview.DefaultKeyMap()
 	keyMap.SearchStart = []string{"/"}
 	keyMap.Up = []string{"up", "k", "w"}
 	keyMap.Down = []string{"down", "j", "s"}
+	keyMap.Toggle = []string{"enter"}
 
 	return treeview.NewTuiTreeModel(tree,
-		treeview.WithTuiWidth[string](width),
-		treeview.WithTuiHeight[string](height),
-		treeview.WithTuiKeyMap[string](keyMap),
-		treeview.WithTuiDisableNavBar[string](true),
+		treeview.WithTuiWidth[*client.DBNode](width),
+		treeview.WithTuiHeight[*client.DBNode](height),
+		treeview.WithTuiKeyMap[*client.DBNode](keyMap),
+		treeview.WithTuiDisableNavBar[*client.DBNode](true),
+		treeview.WithTuiAllowResize[*client.DBNode](false),
 	)
 }
 
@@ -192,154 +109,113 @@ func (s SidebarViewport) Init() tea.Cmd {
 }
 
 func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
-	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			if s.c.ShowDataCatalog() {
-				selectedNode := s.dbTree.GetFocusedNode()
-				if selectedNode != nil && selectedNode.Data() != nil {
-					switch *selectedNode.Data() {
-					case "database":
-						s.c.SetActiveDatabase(selectedNode.Name())
-						if selectedNode.IsExpanded() {
-							selectedNode.Collapse()
-							return s, nil
-						} else {
-							selectedNode.Expand()
-							selectDatabaseCmd := func() tea.Msg {
-								s.activeDatabase = selectedNode.Name()
-								return selectDatabaseMsg{ActiveDatabase: selectedNode.Name()}
-							}
-							return s, selectDatabaseCmd
+			selectedNode := s.dbTree.GetFocusedNode()
+			if selectedNode != nil && selectedNode.Data() != nil {
+				switch (*selectedNode.Data()).Type {
+				case "table":
+					selectTableCmd := func() tea.Msg {
+						stm := selectTableMsg{Table: selectedNode.Name()}
+						switch s.c.Driver() {
+						case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+							stm.Schema = (*selectedNode.Data()).ParentName
 						}
-					case "table":
-						selectTableCmd := func() tea.Msg {
-							return selectTableMsg{Table: selectedNode.Name()}
-						}
-
-						return s, selectTableCmd
+						return stm
 					}
+
+					return s, selectTableCmd
 				}
-			} else {
-				tableItem := s.tablesList.Items()[s.tablesList.Index()]
-
-				i := tableItem.(item)
-				tableName := i.Title()
-
-				selectTableCmd := func() tea.Msg {
-					return selectTableMsg{Table: tableName}
-				}
-
-				return s, selectTableCmd
 			}
 		}
 
 		switch {
 		case key.Matches(msg, s.bindings.PageTop):
-			if s.c.ShowDataCatalog() {
-				ctx := context.Background()
+			ctx := context.Background()
 
-				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-					if err != nil {
-						break
-					}
-
-					_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+				if err != nil {
 					break
 				}
-				return s, nil
-			} else {
-				s.tablesList.Select(0)
-				s.sidebarViewport.SetContent(s.tablesList.View())
-				return s, nil
+
+				_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+				break
 			}
+			return s, nil
 		case key.Matches(msg, s.bindings.PageBottom):
-			if s.c.ShowDataCatalog() {
-				ctx := context.Background()
+			ctx := context.Background()
 
-				var bottomNodeID string
-				var found bool
+			var bottomNodeID string
+			var found bool
 
-				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-					if err != nil {
-						break
-					}
-
-					bottomNodeID = nodeInfo.Node.ID()
-					found = true
+			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+				if err != nil {
+					break
 				}
 
-				if found {
-					_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
-				}
-				return s, nil
-			} else {
-				totalItems := len(s.tablesList.Items())
-				if totalItems > 0 {
-					s.tablesList.Select(totalItems - 1)
-				}
-				s.sidebarViewport.SetContent(s.tablesList.View())
-				return s, nil
+				bottomNodeID = nodeInfo.Node.ID()
+				found = true
 			}
+
+			if found {
+				_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
+			}
+			return s, nil
 		}
 
-		if s.c.ShowDataCatalog() {
-			if s.dbTree != nil {
-				updatedModel, treeCmd := s.dbTree.Update(msg)
-				if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[string]); ok {
-					s.dbTree = newTreeModel
-				}
-				cmd = treeCmd
-			}
-		} else {
-			s.tablesList, cmd = s.tablesList.Update(msg)
-			s.sidebarViewport.SetContent(s.tablesList.View())
-		}
-		cmds = append(cmds, cmd)
+		s.sidebarViewport.SetContent(s.dbTree.View())
 
-	case tablesFetchedMsg:
-		selectedNode := s.dbTree.GetFocusedNode()
-		if selectedNode != nil {
-			tables := make([]*treeview.Node[string], len(msg.tables))
-			for i, t := range msg.tables {
-				nodeID := uuid.New().String()
-				tables[i] = treeview.NewNode(fmt.Sprintf("%s-%s", t, nodeID), t, "table")
-			}
-			selectedNode.SetChildren(tables)
+		switch msg.String() {
+		case "left", "h":
+			s.sidebarViewport.ScrollLeft(4)
+			return s, nil
+		case "right", "l":
+			s.sidebarViewport.ScrollRight(4)
+			return s, nil
 		}
-		return s, nil
-	case querySuccessMsg:
-		if len(msg.tables) > 0 {
-			tables := make([]list.Item, 0)
-			for _, ta := range msg.tables {
-				tables = append(tables, item(ta))
+
+		if s.dbTree != nil {
+			updatedModel, treeCmd := s.dbTree.Update(msg)
+			if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[*client.DBNode]); ok {
+				s.dbTree = newTreeModel
 			}
-			s.tablesList.SetItems(tables)
+			cmd = treeCmd
 		}
-		return s, nil
+
+		return s, cmd
 	}
 
-	return s, tea.Batch(cmds...)
+	return s, cmd
 }
 
 func (s SidebarViewport) View() string {
-	s.sidebarViewport.SetContent(s.tablesList.View())
+	s.sidebarViewport.SetContent(s.dbTree.View())
 	sideViewContent := s.sidebarViewport.View()
-	if s.c.ShowDataCatalog() {
-		sideViewContent = s.dbTree.View()
+
+	listBorder := darkPurple
+	if s.selected {
+		listBorder = neonPurple
 	}
+	sideViewContent = tablesListStyle.BorderForeground(listBorder).Height(s.height).Render(sideViewContent)
+
 	return sideViewContent
 }
 
-func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
-	return treeview.NewDefaultNodeProvider(
-		treeview.WithIconRule(treeview.PredIsExpanded[string](), "▼"),
-		treeview.WithDefaultIcon[string]("▶"),
+func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
+	// Icons for database objects.
+	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), "⛃")
+	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), "📁")
+	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), "📋")
+
+	return treeview.NewDefaultNodeProvider[*client.DBNode](
+		databaseIconRule,
+		schemaIconRule,
+		tableIconRule,
 		treeview.WithStyleRule(
-			func(n *treeview.Node[string]) bool { return true },
+			func(n *treeview.Node[*client.DBNode]) bool { return true },
 			lipgloss.NewStyle().
 				Foreground(whiteText).
 				PaddingLeft(2),
@@ -353,7 +229,7 @@ func createCyberpunkProvider() *treeview.DefaultNodeProvider[string] {
 				BorderForeground(hiMagenta).
 				PaddingLeft(1),
 		),
-		treeview.WithFormatter[string](func(node *treeview.Node[string]) (string, bool) {
+		treeview.WithFormatter(func(node *treeview.Node[*client.DBNode]) (string, bool) {
 			return node.Name(), true
 		}),
 	)

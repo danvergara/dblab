@@ -4,15 +4,14 @@ import (
 	"context"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -56,17 +55,8 @@ var (
 	footerStyle = lipgloss.NewStyle().
 			Foreground(green)
 
-	activeLabelStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#B200FF")).
-				Bold(true)
-
-	dbNameStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF9D00")).
-			Bold(true).
-			PaddingRight(1)
-
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF0000")). // Bright Red
+			Foreground(lipgloss.Color("#FF0000")).
 			Bold(true).
 			Padding(1, 2)
 )
@@ -79,15 +69,6 @@ type metadataSuccessMsg struct {
 // metadataErrMsg struct used to report error to user at the time to retrieve metadata.
 type metadataErrMsg struct{ err error }
 
-// tablesFetchedMsg struct used to get a given database's tables asynchronously.
-type tablesFetchedMsg struct {
-	dbName string
-	tables []string
-}
-
-// tablesFetchError struct used to report errors to the user at the time to get the list of tables.
-type tablesFetchError struct{ err error }
-
 // querySuccessMsg struct used to get result sets from executed queries asynchronously.
 // Sometimes, tables can be created, altered of deleted, so the this returns a refreshed list of tables.
 type querySuccessMsg struct {
@@ -99,32 +80,6 @@ type querySuccessMsg struct {
 // queryErrMsg struct used to report when the query execution fails.
 type queryErrMsg struct{ err error }
 
-// styles struct is for generic styling.
-type styles struct {
-	title        lipgloss.Style
-	item         lipgloss.Style
-	selectedItem lipgloss.Style
-	pagination   lipgloss.Style
-	help         lipgloss.Style
-	quitText     lipgloss.Style
-}
-
-// newStyles function retunrs a styles with defaults.
-func newStyles() styles {
-	var s styles
-
-	s.title = lipgloss.NewStyle().MarginLeft(2)
-	s.item = lipgloss.NewStyle().PaddingLeft(4)
-	s.selectedItem = lipgloss.NewStyle().PaddingLeft(2).Foreground(cyberGreen).
-		Background(darkPurple).
-		BorderLeftForeground(neonPurple)
-	s.pagination = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	s.help = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	s.quitText = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-
-	return s
-}
-
 type Model struct {
 	// database client.
 	c *client.Client
@@ -133,8 +88,6 @@ type Model struct {
 	editor          Editor
 	sidebarViewport SidebarViewport
 	resulstset      ResultSet
-
-	activeDatabase string
 
 	// Manages the focus on the app.
 	focus focusState
@@ -215,7 +168,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.titleWidth = m.leftWidth - 2
 
 		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
-		m.sidebarViewportWidth = m.leftWidth - 2
+		m.sidebarViewportWidth = m.leftWidth
 
 		m.editorWidth = m.rightWidth - 4
 		m.editorHeight = availableHeight/3 - 2
@@ -240,6 +193,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor
+				m.sidebarViewport.selected = false
 				cmd = m.editor.Focus()
 				cmds = append(cmds, cmd)
 			}
@@ -253,12 +207,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.bindings.Navigation.Left):
 			if m.focus == focusTable {
 				m.focus = focusList
+				m.sidebarViewport.selected = true
 				m.resulstset.Blur()
 			}
 
 			if m.focus == focusEditor {
 				m.editor.Blur()
 				m.focus = focusList
+				m.sidebarViewport.selected = true
 			}
 		case key.Matches(msg, m.bindings.Navigation.Up):
 			if m.focus == focusTable {
@@ -269,15 +225,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmds...)
 		}
-	case selectDatabaseMsg:
-		m.activeDatabase = msg.ActiveDatabase
-		m.c.SetActiveDatabase(msg.ActiveDatabase)
-		return m, m.fetchTablesCmd(msg.ActiveDatabase)
 	case selectTableMsg:
-		return m, m.runTableMetadata(msg.Table)
+		tableRef := client.TableRef{Name: msg.Table}
+		switch m.c.Driver() {
+		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+			tableRef.Schema = msg.Schema
+		}
+		return m, m.runTableMetadata(tableRef)
 	case executeQueryMsg:
 		return m, m.executeQueryCmd(msg.Query)
-	case metadataErrMsg, metadataSuccessMsg, tablesFetchError, tablesFetchedMsg, queryErrMsg, querySuccessMsg:
+	case metadataErrMsg, metadataSuccessMsg, queryErrMsg, querySuccessMsg:
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
 		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
@@ -300,36 +257,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	var rightText string
 
-	listBorder := darkPurple
 	textAreaBorder := darkPurple
 
 	switch m.focus {
-	case focusList:
-		listBorder = neonPurple
 	case focusEditor:
 		textAreaBorder = neonPurple
 	case focusTable:
 	}
 
-	if m.c.ShowDataCatalog() {
-		if m.activeDatabase == "" {
-			m.activeDatabase = m.sidebarViewport.ActiveDatabase()
-		}
-		label := activeLabelStyle.Render("Active: ")
-		dbName := dbNameStyle.Render(m.activeDatabase + " ")
-		rightText = label + dbName
-	}
-
-	gapWidth := m.width - lipgloss.Width(m.footer) - lipgloss.Width(rightText)
-
-	if gapWidth < 0 {
-		gapWidth = 0
-	}
-
-	spacer := strings.Repeat(" ", gapWidth)
-	fullFooter := m.footer + spacer + rightText
+	fullFooter := m.footer
 	lipgloss.JoinVertical(
 		lipgloss.Left,
 		fullFooter,
@@ -345,10 +282,15 @@ func (m Model) View() string {
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
-	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
-	styledTableList := tablesListStyle.BorderForeground(listBorder).Width(m.sidebarViewportWidth).Height(m.sidebarViewportHeight - 2).Render(m.sidebarViewport.View())
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, m.sidebarViewport.View())
+	leftColumn = lipgloss.NewStyle().
+		Width(m.leftWidth).
+		MaxWidth(m.leftWidth).
+		Height(m.height - lipgloss.Height(m.footer)).
+		MaxHeight(m.height - lipgloss.Height(m.footer)).
+		Render(leftColumn)
 
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, styledTableList)
+	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
 	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
@@ -368,9 +310,9 @@ func (m *Model) Run() error {
 
 // runTableMetadata gets the given table's metadata asynchronously.
 // If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
-func (m *Model) runTableMetadata(tableName string) tea.Cmd {
+func (m *Model) runTableMetadata(table client.TableRef) tea.Cmd {
 	return func() tea.Msg {
-		metadata, err := m.c.Metadata(tableName)
+		metadata, err := m.c.Metadata(table)
 		if err != nil {
 			return metadataErrMsg{err}
 		}
@@ -389,34 +331,6 @@ func (m *Model) executeQueryCmd(query string) tea.Cmd {
 			return queryErrMsg{err}
 		}
 
-		switch {
-		case strings.Contains(strings.ToLower(query), "alter table"):
-			fallthrough
-		case strings.Contains(strings.ToLower(query), "drop table"):
-			fallthrough
-		case strings.Contains(strings.ToLower(query), "create table"):
-			ts, err = m.c.ShowTables()
-			if err != nil {
-				return queryErrMsg{err}
-			}
-		}
-
 		return querySuccessMsg{columns: columns, rows: rows, tables: ts}
-	}
-}
-
-// fetchTablesCmd method gets the list from a given database asynchronously.
-// If it succeeds, returns tablesFetchedMsg. Otherwise, it returns tablesFetchError with the error.
-func (m *Model) fetchTablesCmd(dbName string) tea.Cmd {
-	return func() tea.Msg {
-		ts, err := m.c.ShowTablesPerDB(dbName)
-		if err != nil {
-			return tablesFetchError{err}
-		}
-
-		return tablesFetchedMsg{
-			dbName: dbName,
-			tables: ts,
-		}
 	}
 }

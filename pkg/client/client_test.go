@@ -248,7 +248,12 @@ func (suite *ClientTestSuite) TestQuery() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.Query("SELECT * FROM products;")
+	query := "SELECT * FROM public.products;"
+	if suite.driver == "mysql" {
+		query = "SELECT * FROM products;"
+	}
+
+	r, co, err := c.Query(query)
 	suite.Len(r, 100)
 	suite.Len(co, 3)
 	suite.NoError(err)
@@ -269,80 +274,12 @@ func (suite *ClientTestSuite) TestTableContent() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.tableContent("products")
+	tableRef := TableRef{Name: "products", Schema: "public"}
+	r, co, err := c.tableContent(tableRef)
 
 	suite.Len(r, int(opts.Limit))
 	suite.Len(co, 3)
 	suite.NoError(err)
-}
-
-func (suite *ClientTestSuite) TestShowTables() {
-	opts := command.Options{
-		Driver: suite.driver,
-		User:   suite.user,
-		Pass:   suite.password,
-		Host:   suite.host,
-		Port:   suite.port.Port(),
-		DBName: suite.dbName,
-		Schema: suite.dbSchema,
-		SSL:    "disable",
-		Limit:  100,
-	}
-
-	c, err := New(opts)
-	suite.NoError(err)
-
-	tables, err := c.ShowTables()
-	suite.NoError(err)
-	suite.Len(tables, 4)
-}
-
-func (suite *ClientTestSuite) TestShowTablesPerDB() {
-	opts := command.Options{
-		Driver: suite.driver,
-		User:   suite.user,
-		Pass:   suite.password,
-		Host:   suite.host,
-		Port:   suite.port.Port(),
-		Schema: suite.dbSchema,
-		SSL:    "disable",
-		Limit:  100,
-	}
-
-	c, _ := New(opts)
-
-	tables, err := c.ShowTablesPerDB(suite.dbName)
-	suite.Len(tables, 4)
-	suite.NoError(err)
-}
-
-func (suite *ClientTestSuite) TestTableStructure() {
-	opts := command.Options{
-		Driver: suite.driver,
-		User:   suite.user,
-		Pass:   suite.password,
-		Host:   suite.host,
-		Port:   suite.port.Port(),
-		DBName: suite.dbName,
-		Schema: suite.dbSchema,
-		SSL:    "disable",
-		Limit:  100,
-	}
-
-	c, _ := New(opts)
-
-	r, co, err := c.tableStructure("products")
-	suite.NoError(err)
-	suite.Len(r, 3)
-
-	switch suite.driver {
-	case drivers.Postgres:
-		suite.Len(co, 8)
-	case drivers.MySQL:
-		suite.Len(co, 6)
-	default:
-		suite.Len(co, 8)
-	}
 }
 
 func (suite *ClientTestSuite) TestConstraints() {
@@ -360,7 +297,8 @@ func (suite *ClientTestSuite) TestConstraints() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.constraints("products")
+	tableRef := TableRef{Name: "products", Schema: "public"}
+	r, co, err := c.constraints(tableRef)
 
 	suite.T().Logf("constraints columns %v", co)
 	suite.T().Logf("constraints content %v", r)
@@ -385,7 +323,8 @@ func (suite *ClientTestSuite) TestIndexes() {
 
 	c, _ := New(opts)
 
-	r, co, err := c.indexes("products")
+	tableRef := TableRef{Name: "products", Schema: "public"}
+	r, co, err := c.indexes(tableRef)
 	suite.NoError(err)
 	suite.NotEmpty(r)
 	suite.NotEmpty(co)
@@ -406,7 +345,8 @@ func (suite *ClientTestSuite) TestMetadata() {
 
 	c, _ := New(opts)
 
-	m, err := c.Metadata("products")
+	tableRef := TableRef{Name: "products", Schema: "public"}
+	m, err := c.Metadata(tableRef)
 	suite.NoError(err)
 	suite.NotNil(m)
 

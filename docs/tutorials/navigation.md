@@ -32,7 +32,7 @@ Now you can navigate to the different panels to see the related information.
 
 The navigation buttons were removed since they are too slow to navigate the content of a table effectively. The user is better off typing a `SELECT` statement with proper `OFFSET` and `LIMIT`.
 
-The `--db` flag is now optional (except for Oracle), meaning that the user will be able to see the list of databases they have access to. The regular list of tables will be replaced with a tree structure showing a list of databases and their respective list of tables, branching off each database. Due to the nature of the vast majority of DBMSs that don't allow cross-database queries, dblab has to open an independent connection for each database. The side effect of this decision is that the user has to press `Enter` on the specific database of interest. An indicator showing the current active database will appear at the bottom-right of the screen. To change the focus, just hit enter on another database. Once a database is selected, the usual behavior of inspecting tables remains the same.
+The `--db` flag is mandatory. dblab connects to a single database and displays its catalog as a tree in the sidebar. For PostgreSQL and Oracle, the tree shows the database, its schemas, and the tables under each schema. For MySQL, SQLite, and SQL Server, the tree shows the database and its tables directly. If the `--schema` flag is provided for PostgreSQL or Oracle, only that schema is shown; otherwise, all accessible schemas are listed.
 
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/tree-view.png){ width="400" : .center }
 

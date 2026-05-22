@@ -1,8 +1,8 @@
 package client
 
 import (
+	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -18,30 +18,41 @@ import (
 	"github.com/danvergara/dblab/pkg/pagination"
 )
 
+type TableRef struct {
+	Schema string
+	Name   string
+}
+
+type DBNode struct {
+	ID         string
+	Name       string
+	Type       string
+	ParentID   string
+	ParentName string
+	Children   []*DBNode
+}
+
 // databaseQuerier is an interface that indicates the methods
 // a given type has to implement to interact with a database,
 // to get specific data.
 // This allows us to decouple the client from the database implementation and
 // make adding new databases easier.
 type databaseQuerier interface {
-	ShowTables() (string, []interface{}, error)
-	TableStructure(tableName string) (string, []interface{}, error)
-	Constraints(tableName string) (string, []interface{}, error)
-	Indexes(tableName string) (string, []interface{}, error)
-	ShowDatabases() (string, []interface{}, error)
-	ShowTablesPerDB(database string) (string, []interface{}, error)
+	TableStructure(table TableRef) (string, []any, error)
+	Constraints(table TableRef) (string, []any, error)
+	Indexes(table TableRef) (string, []any, error)
+	Catalog(context.Context) (*DBNode, error)
 }
 
 // Client is used to store the pool of db connection.
 type Client struct {
 	db                *sqlx.DB
+	dbName            string
 	databaseQuerier   databaseQuerier
 	driver, schema    string
+	host              string
 	paginationManager *pagination.Manager
-	activeDatabase    string
 	limit             uint
-	showDataCatalog   bool
-	dbs               map[string]*sqlx.DB
 }
 
 // New return an instance of the client.
@@ -58,54 +69,30 @@ func New(opts command.Options) (*Client, error) {
 
 	c := &Client{
 		db:     db,
+		dbName: opts.DBName,
+		host:   opts.Host,
 		driver: opts.Driver,
 		limit:  opts.Limit,
-		dbs:    make(map[string]*sqlx.DB),
 	}
 
-	if opts.Schema == "" {
-		switch c.driver {
-		case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
-			c.schema = "public"
-		}
-	} else {
+	if opts.Schema != "" {
 		c.schema = opts.Schema
 	}
 
 	// This is where an implementation of databaseQuerier is getting picked up.
 	switch c.driver {
 	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
-		c.databaseQuerier = newPostgres(c.schema)
+		c.databaseQuerier = newPostgres(c.dbName, c.schema, c.db)
 	case drivers.MySQL:
-		c.databaseQuerier = newMySQL()
+		c.databaseQuerier = newMySQL(c.dbName, c.db)
 	case drivers.SQLite:
-		c.databaseQuerier = newSQLite()
+		c.databaseQuerier = newSQLite(c.dbName, c.db)
 	case drivers.Oracle:
-		c.databaseQuerier = newOracle(c.schema)
+		c.databaseQuerier = newOracle(c.dbName, c.schema, c.db)
 	case drivers.SQLServer:
-		c.databaseQuerier = newMSSQL()
+		c.databaseQuerier = newMSSQL(c.dbName, c.db)
 	default:
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
-	}
-
-	if opts.DBName == "" {
-		switch c.driver {
-		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
-			c.showDataCatalog = true
-			dbs, err := c.ShowDatabases()
-			if err != nil {
-				return nil, err
-			}
-
-			for _, d := range dbs {
-				db, err := getDB(c.driver, conn, d)
-				if err != nil {
-					continue
-				}
-
-				c.dbs[d] = db
-			}
-		}
 	}
 
 	switch c.driver {
@@ -131,14 +118,6 @@ func New(opts command.Options) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) SetActiveDatabase(database string) {
-	c.activeDatabase = database
-}
-
-func (c *Client) ActiveDatabase() string {
-	return c.activeDatabase
-}
-
 // DB Return the db attribute.
 func (c *Client) DB() *sqlx.DB {
 	return c.db
@@ -149,38 +128,22 @@ func (c *Client) Driver() string {
 	return c.driver
 }
 
-func (c *Client) ShowDataCatalog() bool {
-	return c.showDataCatalog
+func (c *Client) Host() string {
+	return c.host
 }
 
 // Query returns performs the query and returns the result set and the column names.
-func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, error) {
+func (c *Client) Query(q string, args ...any) ([][]string, []string, error) {
 	var (
 		resultSet = [][]string{}
-		db        *sqlx.DB
-		ok        bool
 	)
 
-	db = c.db
-
-	if c.activeDatabase != "" {
-		switch c.driver {
-		case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH, drivers.MySQL:
-			db, ok = c.dbs[c.activeDatabase]
-			if !ok {
-				return nil, nil, fmt.Errorf(
-					"connection with %s database not found",
-					c.activeDatabase,
-				)
-			}
-		}
-	}
-
 	// Runs the query extracting the content of the view calling the Buffer method.
-	rows, err := db.Queryx(q, args...)
+	rows, err := c.db.Queryx(q, args...)
 	if err != nil {
 		return nil, nil, err
 	}
+	defer rows.Close()
 
 	// Gets the names of the columns of the result set.
 	columnNames, err := rows.Columns()
@@ -189,13 +152,13 @@ func (c *Client) Query(q string, args ...interface{}) ([][]string, []string, err
 	}
 
 	for rows.Next() {
-		// cols is an []interface{} of all of the column results.
+		// cols is an []any of all of the column results.
 		cols, err := rows.SliceScan()
 		if err != nil {
 			return nil, nil, err
 		}
 
-		// Convert []interface{} into []string.
+		// Convert []any into []string.
 		s := make([]string, len(cols))
 		for i, v := range cols {
 			switch v.(type) {
@@ -238,23 +201,23 @@ type Metadata struct {
 }
 
 // Metadata returns the most relevant data from a given table.
-func (c *Client) Metadata(tableName string) (*Metadata, error) {
-	tcRows, tcColumns, err := c.tableContent(tableName)
+func (c *Client) Metadata(table TableRef) (*Metadata, error) {
+	tcRows, tcColumns, err := c.tableContent(table)
 	if err != nil {
 		return nil, err
 	}
 
-	sRows, sColumns, err := c.tableStructure(tableName)
+	sRows, sColumns, err := c.tableStructure(table)
 	if err != nil {
 		return nil, err
 	}
 
-	cRows, cColumns, err := c.constraints(tableName)
+	cRows, cColumns, err := c.constraints(table)
 	if err != nil {
 		return nil, err
 	}
 
-	iRows, iColumns, err := c.indexes(tableName)
+	iRows, iColumns, err := c.indexes(table)
 	if err != nil {
 		return nil, err
 	}
@@ -281,152 +244,38 @@ func (c *Client) Metadata(tableName string) (*Metadata, error) {
 	return &m, nil
 }
 
-func (c *Client) ShowTablesPerDB(database string) ([]string, error) {
-	var (
-		query string
-		err   error
-		args  []interface{}
-		db    *sqlx.DB
-		ok    bool
-	)
-
-	tables := make([]string, 0)
-
-	query, args, err = c.databaseQuerier.ShowTablesPerDB(database)
-	if err != nil {
-		return nil, err
-	}
-
-	switch c.driver {
-	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.MySQL:
-		db, ok = c.dbs[database]
-		if !ok {
-			return nil, fmt.Errorf("connection with %s database not found", database)
-		}
-	default:
-		db = c.db
-	}
-
-	rows, err := db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			return nil, err
-		}
-
-		tables = append(tables, table)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tables, nil
-}
-
-// ShowTables list all the tables in the database on the tables panel.
-func (c *Client) ShowTables() ([]string, error) {
-	var (
-		query string
-		err   error
-		args  []interface{}
-	)
-
-	tables := make([]string, 0)
-
-	query, args, err = c.databaseQuerier.ShowTables()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := c.db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			return nil, err
-		}
-
-		tables = append(tables, table)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tables, nil
-}
-
-// ShowDatabases returns a list of the databases the user has access to.
-func (c *Client) ShowDatabases() ([]string, error) {
-	var (
-		query string
-		err   error
-		args  []interface{}
-	)
-
-	databases := make([]string, 0)
-
-	query, args, err = c.databaseQuerier.ShowDatabases()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := c.db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var database string
-		if err := rows.Scan(&database); err != nil {
-			return nil, err
-		}
-
-		databases = append(databases, database)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return databases, nil
-}
-
 // TableContent returns all the rows of a table.
-func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
+func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 	var query string
 
 	switch c.driver {
 	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
 		query = fmt.Sprintf(
-			"SELECT * FROM %q LIMIT %d OFFSET %d;",
-			tableName,
+			"SELECT * FROM %s.%s LIMIT %d OFFSET %d;",
+			table.Schema,
+			table.Name,
 			c.paginationManager.Limit(),
 			c.paginationManager.Offset(),
 		)
 	case drivers.Oracle:
 		query = fmt.Sprintf(
-			"SELECT * FROM %s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			tableName,
+			"SELECT * FROM %s.%s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			strings.ToUpper(table.Schema),
+			strings.ToUpper(table.Name),
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
 		)
 	case drivers.SQLServer:
 		query = fmt.Sprintf(
 			"SELECT * FROM %s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			tableName,
+			table.Name,
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
 		)
 	default:
 		query = fmt.Sprintf(
 			"SELECT * FROM %s LIMIT %d OFFSET %d;",
-			tableName,
+			table.Name,
 			c.paginationManager.Limit(),
 			c.paginationManager.Offset(),
 		)
@@ -436,14 +285,14 @@ func (c *Client) tableContent(tableName string) ([][]string, []string, error) {
 }
 
 // tableStructure returns the structure of the table columns.
-func (c *Client) tableStructure(tableName string) ([][]string, []string, error) {
+func (c *Client) tableStructure(table TableRef) ([][]string, []string, error) {
 	var (
 		query string
 		err   error
-		args  []interface{}
+		args  []any
 	)
 
-	query, args, err = c.databaseQuerier.TableStructure(tableName)
+	query, args, err = c.databaseQuerier.TableStructure(table)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -452,8 +301,8 @@ func (c *Client) tableStructure(tableName string) ([][]string, []string, error) 
 }
 
 // constraints returns the resultet of from information_schema.table_constraints.
-func (c *Client) constraints(tableName string) ([][]string, []string, error) {
-	sql, args, err := c.databaseQuerier.Constraints(tableName)
+func (c *Client) constraints(table TableRef) ([][]string, []string, error) {
+	sql, args, err := c.databaseQuerier.Constraints(table)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -462,8 +311,8 @@ func (c *Client) constraints(tableName string) ([][]string, []string, error) {
 }
 
 // indexes returns a resulset with the information of the indexes given a table name.
-func (c *Client) indexes(tableName string) ([][]string, []string, error) {
-	query, args, err := c.databaseQuerier.Indexes(tableName)
+func (c *Client) indexes(table TableRef) ([][]string, []string, error) {
+	query, args, err := c.databaseQuerier.Indexes(table)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -471,26 +320,6 @@ func (c *Client) indexes(tableName string) ([][]string, []string, error) {
 	return c.Query(query, args...)
 }
 
-func getDB(driver, connString, database string) (*sqlx.DB, error) {
-	var newConnString string
-
-	switch driver {
-	case drivers.MySQL:
-		newConnString = strings.Replace(connString, "/", fmt.Sprintf("/%s", database), 1)
-	default:
-		u, err := url.Parse(connString)
-		if err != nil {
-			return nil, err
-		}
-
-		u.Path = "/" + database
-		newConnString = u.String()
-	}
-
-	db, err := sqlx.Open(driver, newConnString)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+func (c *Client) Catalog(ctx context.Context) (*DBNode, error) {
+	return c.databaseQuerier.Catalog(ctx)
 }

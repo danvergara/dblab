@@ -186,12 +186,6 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		r.viewport.SetContent(styledError)
 		r.viewport.GotoTop()
 		return r, nil
-	case tablesFetchError:
-		errorText := fmt.Sprintf("❌ failed to retrieve the current database tables\n\n%s", msg.err.Error())
-		styledError := errorStyle.Render(errorText)
-		r.viewport.SetContent(styledError)
-		r.viewport.GotoTop()
-		return r, nil
 	}
 
 	return r, tea.Batch(cmds...)

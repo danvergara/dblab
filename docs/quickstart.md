@@ -26,7 +26,7 @@ dblab --url mysql://user:password@tcp(host:port)/db
 dblab --url file:test.db?cache=shared&mode=memory
 ```
 
-If you're using PostgreSQL or Oracle, you have the option to define the schema you want to work with; the default value is `public` for Postgres, and empty for Oracle.
+If you're using PostgreSQL or Oracle, you have the option to define the schema you want to work with. The `--schema` flag is optional: if omitted, dblab will display all schemas the connected user has access to in the sidebar tree. If provided, only that specific schema will be shown.
 
 ```{ .sh .copy }
 dblab --host localhost --user myuser --db users --pass password --schema myschema --ssl disable --port 5432 --driver postgres --limit 50
@@ -73,9 +73,8 @@ database:
     password: "password"
     user: "postgres"
     driver: "postgres"
-    # optional
-    # postgres only
-    # default value: public
+    # optional for postgres and oracle
+    # if omitted, all accessible schemas are shown
     schema: "myschema"
   - name: "prod"
     # example endpoint
@@ -110,4 +109,4 @@ database:
     driver: "sqlite"
 ```
 
-Only the `host` and `ssl` fields are optional. They default to `127.0.0.1` and `disable`, respectively.
+Only the `host`, `ssl`, and `schema` fields are optional. `host` defaults to `127.0.0.1`, `ssl` defaults to `disable`. The `schema` field is only applicable to PostgreSQL and Oracle; if omitted, all accessible schemas are shown.
