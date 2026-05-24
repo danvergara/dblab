@@ -112,7 +112,9 @@ type Model struct {
 	// Key Bindings.
 	bindings *command.TUIKeyMap
 
-	footer string
+	// constant text on the client.
+	footer        string
+	renderedTitle string
 
 	dump io.Writer
 }
@@ -132,6 +134,8 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 		return nil, err
 	}
 
+	dblabTitle := figure.NewFigure("dblab", "", true).String()
+
 	m := &Model{
 		focus:           focusEditor,
 		c:               c,
@@ -140,6 +144,8 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(kb),
 		footer:          footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
+		renderedTitle:   dblabTitle,
+		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
 	}
 
@@ -167,10 +173,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
 
-		m.titleHeight = availableHeight / 6
 		m.titleWidth = m.leftWidth
 
-		m.sidebarViewportHeight = availableHeight - m.titleHeight
+		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
 		m.sidebarViewportWidth = m.leftWidth
 
 		m.editorWidth = m.rightWidth - 4
@@ -276,11 +281,10 @@ func (m Model) View() tea.View {
 		lipgloss.Left,
 		fullFooter,
 	)
-	dblabFigure := figure.NewFigure("dblab", "", true)
 
 	tightBlock := lipgloss.NewStyle().
 		Align(lipgloss.Left).
-		Render(dblabFigure.String())
+		Render(m.renderedTitle)
 
 	centeredLogo := titleStyle.
 		Width(m.titleWidth).
