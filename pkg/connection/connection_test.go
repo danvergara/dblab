@@ -1038,3 +1038,15 @@ func TestParseDSN(t *testing.T) {
 		})
 	}
 }
+
+func TestSocketFileExistsStatError(t *testing.T) {
+	// A path that traverses through a regular file yields a stat error
+	// other than os.IsNotExist, leaving info nil.
+	dir := t.TempDir()
+	regularFile := fmt.Sprintf("%s/regular", dir)
+	assert.NoError(t, os.WriteFile(regularFile, []byte("x"), 0o600))
+
+	assert.NotPanics(t, func() {
+		assert.False(t, socketFileExists(fmt.Sprintf("%s/inner.sock", regularFile)))
+	})
+}
