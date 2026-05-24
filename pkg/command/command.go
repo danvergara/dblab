@@ -3,7 +3,7 @@ package command
 import (
 	"os"
 
-	"github.com/charmbracelet/bubbles/key"
+	"charm.land/bubbles/v2/key"
 )
 
 // Options is a struct that stores the provided commands by the user.

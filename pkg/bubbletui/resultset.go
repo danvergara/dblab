@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/table"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/davecgh/go-spew/spew"
@@ -64,7 +64,7 @@ func NewResultSet(kb *command.TUIKeyMap) ResultSet {
 	rs := ResultSet{
 		tabs:     []string{"Data", "Columns", "Indexes", "Constraints"},
 		bindings: kb,
-		viewport: viewport.New(0, 0),
+		viewport: viewport.New(viewport.WithHeight(0), viewport.WithWidth(0)),
 		dump:     dump,
 	}
 
@@ -86,8 +86,8 @@ func (r *ResultSet) SetSize(w, h int) {
 	r.width = w
 	r.height = h
 
-	r.viewport.Width = w - 4
-	r.viewport.Height = h
+	r.viewport.SetWidth(w - 4)
+	r.viewport.SetHeight(h)
 }
 
 func (r *ResultSet) setupTable() {
@@ -136,7 +136,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				}
 			}
 
-			maxOffset := maxWidth - r.viewport.Width
+			maxOffset := maxWidth - r.viewport.Width()
 
 			if maxOffset < 0 {
 				maxOffset = 0

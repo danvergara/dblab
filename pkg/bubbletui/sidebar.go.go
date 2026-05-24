@@ -3,11 +3,11 @@ package bubbletui
 import (
 	"context"
 
-	"github.com/Digital-Shane/treeview"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"github.com/Digital-Shane/treeview/v2"
 
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
@@ -52,7 +52,7 @@ func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNod
 func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKeyMap) (SidebarViewport, error) {
 	svp := SidebarViewport{c: c, bindings: kb}
 
-	svp.sidebarViewport = viewport.New(0, 0)
+	svp.sidebarViewport = viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
 	svp.sidebarViewport.KeyMap = viewport.KeyMap{}
 
 	root, err := c.Catalog(ctx)
@@ -79,8 +79,8 @@ func (s *SidebarViewport) SetSize(w, h int) {
 	s.width = w - 4
 	s.height = h - 2
 
-	s.sidebarViewport.Width = s.width
-	s.sidebarViewport.Height = s.height
+	s.sidebarViewport.SetWidth(s.width)
+	s.sidebarViewport.SetHeight(s.height)
 
 	if s.dbTree != nil {
 		s.dbTree = s.newTuiTreeModel(s.dbTree.Tree, 0, s.height-2)
@@ -111,8 +111,8 @@ func (s SidebarViewport) Init() tea.Cmd {
 func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
+	case tea.KeyPressMsg:
+		switch msg.Code {
 		case tea.KeyEnter:
 			selectedNode := s.dbTree.GetFocusedNode()
 			if selectedNode != nil && selectedNode.Data() != nil {
@@ -166,7 +166,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 			return s, nil
 		}
 
-		s.sidebarViewport.SetContent(s.dbTree.View())
+		s.sidebarViewport.SetContent(s.dbTree.View().Content)
 
 		switch msg.String() {
 		case "left", "h":
@@ -192,7 +192,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 }
 
 func (s SidebarViewport) View() string {
-	s.sidebarViewport.SetContent(s.dbTree.View())
+	s.sidebarViewport.SetContent(s.dbTree.View().Content)
 	sideViewContent := s.sidebarViewport.View()
 
 	listBorder := darkPurple

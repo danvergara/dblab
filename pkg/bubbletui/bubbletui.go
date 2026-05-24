@@ -5,9 +5,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
@@ -17,7 +18,7 @@ import (
 
 type focusState int
 
-const (
+var (
 	// colors.
 	green      = lipgloss.Color("#1fb009") // Normal green
 	purple     = lipgloss.Color("#800080")
@@ -28,7 +29,9 @@ const (
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
 	black      = lipgloss.Color("#000000")
+)
 
+const (
 	// focus state management.
 	focusEditor focusState = iota
 	focusList
@@ -183,9 +186,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
 		return m, tea.Batch(cmds...)
 
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "ctrl+c":
 			return m, tea.Quit
 		}
 
@@ -256,7 +259,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
+	var v tea.View
+	v.AltScreen = true
 
 	textAreaBorder := darkPurple
 
@@ -290,17 +295,16 @@ func (m Model) View() string {
 		MaxHeight(m.height - lipgloss.Height(m.footer)).
 		Render(leftColumn)
 
-	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
+	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
 	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
-
-	return lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter)
+	v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter))
+	return v
 }
 
 func (m *Model) Run() error {
-	p := tea.NewProgram(m, tea.WithAltScreen())
-
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		return err
 	}
