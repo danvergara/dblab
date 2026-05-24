@@ -283,7 +283,9 @@ func (m Model) View() tea.View {
 		Render(dblabFigure.String())
 
 	centeredLogo := titleStyle.
-		Width(m.titleWidth).Height(m.titleHeight).
+		Width(m.titleWidth).
+		MaxHeight(m.titleHeight + 2).
+		Height(m.titleHeight).
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
