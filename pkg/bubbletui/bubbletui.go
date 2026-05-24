@@ -168,15 +168,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.rightWidth = m.width - m.leftWidth
 
 		m.titleHeight = availableHeight / 6
-		m.titleWidth = m.leftWidth - 2
+		m.titleWidth = m.leftWidth
 
-		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
+		m.sidebarViewportHeight = availableHeight - m.titleHeight
 		m.sidebarViewportWidth = m.leftWidth
 
 		m.editorWidth = m.rightWidth - 4
 		m.editorHeight = availableHeight/3 - 2
 
-		m.resultSetHeight = availableHeight - m.editorHeight - 6
+		m.resultSetHeight = availableHeight - m.editorHeight - 4
 		m.resultSetWidth = m.rightWidth - 4
 
 		m.editor.SetHeight(m.editorHeight)
@@ -296,7 +296,7 @@ func (m Model) View() tea.View {
 		Render(leftColumn)
 
 	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View().Content)
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
 	v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter))

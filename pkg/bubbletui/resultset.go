@@ -91,10 +91,10 @@ func (r *ResultSet) SetSize(w, h int) {
 }
 
 func (r *ResultSet) setupTable() {
-	columns := setupTable(r.height - 2)
-	data := setupTable(r.height - 2)
-	constraints := setupTable(r.height)
-	indexes := setupTable(r.height)
+	columns := setupTable(r.height, r.width)
+	data := setupTable(r.height, r.width)
+	constraints := setupTable(r.height, r.width)
+	indexes := setupTable(r.height, r.width)
 	r.tablesMetadata = []table.Model{
 		data,
 		columns,
@@ -111,10 +111,11 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 	if r.dump != nil {
 		spew.Fdump(r.dump, msg)
 	}
+
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, r.bindings.NextTab):
 			r.activeTab = min(r.activeTab+1, len(r.tabs)-1)
@@ -191,7 +192,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 	return r, tea.Batch(cmds...)
 }
 
-func (r ResultSet) View() string {
+func (r ResultSet) View() tea.View {
 	var renderedTabs []string
 
 	tableBorder := darkPurple
@@ -202,7 +203,7 @@ func (r ResultSet) View() string {
 	doc := strings.Builder{}
 	s := r.tabStyles
 	numTabs := len(r.tabs)
-	viewportWidth := r.width - 6
+	viewportWidth := r.width
 
 	baseWidth := viewportWidth / numTabs
 	remainder := viewportWidth % numTabs
@@ -248,12 +249,12 @@ func (r ResultSet) View() string {
 	doc.WriteString(row)
 	doc.WriteString("\n")
 	doc.WriteString(styledResultSet.Render(r.viewport.View()))
-	return doc.String()
+	return tea.NewView(doc.String())
 }
 
 func (r *ResultSet) clearTables() {
 	for i := range r.tablesMetadata {
-		r.tablesMetadata[i] = setupTable(r.height)
+		r.tablesMetadata[i] = setupTable(r.height, r.width)
 	}
 }
 
@@ -296,9 +297,10 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 }
 
 // prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
-func setupTable(height int) table.Model {
+func setupTable(height, width int) table.Model {
 	t := table.New(
 		table.WithFocused(true),
+		table.WithWidth(width-2),
 		table.WithHeight(height-2),
 	)
 

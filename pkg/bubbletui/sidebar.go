@@ -2,6 +2,8 @@ package bubbletui
 
 import (
 	"context"
+	"io"
+	"os"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/viewport"
@@ -12,6 +14,7 @@ import (
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/drivers"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool {
@@ -34,6 +37,7 @@ type SidebarViewport struct {
 	width, height   int
 
 	selected bool
+	dump     io.Writer
 }
 
 type DBGraphTreeBuilderProvider struct{}
@@ -50,7 +54,20 @@ func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNod
 }
 
 func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKeyMap) (SidebarViewport, error) {
-	svp := SidebarViewport{c: c, bindings: kb}
+	var dump *os.File
+	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
+		var err error
+		dump, err = os.OpenFile("sidebar_messages.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+		if err != nil {
+			os.Exit(1)
+		}
+	}
+
+	svp := SidebarViewport{
+		c:        c,
+		bindings: kb,
+		dump:     dump,
+	}
 
 	svp.sidebarViewport = viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
 	svp.sidebarViewport.KeyMap = viewport.KeyMap{}
@@ -109,6 +126,10 @@ func (s SidebarViewport) Init() tea.Cmd {
 }
 
 func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
+	if s.dump != nil {
+		spew.Fdump(s.dump, msg)
+	}
+
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
