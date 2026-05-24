@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/muesli/termenv"
@@ -20,6 +21,7 @@ const (
 )
 
 var (
+	isDark       = compat.HasDarkBackground
 	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	noStyle      = lipgloss.NewStyle()
 	term         = termenv.ColorProfile()
@@ -97,7 +99,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View displays the content on the terminal.
-func (m *Model) View() string {
+func (m *Model) View() tea.View {
 	var s string
 
 	switch m.steps {
@@ -111,7 +113,7 @@ func (m *Model) View() string {
 		s = sslConnView(m)
 	}
 
-	return fmt.Sprint(s)
+	return tea.NewView(s)
 }
 
 // Host returns the host value.
@@ -212,87 +214,90 @@ func colorFg(val, color string) string {
 }
 
 func initModel() Model {
+	s := textinput.DefaultStyles(isDark)
+	s.Focused.Prompt = focusedStyle
+	s.Focused.Text = focusedStyle
+
 	host := textinput.New()
 	host.Placeholder = "Host"
-	host.PromptStyle = focusedStyle
-	host.TextStyle = focusedStyle
 	host.CharLimit = 200
-	host.Width = 20
+	host.SetStyles(s)
+	host.SetWidth(20)
 	host.Focus()
 
 	port := textinput.New()
 	port.Placeholder = "Port"
 	port.CharLimit = 200
-	port.Width = 20
+	port.SetWidth(20)
 
 	user := textinput.New()
 	user.Placeholder = "Username"
 	user.CharLimit = 200
-	user.Width = 20
+	user.SetWidth(20)
 
 	password := textinput.New()
 	password.Placeholder = "Password"
 	password.EchoMode = textinput.EchoPassword
 	password.EchoCharacter = '*'
 	password.CharLimit = 200
-	password.Width = 20
+	password.SetWidth(20)
 
 	database := textinput.New()
 	database.Placeholder = "Database"
 	database.CharLimit = 200
-	database.Width = 20
+	database.SetWidth(20)
 
 	limit := textinput.New()
 	limit.Placeholder = "Limit"
 	limit.CharLimit = 200
-	limit.Width = 20
+	limit.SetWidth(20)
 
 	filePath := textinput.New()
 	filePath.Placeholder = "File Path"
 	filePath.CharLimit = 1000
-	filePath.Width = 20
+	filePath.SetWidth(20)
 	filePath.Focus()
 
 	sslCert := textinput.New()
 	sslCert.Placeholder = "Client SSL certificate"
 	sslCert.CharLimit = 1000
-	sslCert.Width = 20
+	sslCert.SetWidth(20)
 	sslCert.Focus()
 
 	sslKey := textinput.New()
 	sslKey.Placeholder = "The location for the secret key used for the client certificate"
 	sslKey.CharLimit = 1000
-	sslKey.Width = 20
+	sslKey.SetWidth(20)
 
 	sslPassword := textinput.New()
 	sslPassword.Placeholder = "The password for the secret key"
 	sslPassword.CharLimit = 1000
-	sslPassword.Width = 20
+	sslPassword.SetWidth(20)
 
 	sslRootCert := textinput.New()
 	sslRootCert.Placeholder = "The name of a file containing SSL certificate authority (CA) certificate(s)"
 	sslRootCert.CharLimit = 1000
-	sslRootCert.Width = 20
+	sslRootCert.SetWidth(20)
 
 	sslVerify := textinput.New()
 	sslVerify.Placeholder = "SSL Verify"
 	sslVerify.CharLimit = 200
-	sslVerify.Width = 20
+	sslVerify.SetWidth(20)
 
 	traceFile := textinput.New()
 	traceFile.Placeholder = "Trace file"
 	traceFile.CharLimit = 1000
-	traceFile.Width = 20
+	traceFile.SetWidth(20)
 
 	wallet := textinput.New()
 	wallet.Placeholder = "Path to wallet"
 	wallet.CharLimit = 1000
-	wallet.Width = 20
+	wallet.SetWidth(20)
 
 	trustServerCertificate := textinput.New()
 	trustServerCertificate.Placeholder = "Server certificate is checked or not"
 	trustServerCertificate.CharLimit = 1000
-	trustServerCertificate.Width = 20
+	trustServerCertificate.SetWidth(20)
 	trustServerCertificate.Focus()
 
 	m := Model{

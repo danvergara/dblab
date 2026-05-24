@@ -5,11 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/cursor"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -35,7 +35,9 @@ type Editor struct {
 }
 
 func NewEditor(kb *command.TUIKeyMap) Editor {
+	var isDark = compat.HasDarkBackground
 	var dump *os.File
+
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
 		dump, err = os.OpenFile("editor_messages.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
@@ -43,10 +45,13 @@ func NewEditor(kb *command.TUIKeyMap) Editor {
 			os.Exit(1)
 		}
 	}
+
 	ta := textarea.New()
 	ta.Placeholder = "Enter text..."
-	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(mutedGreen)
-	ta.BlurredStyle.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
+	s := textarea.DefaultStyles(isDark)
+	s.Focused.Text = lipgloss.NewStyle().Foreground(mutedGreen)
+	s.Blurred.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
+	ta.SetStyles(s)
 	ta.Focus()
 
 	return Editor{editor: ta, bindings: kb, dump: dump}
@@ -78,7 +83,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	}
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if key.Matches(msg, e.bindings.Editor.ExecuteQuery) {
 			query := e.editor.Value()
 			if strings.TrimSpace(query) == "" {
@@ -121,28 +126,30 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 				e.pasteAfter()
 				return e, nil
 			case "x":
-				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyDelete})
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyDelete})
 				return e, cmd
 			case "0":
-				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyHome})
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyHome})
 				return e, cmd
 			case "$":
-				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyEnd})
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
 				return e, cmd
 			}
 
 			switch {
 			case key.Matches(msg, e.bindings.Editor.Insert):
 				e.mode = InsertMode
-				e.editor.Cursor.SetMode(cursor.CursorBlink)
+				styles := e.editor.Styles()
+				styles.Cursor.Blink = true
+				e.editor.SetStyles(styles)
 				return e, nil
 
 			case key.Matches(msg, e.bindings.Editor.Left):
-				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyLeft})
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 				return e, cmd
 
 			case key.Matches(msg, e.bindings.Editor.Right):
-				e.editor, cmd = e.editor.Update(tea.KeyMsg{Type: tea.KeyRight})
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 				return e, cmd
 
 			case key.Matches(msg, e.bindings.Editor.Down):
@@ -159,8 +166,10 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			switch {
 			case key.Matches(msg, e.bindings.Editor.Normal):
 				e.mode = NormalMode
-				e.editor.Cursor.SetMode(cursor.CursorStatic)
-				e.editor, _ = e.editor.Update(tea.KeyMsg{Type: tea.KeyLeft})
+				styles := e.editor.Styles()
+				styles.Cursor.Blink = false
+				e.editor.SetStyles(styles)
+				e.editor, _ = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 				return e, nil
 			}
 		}
@@ -170,8 +179,8 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	return e, cmd
 }
 
-func (e Editor) View() string {
-	return e.editor.View()
+func (e Editor) View() tea.View {
+	return tea.NewView(e.editor.View())
 }
 
 func (e *Editor) yankCurrentLine() {

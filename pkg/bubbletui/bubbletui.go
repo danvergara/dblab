@@ -5,9 +5,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
@@ -17,7 +18,7 @@ import (
 
 type focusState int
 
-const (
+var (
 	// colors.
 	green      = lipgloss.Color("#1fb009") // Normal green
 	purple     = lipgloss.Color("#800080")
@@ -28,7 +29,9 @@ const (
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
 	black      = lipgloss.Color("#000000")
+)
 
+const (
 	// focus state management.
 	focusEditor focusState = iota
 	focusList
@@ -109,7 +112,9 @@ type Model struct {
 	// Key Bindings.
 	bindings *command.TUIKeyMap
 
-	footer string
+	// constant text on the client.
+	footer        string
+	renderedTitle string
 
 	dump io.Writer
 }
@@ -129,6 +134,8 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 		return nil, err
 	}
 
+	dblabTitle := figure.NewFigure("dblab", "", true).String()
+
 	m := &Model{
 		focus:           focusEditor,
 		c:               c,
@@ -137,6 +144,8 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(kb),
 		footer:          footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
+		renderedTitle:   dblabTitle,
+		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
 	}
 
@@ -164,8 +173,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
 
-		m.titleHeight = availableHeight / 6
-		m.titleWidth = m.leftWidth - 2
+		m.titleWidth = m.leftWidth
 
 		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
 		m.sidebarViewportWidth = m.leftWidth
@@ -173,7 +181,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.editorWidth = m.rightWidth - 4
 		m.editorHeight = availableHeight/3 - 2
 
-		m.resultSetHeight = availableHeight - m.editorHeight - 6
+		m.resultSetHeight = availableHeight - m.editorHeight - 4
 		m.resultSetWidth = m.rightWidth - 4
 
 		m.editor.SetHeight(m.editorHeight)
@@ -183,9 +191,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
 		return m, tea.Batch(cmds...)
 
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "ctrl+c":
 			return m, tea.Quit
 		}
 
@@ -256,7 +264,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
+	var v tea.View
+	v.AltScreen = true
 
 	textAreaBorder := darkPurple
 
@@ -271,14 +281,15 @@ func (m Model) View() string {
 		lipgloss.Left,
 		fullFooter,
 	)
-	dblabFigure := figure.NewFigure("dblab", "", true)
 
 	tightBlock := lipgloss.NewStyle().
 		Align(lipgloss.Left).
-		Render(dblabFigure.String())
+		Render(m.renderedTitle)
 
 	centeredLogo := titleStyle.
-		Width(m.titleWidth).Height(m.titleHeight).
+		Width(m.titleWidth).
+		MaxHeight(m.titleHeight + 2).
+		Height(m.titleHeight).
 		Align(lipgloss.Center).
 		Render(tightBlock)
 
@@ -290,17 +301,16 @@ func (m Model) View() string {
 		MaxHeight(m.height - lipgloss.Height(m.footer)).
 		Render(leftColumn)
 
-	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View())
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View())
+	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View().Content)
 
 	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
-
-	return lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter)
+	v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter))
+	return v
 }
 
 func (m *Model) Run() error {
-	p := tea.NewProgram(m, tea.WithAltScreen())
-
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		return err
 	}

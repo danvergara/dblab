@@ -1,8 +1,8 @@
 package form
 
 import (
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/danvergara/dblab/pkg/drivers"
 )
@@ -74,15 +74,19 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 			for i := 0; i <= len(inputs)-1; i++ {
 				if i == m.cursor {
 					// Set focused state.
+					s := textinput.DefaultStyles(isDark)
+					s.Focused.Prompt = focusedStyle
+					s.Focused.Text = focusedStyle
+					inputs[i].SetStyles(s)
 					inputs[i].Focus()
-					inputs[i].PromptStyle = focusedStyle
-					inputs[i].TextStyle = focusedStyle
 					continue
 				}
 				// Remove focused state.
+				s := textinput.DefaultStyles(isDark)
+				s.Focused.Prompt = noStyle
+				s.Focused.Text = noStyle
+				inputs[i].SetStyles(s)
 				inputs[i].Blur()
-				inputs[i].PromptStyle = noStyle
-				inputs[i].TextStyle = noStyle
 			}
 
 			assignStdInputValues(m, inputs)
@@ -261,15 +265,19 @@ func updateSSLConn(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 			for i := 0; i <= len(inputs)-1; i++ {
 				if i == m.cursor {
 					// Set focused state.
+					s := textinput.DefaultStyles(isDark)
+					s.Focused.Prompt = focusedStyle
+					s.Focused.Text = focusedStyle
+					inputs[i].SetStyles(s)
 					inputs[i].Focus()
-					inputs[i].PromptStyle = focusedStyle
-					inputs[i].TextStyle = focusedStyle
 					continue
 				}
 				// Remove focused state.
+				s := textinput.DefaultStyles(isDark)
+				s.Focused.Prompt = noStyle
+				s.Focused.Text = noStyle
+				inputs[i].SetStyles(s)
 				inputs[i].Blur()
-				inputs[i].PromptStyle = noStyle
-				inputs[i].TextStyle = noStyle
 			}
 
 			assignSSLConnInputValues(m, inputs)
