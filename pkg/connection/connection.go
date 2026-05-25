@@ -448,7 +448,7 @@ func hasValidSQLServerPrefix(rawurl string) bool {
 
 func socketFileExists(socketFile string) bool {
 	info, err := os.Stat(socketFile)
-	if os.IsNotExist(err) {
+	if err != nil {
 		return false
 	}
 
