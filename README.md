@@ -1,5 +1,7 @@
-dblab ![integration tests](https://github.com/danvergara/dblab/actions/workflows/ci.yaml/badge.svg) ![unit tests](https://github.com/danvergara/dblab/actions/workflows/test.yaml/badge.svg) [![Release](https://img.shields.io/github/release/danvergara/dblab.svg?label=Release)](https://github.com/danvergara/dblab/releases)
-===============
+# dblab 
+![integration tests](https://github.com/danvergara/dblab/actions/workflows/ci.yaml/badge.svg)
+![unit tests](https://github.com/danvergara/dblab/actions/workflows/test.yaml/badge.svg)
+[![Release](https://img.shields.io/github/release/danvergara/dblab.svg?label=Release)](https://github.com/danvergara/dblab/releases)
 
 <p align="center">
   <img style="float: right;" src="assets/gopher-dblab.png" alt="dblab logo"/  width=200>
