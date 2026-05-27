@@ -4,11 +4,13 @@ import (
 	"context"
 	"io"
 	"os"
+	"strings"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/Digital-Shane/treeview/v2"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
@@ -75,13 +77,23 @@ type metadataErrMsg struct{ err error }
 // querySuccessMsg struct used to get result sets from executed queries asynchronously.
 // Sometimes, tables can be created, altered of deleted, so the this returns a refreshed list of tables.
 type querySuccessMsg struct {
-	columns []string
-	rows    [][]string
-	tables  []string
+	columns       []string
+	rows          [][]string
+	tables        []string
+	reloadCatalog bool
 }
 
 // queryErrMsg struct used to report when the query execution fails.
 type queryErrMsg struct{ err error }
+
+// updateGraphMsg struct used to refresh the database graph from executed queries asynchronously.
+// It's triggered when the user either submits a DDL (Data Definition Language) query with a drop, create, alter, etc.
+type updateGraphMsg struct {
+	tree *treeview.TuiTreeModel[*client.DBNode]
+}
+
+// queryErrMsg struct used to report when the grap update fails.
+type updateGraphErrMsg struct{ err error }
 
 type Model struct {
 	// database client.
@@ -247,6 +259,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
 		cmds = append(cmds, cmd)
+	case updateGraphMsg, updateGraphErrMsg:
+		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	switch m.focus {
@@ -341,6 +356,19 @@ func (m *Model) executeQueryCmd(query string) tea.Cmd {
 			return queryErrMsg{err}
 		}
 
-		return querySuccessMsg{columns: columns, rows: rows, tables: ts}
+		qsMsg := querySuccessMsg{columns: columns, rows: rows, tables: ts}
+
+		cleanQuery := strings.TrimSpace(query)
+		firstWord := ""
+		if parts := strings.Fields(cleanQuery); len(parts) > 0 {
+			firstWord = strings.ToLower(parts[0])
+		}
+
+		switch firstWord {
+		case "create", "drop", "alter", "truncate", "rename":
+			qsMsg.reloadCatalog = true
+		}
+
+		return qsMsg
 	}
 }
