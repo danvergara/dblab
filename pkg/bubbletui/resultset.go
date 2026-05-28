@@ -168,6 +168,12 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		r.viewport.SetContent(styledError)
 		r.viewport.GotoTop()
 		return r, nil
+	case updateGraphErrMsg:
+		errorText := fmt.Sprintf("❌ FAILED TO LOAD THE CATALOG\n\n%s", msg.err.Error())
+		styledError := errorStyle.Render(errorText)
+		r.viewport.SetContent(styledError)
+		r.viewport.GotoTop()
+		return r, nil
 	case querySuccessMsg:
 		r.clearTables()
 		tableContentColumns, tableContentRows := populateTable(msg.columns, msg.rows)

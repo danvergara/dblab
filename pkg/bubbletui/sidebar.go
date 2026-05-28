@@ -207,6 +207,17 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 		}
 
 		return s, cmd
+	case querySuccessMsg:
+		var cmd tea.Cmd
+		if msg.reloadCatalog {
+			cmd = s.updateGraph()
+		}
+		return s, cmd
+	case updateGraphMsg:
+		s.dbTree = msg.tree
+		return s, nil
+	case updateGraphErrMsg:
+		return s, nil
 	}
 
 	return s, cmd
@@ -223,6 +234,33 @@ func (s SidebarViewport) View() string {
 	sideViewContent = tablesListStyle.BorderForeground(listBorder).Height(s.height).Render(sideViewContent)
 
 	return sideViewContent
+}
+
+// updateGraph method refreshes the database catalog asynchronously, so it does not block the bubbletea execution.
+// If it succeeds, returns a updateGraphMsg with the a new database tree. Otherwise, it returns  updateGraphErrMsg with the error.
+func (s *SidebarViewport) updateGraph() tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		root, err := s.c.Catalog(ctx)
+		if err != nil {
+			return updateGraphErrMsg{err}
+		}
+
+		tree, err := treeview.NewTreeFromNestedData[*client.DBNode](
+			ctx,
+			[]*client.DBNode{root},
+			&DBGraphTreeBuilderProvider{},
+			treeview.WithProvider(createCyberpunkProvider()),
+		)
+		if err != nil {
+			return updateGraphErrMsg{err}
+		}
+
+		dbTree := s.newTuiTreeModel(tree, 0, s.height-2)
+		_, _ = dbTree.SetFocusedID(ctx, root.ID)
+
+		return updateGraphMsg{tree: dbTree}
+	}
 }
 
 func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
