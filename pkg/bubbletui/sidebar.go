@@ -239,7 +239,6 @@ func (s SidebarViewport) View() string {
 // updateGraph method refreshes the database catalog asynchronously, so it does not block the bubbletea execution.
 // If it succeeds, returns a updateGraphMsg with the a new database tree. Otherwise, it returns  updateGraphErrMsg with the error.
 func (s *SidebarViewport) updateGraph() tea.Cmd {
-	focusedID := s.dbTree.GetFocusedID()
 	return func() tea.Msg {
 		ctx := context.Background()
 		root, err := s.c.Catalog(ctx)
@@ -258,8 +257,7 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 		}
 
 		dbTree := s.newTuiTreeModel(tree, 0, s.height-2)
-		dbTree.SetFocusedID(ctx, focusedID)
-		dbTree.ExpandAll(ctx)
+		_, _ = dbTree.SetFocusedID(ctx, root.ID)
 
 		return updateGraphMsg{tree: dbTree}
 	}
