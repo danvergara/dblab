@@ -119,7 +119,7 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 		current := queue[0]
 		queue = queue[1:]
 
-		var children []*DBNode
+		children := make([]*DBNode, 0)
 		var err error
 		switch current.Type {
 		case "database":
@@ -134,7 +134,17 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 				children, err = p.fetchSchemas(ctx, current.Name)
 			}
 		case "schema":
-			children, err = p.fetchTables(ctx, current.Name, current.ID)
+			tables, err := p.fetchTables(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, tables...)
+
+			views, err := p.fetchViews(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, views...)
 		}
 		if err != nil {
 			return nil, err
@@ -214,7 +224,7 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 		}
 		tables = append(tables, &DBNode{
 			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
-			Name:       name,
+			Name:       name + " - " + "t",
 			Type:       "table",
 			ParentName: parentName,
 			ParentID:   parentID,
@@ -226,4 +236,49 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 	}
 
 	return tables, nil
+}
+
+func (p *postgres) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	// 'v' is View, 'm' is Materialized View.
+	query, args, err := sq.Select("c.relname AS view_name").
+		From("pg_class c").
+		Join("pg_namespace n ON n.oid = c.relnamespace").
+		Where(sq.Eq{
+			"n.nspname": parentName,
+			"c.relkind": []string{"v", "m"},
+		}).
+		OrderBy("c.relname ASC").
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := p.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	views := make([]*DBNode, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		views = append(views, &DBNode{
+			ID:         fmt.Sprintf("%s.v:%s", parentID, name),
+			Name:       name + " - " + "v",
+			Type:       "view",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return views, nil
 }

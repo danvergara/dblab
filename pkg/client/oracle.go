@@ -187,10 +187,6 @@ func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) (
 		OrderBy("TABLE_NAME ASC")
 
 	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()
-
-	if err != nil {
-		return nil, err
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +205,7 @@ func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) (
 		}
 		tables = append(tables, &DBNode{
 			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
-			Name:       name,
+			Name:       name + " - " + "t",
 			Type:       "table",
 			ParentName: parentName,
 			ParentID:   parentID,
@@ -221,4 +217,42 @@ func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) (
 	}
 
 	return tables, nil
+}
+
+func (o *oracle) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query := sq.Select("VIEW_NAME").
+		From("ALL_VIEWS").
+		Where(sq.Eq{"OWNER": strings.ToUpper(parentName)}).
+		OrderBy("VIEW_NAME ASC")
+	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := o.db.Query(sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	views := make([]*DBNode, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		views = append(views, &DBNode{
+			ID:         fmt.Sprintf("%s.v:%s", parentID, name),
+			Name:       name + " - " + "v",
+			Type:       "view",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return views, nil
 }
