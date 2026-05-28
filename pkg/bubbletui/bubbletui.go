@@ -262,6 +262,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case updateGraphMsg, updateGraphErrMsg:
 		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
 		cmds = append(cmds, cmd)
+		m.resulstset, cmd = m.resulstset.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	switch m.focus {
