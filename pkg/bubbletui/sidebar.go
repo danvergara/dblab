@@ -268,11 +268,13 @@ func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
 	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), "⛃")
 	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), "📁")
 	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), "📋")
+	viewIconRule := treeview.WithIconRule(dbObjectHasType("view"), "📑")
 
 	return treeview.NewDefaultNodeProvider[*client.DBNode](
 		databaseIconRule,
 		schemaIconRule,
 		tableIconRule,
+		viewIconRule,
 		treeview.WithStyleRule(
 			func(n *treeview.Node[*client.DBNode]) bool { return true },
 			lipgloss.NewStyle().
