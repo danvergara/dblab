@@ -250,7 +250,6 @@ func (p *postgres) fetchViews(ctx context.Context, parentName, parentID string) 
 		OrderBy("c.relname ASC").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
-
 	if err != nil {
 		return nil, err
 	}

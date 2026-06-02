@@ -90,7 +90,7 @@ func New(opts command.Options) (*Client, error) {
 	case drivers.Oracle:
 		c.databaseQuerier = newOracle(c.dbName, c.schema, c.db)
 	case drivers.SQLServer:
-		c.databaseQuerier = newMSSQL(c.dbName, c.db)
+		c.databaseQuerier = newMSSQL(c.dbName, c.schema, c.db)
 	default:
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}

@@ -12,16 +12,19 @@ import (
 type mssql struct {
 	db     *sqlx.DB
 	dbName string
+	schema string
 }
 
 var _ databaseQuerier = (*mssql)(nil)
 
 // returns a pointer to a mysql.
-func newMSSQL(dbName string, db *sqlx.DB) *mssql {
+func newMSSQL(dbName, schema string, db *sqlx.DB) *mssql {
 	m := mssql{
 		dbName: dbName,
 		db:     db,
+		schema: schema,
 	}
+
 	return &m
 }
 
@@ -120,7 +123,28 @@ func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) {
 		var err error
 		switch current.Type {
 		case "database":
-			children, err = m.fetchTables(ctx, current.Name, current.ID)
+			if m.schema != "" {
+				children = append(children, &DBNode{
+					ID:       fmt.Sprintf("%s.s:%s", rootID, m.schema),
+					Name:     m.schema,
+					Type:     "schema",
+					ParentID: rootID,
+				})
+			} else {
+				children, err = m.fetchSchemas(ctx, current.Name)
+			}
+		case "schema":
+			tables, err := m.fetchTables(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, tables...)
+
+			views, err := m.fetchViews(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, views...)
 		}
 		if err != nil {
 			return nil, err
@@ -135,10 +159,57 @@ func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
-func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
-	query := "SHOW TABLES;"
+func (m *mssql) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
+	query, args, err := sq.Select("s.name").
+		From("sys.schemas AS s").
+		Join("sys.database_principals p ON s.principal_id = p.principal_id").
+		OrderBy("s.name").
+		PlaceholderFormat(sq.AtP).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
 
-	rows, err := m.db.Query(query)
+	rows, err := m.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var schemas []*DBNode
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		schemas = append(schemas, &DBNode{
+
+			ID:       fmt.Sprintf("%s.s:%s", parentID, name),
+			Name:     name,
+			Type:     "schema",
+			ParentID: parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return schemas, nil
+}
+
+func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query, args, err := sq.Select("TABLE_NAME").
+		From("INFORMATION_SCHEMA.TABLES").
+		Where(sq.Eq{
+			"TABLE_SCHEMA": parentName,
+			"TABLE_TYPE":   "BASE TABLE",
+		}).PlaceholderFormat(sq.AtP).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := m.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -164,4 +235,44 @@ func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([
 	}
 
 	return tables, nil
+}
+
+func (m *mssql) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query, args, err := sq.Select("TABLE_NAME").
+		From("INFORMATION_SCHEMA.VIEWS").
+		Where(sq.Eq{
+			"TABLE_SCHEMA": parentName,
+		}).
+		PlaceholderFormat(sq.AtP).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := m.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	views := make([]*DBNode, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		views = append(views, &DBNode{
+			ID:         fmt.Sprintf("%s.v:%s", parentID, name),
+			Name:       name + " - " + "v",
+			Type:       "view",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return views, nil
 }
