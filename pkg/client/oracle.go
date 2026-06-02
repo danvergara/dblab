@@ -131,7 +131,17 @@ func (o *oracle) Catalog(ctx context.Context) (*DBNode, error) {
 				children, err = o.fetchSchemas(ctx, current.Name)
 			}
 		case "schema":
-			children, err = o.fetchTables(ctx, current.Name, current.ID)
+			tables, err := o.fetchTables(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, tables...)
+
+			views, err := o.fetchViews(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, views...)
 		}
 		if err != nil {
 			return nil, err
