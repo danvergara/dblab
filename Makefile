@@ -42,6 +42,16 @@ run: build
 run-pagila: build
 	DBLAB_DEBUG="" ./dblab --host localhost --user postgres --db postgres --pass 123456 --schema public --ssl disable --port 5432 --driver postgres --limit 50 -k
 
+.PHONY: run-sakila
+## run-sakila: Runs the application and connects to the sakila database
+run-sakila: build
+	DBLAB_DEBUG="" ./dblab --host localhost --user sakila --db sakila --pass p_ssW0rd --ssl disable --port 3306 --driver mysql --limit 50 -k
+
+.PHONY: run-chinook
+## run-chinook: Runs the application with a connection to the Chinook sqlite database
+run-chinook: build
+	./dblab --db chinook.db --driver sqlite
+
 .PHONY: run-ssh
 ## run-ssh: Runs the application through a ssh tunnel
 run-ssh: build
