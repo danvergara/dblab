@@ -75,7 +75,17 @@ func (s *sqlite) Catalog(ctx context.Context) (*DBNode, error) {
 		var err error
 		switch current.Type {
 		case "database":
-			children, err = s.fetchTables(ctx, current.Name, current.ID)
+			tables, err := s.fetchTables(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, tables...)
+
+			views, err := s.fetchViews(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, views...)
 		}
 		if err != nil {
 			return nil, err
@@ -88,6 +98,23 @@ func (s *sqlite) Catalog(ctx context.Context) (*DBNode, error) {
 	}
 
 	return root, nil
+}
+
+func (s *sqlite) GetViewDefinition(view ViewRef) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Question)
+	query, args, err := psql.
+		Select("sql AS view_definition").
+		From("sqlite_master").
+		Where(sq.Eq{
+			"type": "view",
+			"name": view.Name,
+		}).
+		ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return query, args, nil
 }
 
 func (s *sqlite) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
@@ -115,7 +142,8 @@ func (s *sqlite) fetchTables(ctx context.Context, parentName, parentID string) (
 
 		tables = append(tables, &DBNode{
 			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
-			Name:       name,
+			Name:       name + " - " + "t",
+			EntityName: name,
 			Type:       "table",
 			ParentName: parentName,
 			ParentID:   parentID,
@@ -127,4 +155,47 @@ func (s *sqlite) fetchTables(ctx context.Context, parentName, parentID string) (
 	}
 
 	return tables, nil
+}
+
+func (s *sqlite) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query, args, err := sq.
+		Select("name AS view_name").
+		From("sqlite_master").
+		Where(sq.Eq{
+			"type": "view",
+		}).
+		OrderBy("name").
+		PlaceholderFormat(sq.Question).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	views := make([]*DBNode, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		views = append(views, &DBNode{
+			ID:         fmt.Sprintf("%s.v:%s", parentID, name),
+			Name:       name + " - " + "v",
+			EntityName: name,
+			Type:       "view",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return views, nil
 }

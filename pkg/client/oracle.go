@@ -156,6 +156,24 @@ func (o *oracle) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
+func (o *oracle) GetViewDefinition(view ViewRef) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Question)
+	query, args, err := psql.
+		Select("TEXT AS view_definition").
+		From("ALL_VIEWS").
+		Where(sq.Eq{
+			"OWNER":     strings.ToUpper(view.Schema),
+			"VIEW_NAME": strings.ToUpper(view.Name),
+		}).
+		ToSql()
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	return query, args, nil
+}
+
 func (o *oracle) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
 	query := `
 		SELECT DISTINCT owner AS schema_name
@@ -216,6 +234,7 @@ func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) (
 		tables = append(tables, &DBNode{
 			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
 			Name:       name + " - " + "t",
+			EntityName: name,
 			Type:       "table",
 			ParentName: parentName,
 			ParentID:   parentID,
@@ -254,6 +273,7 @@ func (o *oracle) fetchViews(ctx context.Context, parentName, parentID string) ([
 		views = append(views, &DBNode{
 			ID:         fmt.Sprintf("%s.v:%s", parentID, name),
 			Name:       name + " - " + "v",
+			EntityName: name,
 			Type:       "view",
 			ParentName: parentName,
 			ParentID:   parentID,

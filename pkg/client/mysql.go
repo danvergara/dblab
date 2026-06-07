@@ -71,7 +71,17 @@ func (m *mysql) Catalog(ctx context.Context) (*DBNode, error) {
 		var err error
 		switch current.Type {
 		case "database":
-			children, err = m.fetchTables(ctx, current.Name, current.ID)
+			tables, err := m.fetchTables(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, tables...)
+
+			views, err := m.fetchViews(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, views...)
 		}
 		if err != nil {
 			return nil, err
@@ -84,6 +94,25 @@ func (m *mysql) Catalog(ctx context.Context) (*DBNode, error) {
 	}
 
 	return root, nil
+}
+
+func (m *mysql) GetViewDefinition(view ViewRef) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Question)
+
+	query, args, err := psql.
+		Select("VIEW_DEFINITION AS view_definition").
+		From("information_schema.VIEWS").
+		Where(sq.Eq{
+			"TABLE_SCHEMA": m.dbName,
+			"TABLE_NAME":   view.Name,
+		}).
+		ToSql()
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	return query, args, nil
 }
 
 func (m *mysql) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
@@ -103,7 +132,8 @@ func (m *mysql) fetchTables(ctx context.Context, parentName, parentID string) ([
 
 		tables = append(tables, &DBNode{
 			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
-			Name:       name,
+			Name:       name + " - " + "t",
+			EntityName: name,
 			Type:       "table",
 			ParentName: parentName,
 			ParentID:   parentID,
@@ -115,4 +145,46 @@ func (m *mysql) fetchTables(ctx context.Context, parentName, parentID string) ([
 	}
 
 	return tables, nil
+}
+
+func (m *mysql) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	query, args, err := sq.
+		Select("TABLE_NAME AS view_name").
+		From("information_schema.VIEWS").
+		Where(sq.Eq{
+			"TABLE_SCHEMA": m.dbName,
+		}).
+		PlaceholderFormat(sq.Question).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := m.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	views := make([]*DBNode, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		views = append(views, &DBNode{
+			ID:         fmt.Sprintf("%s.v:%s", parentName, name),
+			Name:       name + " - " + "v",
+			EntityName: name,
+			Type:       "view",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return views, nil
 }

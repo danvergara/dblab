@@ -23,9 +23,17 @@ type TableRef struct {
 	Name   string
 }
 
+type ViewRef struct {
+	Schema string
+	Name   string
+}
+
 type DBNode struct {
-	ID         string
-	Name       string
+	ID string
+	// Name is used to display on the TUI.
+	Name string
+	// EntityName is used to run queries.
+	EntityName string
 	Type       string
 	ParentID   string
 	ParentName string
@@ -42,6 +50,7 @@ type databaseQuerier interface {
 	Constraints(table TableRef) (string, []any, error)
 	Indexes(table TableRef) (string, []any, error)
 	Catalog(context.Context) (*DBNode, error)
+	GetViewDefinition(view ViewRef) (string, []any, error)
 }
 
 // Client is used to store the pool of db connection.
@@ -151,6 +160,11 @@ func (c *Client) Query(q string, args ...any) ([][]string, []string, error) {
 		return nil, nil, err
 	}
 
+	colTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	for rows.Next() {
 		// cols is an []any of all of the column results.
 		cols, err := rows.SliceScan()
@@ -161,13 +175,26 @@ func (c *Client) Query(q string, args ...any) ([][]string, []string, error) {
 		// Convert []any into []string.
 		s := make([]string, len(cols))
 		for i, v := range cols {
-			switch v.(type) {
-			case string, rune, []byte:
-				s[i] = fmt.Sprintf("%s", v)
+			switch val := v.(type) {
+			case []byte:
+				// Isolate []byte and check the database type
+				dbType := colTypes[i].DatabaseTypeName()
+
+				// Check for both MySQL BLOBs and Postgres BYTEA
+				switch dbType {
+				case "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "BYTEA":
+					// Safely represent the BLOB without printing raw binary
+					s[i] = fmt.Sprintf("[BLOB - %d bytes]", len(val))
+				default:
+					// It's a normal string/text type returned as []byte, safe to convert
+					s[i] = string(val)
+				}
+			case string, rune:
+				s[i] = fmt.Sprintf("%s", val)
 			case nil:
-				s[i] = fmt.Sprint(v)
+				s[i] = fmt.Sprint(val)
 			default:
-				s[i] = fmt.Sprintf("%v", v)
+				s[i] = fmt.Sprintf("%v", val)
 			}
 		}
 
@@ -197,7 +224,12 @@ type Metadata struct {
 	Structure    Table
 	Constraints  Table
 	Indexes      Table
+	ViewDef      Table
 	TotalPages   int
+}
+
+type ViewMetadata struct {
+	ViewDef Table
 }
 
 // Metadata returns the most relevant data from a given table.
@@ -244,6 +276,30 @@ func (c *Client) Metadata(table TableRef) (*Metadata, error) {
 	return &m, nil
 }
 
+func (c *Client) ViewMetadata(view ViewRef) (*Metadata, error) {
+	vdRows, vdColumns, err := c.viewDefintion(view)
+	if err != nil {
+		return nil, err
+	}
+	vcRows, vcColumns, err := c.viewContent(view)
+	if err != nil {
+		return nil, err
+	}
+
+	vm := Metadata{
+		ViewDef: Table{
+			Rows:    vdRows,
+			Columns: vdColumns,
+		},
+		TableContent: Table{
+			Rows:    vcRows,
+			Columns: vcColumns,
+		},
+	}
+
+	return &vm, nil
+}
+
 // TableContent returns all the rows of a table.
 func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 	var query string
@@ -267,7 +323,8 @@ func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 		)
 	case drivers.SQLServer:
 		query = fmt.Sprintf(
-			"SELECT * FROM %s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			"SELECT * FROM %s.%s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			table.Schema,
 			table.Name,
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
@@ -281,6 +338,44 @@ func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 		)
 	}
 
+	return c.Query(query)
+}
+
+func (c *Client) viewContent(view ViewRef) ([][]string, []string, error) {
+	var query string
+	switch c.driver {
+	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s.%s LIMIT %d OFFSET %d;",
+			view.Schema,
+			view.Name,
+			c.paginationManager.Limit(),
+			c.paginationManager.Offset(),
+		)
+	case drivers.Oracle:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s.%s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			strings.ToUpper(view.Schema),
+			strings.ToUpper(view.Name),
+			c.paginationManager.Offset(),
+			c.paginationManager.Limit(),
+		)
+	case drivers.SQLServer:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s.%s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
+			view.Schema,
+			view.Name,
+			c.paginationManager.Offset(),
+			c.paginationManager.Limit(),
+		)
+	default:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s LIMIT %d OFFSET %d;",
+			view.Name,
+			c.paginationManager.Limit(),
+			c.paginationManager.Offset(),
+		)
+	}
 	return c.Query(query)
 }
 
@@ -322,4 +417,13 @@ func (c *Client) indexes(table TableRef) ([][]string, []string, error) {
 
 func (c *Client) Catalog(ctx context.Context) (*DBNode, error) {
 	return c.databaseQuerier.Catalog(ctx)
+}
+
+func (c *Client) viewDefintion(view ViewRef) ([][]string, []string, error) {
+	query, args, err := c.databaseQuerier.GetViewDefinition(view)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return c.Query(query, args...)
 }

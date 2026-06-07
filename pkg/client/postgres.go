@@ -125,10 +125,11 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 		case "database":
 			if p.schema != "" {
 				children = append(children, &DBNode{
-					ID:       fmt.Sprintf("%s.s:%s", rootID, p.schema),
-					Name:     p.schema,
-					Type:     "schema",
-					ParentID: rootID,
+					ID:         fmt.Sprintf("%s.s:%s", rootID, p.schema),
+					Name:       p.schema,
+					EntityName: p.schema,
+					Type:       "schema",
+					ParentID:   rootID,
 				})
 			} else {
 				children, err = p.fetchSchemas(ctx, current.Name)
@@ -159,6 +160,19 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
+func (p *postgres) GetViewDefinition(view ViewRef) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err := psql.
+		Select().
+		Column(sq.Expr("pg_get_viewdef(?::text::regclass, true) AS view_definition", fmt.Sprintf("%s.%s", view.Schema, view.Name))).
+		ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return query, args, nil
+}
+
 func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("schema_name").
 		From("information_schema.schemata").
@@ -185,10 +199,11 @@ func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode
 		}
 		schemas = append(schemas, &DBNode{
 
-			ID:       fmt.Sprintf("%s.s:%s", parentID, name),
-			Name:     name,
-			Type:     "schema",
-			ParentID: parentID,
+			ID:         fmt.Sprintf("%s.s:%s", parentID, name),
+			Name:       name,
+			EntityName: name,
+			Type:       "schema",
+			ParentID:   parentID,
 		})
 	}
 
@@ -225,6 +240,7 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 		tables = append(tables, &DBNode{
 			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
 			Name:       name + " - " + "t",
+			EntityName: name,
 			Type:       "table",
 			ParentName: parentName,
 			ParentID:   parentID,
@@ -269,6 +285,7 @@ func (p *postgres) fetchViews(ctx context.Context, parentName, parentID string) 
 		views = append(views, &DBNode{
 			ID:         fmt.Sprintf("%s.v:%s", parentID, name),
 			Name:       name + " - " + "v",
+			EntityName: name,
 			Type:       "view",
 			ParentName: parentName,
 			ParentID:   parentID,

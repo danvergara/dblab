@@ -38,6 +38,46 @@ func newTabStyles() *tabStyles {
 	return s
 }
 
+type MetadataPanel interface {
+	tea.Model
+}
+
+type TablePanel struct {
+	table table.Model
+}
+
+func (t *TablePanel) Init() tea.Cmd { return nil }
+
+func (t *TablePanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	updatedTable, cmd := t.table.Update(msg)
+	t.table = updatedTable
+	return t, cmd
+}
+
+func (t *TablePanel) View() tea.View {
+	return tea.NewView(t.table.View())
+}
+
+type TextPanel struct {
+	content string
+}
+
+func (t *TextPanel) Init() tea.Cmd {
+	return nil
+}
+
+func (t *TextPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	return t, nil
+}
+
+func (t *TextPanel) View() tea.View {
+	return tea.NewView(t.content)
+}
+
+func (t *TextPanel) SetContent(content string) {
+	t.content = content
+}
+
 type ResultSet struct {
 	focused       bool
 	tabs          []string
@@ -48,7 +88,7 @@ type ResultSet struct {
 	bindings *command.TUIKeyMap
 
 	viewport       viewport.Model
-	tablesMetadata []table.Model
+	tablesMetadata []MetadataPanel
 	dump           io.Writer
 }
 
@@ -69,7 +109,6 @@ func NewResultSet(kb *command.TUIKeyMap) ResultSet {
 	}
 
 	rs.tabStyles = newTabStyles()
-	rs.setupTable()
 
 	return rs
 }
@@ -90,12 +129,21 @@ func (r *ResultSet) SetSize(w, h int) {
 	r.viewport.SetHeight(h)
 }
 
-func (r *ResultSet) setupTable() {
-	columns := setupTable(r.height, r.width)
-	data := setupTable(r.height, r.width)
-	constraints := setupTable(r.height, r.width)
-	indexes := setupTable(r.height, r.width)
-	r.tablesMetadata = []table.Model{
+func (r *ResultSet) setupViews() {
+	viewDef := newTextPanel()
+	columns := newTablePanel(r.height, r.width)
+	r.tablesMetadata = []MetadataPanel{
+		viewDef,
+		columns,
+	}
+}
+
+func (r *ResultSet) setupTables() {
+	columns := newTablePanel(r.height, r.width)
+	data := newTablePanel(r.height, r.width)
+	constraints := newTablePanel(r.height, r.width)
+	indexes := newTablePanel(r.height, r.width)
+	r.tablesMetadata = []MetadataPanel{
 		data,
 		columns,
 		indexes,
@@ -119,18 +167,18 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		switch {
 		case key.Matches(msg, r.bindings.NextTab):
 			r.activeTab = min(r.activeTab+1, len(r.tabs)-1)
-			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View())
+			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			return r, nil
 		case key.Matches(msg, r.bindings.PrevTab):
 			r.activeTab = max(r.activeTab-1, 0)
-			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View())
+			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			return r, nil
 		case key.Matches(msg, r.bindings.BeginningOfLine):
 			r.viewport.SetXOffset(0)
 			return r, nil
 		case key.Matches(msg, r.bindings.EndOfLine):
 			maxWidth := 0
-			for line := range strings.SplitSeq(r.tablesMetadata[r.activeTab].View(), "\n") {
+			for line := range strings.SplitSeq(r.tablesMetadata[r.activeTab].View().Content, "\n") {
 				w := lipgloss.Width(line)
 				if w > maxWidth {
 					maxWidth = w
@@ -160,7 +208,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		r.tablesMetadata[r.activeTab], cmd = r.tablesMetadata[r.activeTab].Update(msg)
-		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View())
+		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 		cmds = append(cmds, cmd)
 	case queryErrMsg:
 		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
@@ -176,19 +224,25 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		return r, nil
 	case querySuccessMsg:
 		r.clearTables()
+		r.setupTables()
+		r.tabs = []string{"Data", "Columns", "Indexes", "Constraints"}
+		r.activeTab = 0
 		tableContentColumns, tableContentRows := populateTable(msg.columns, msg.rows)
-		r.tablesMetadata[0].SetColumns(tableContentColumns)
-		r.tablesMetadata[0].SetRows(tableContentRows)
-		r.viewport.SetContent(r.tablesMetadata[0].View())
-		r.viewport.GotoTop()
+		if tablePanel, ok := r.tablesMetadata[0].(*TablePanel); ok {
+			tablePanel.table.SetColumns(tableContentColumns)
+			tablePanel.table.SetRows(tableContentRows)
+			r.tablesMetadata[0] = tablePanel
+			r.viewport.SetContent(r.tablesMetadata[0].View().Content)
+			r.viewport.GotoTop()
+		}
 		return r, nil
 	case metadataSuccessMsg:
-		r.updateTableMetadataOnChange(msg.metadata)
-		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View())
+		r.updateMetadataOnChange(msg.metadata, msg.isTable)
+		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 		r.viewport.GotoTop()
 		return r, nil
 	case metadataErrMsg:
-		errorText := fmt.Sprintf("❌ failed to get table metadata\n\n%s", msg.err.Error())
+		errorText := fmt.Sprintf("❌ failed to get metadata\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
 		r.viewport.SetContent(styledError)
 		r.viewport.GotoTop()
@@ -260,34 +314,66 @@ func (r ResultSet) View() tea.View {
 
 func (r *ResultSet) clearTables() {
 	for i := range r.tablesMetadata {
-		r.tablesMetadata[i] = setupTable(r.height, r.width)
+		r.tablesMetadata[i] = newTablePanel(r.height, r.width)
 	}
 }
 
-// updateTableMetadataOnChange method is used to print the table metadata retrieved asynchronously.
-func (r *ResultSet) updateTableMetadataOnChange(metadata *client.Metadata) {
+// updateMetadataOnChange method is used to print the table metadata retrieved asynchronously.
+func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bool) {
 	if metadata != nil {
 		r.clearTables()
+		if isTable {
+			r.setupTables()
 
-		// table data.
-		tableContentColumns, tableContentRows := populateTable(metadata.TableContent.Columns, metadata.TableContent.Rows)
-		r.tablesMetadata[0].SetColumns(tableContentColumns)
-		r.tablesMetadata[0].SetRows(tableContentRows)
+			r.tabs = []string{"Data", "Columns", "Indexes", "Constraints"}
+			r.activeTab = 0
 
-		// table columns.
-		tableStructureColumns, tableStructureRows := populateTable(metadata.Structure.Columns, metadata.Structure.Rows)
-		r.tablesMetadata[1].SetColumns(tableStructureColumns)
-		r.tablesMetadata[1].SetRows(tableStructureRows)
+			// table data.
+			tableContentColumns, tableContentRows := populateTable(metadata.TableContent.Columns, metadata.TableContent.Rows)
+			if tablePanel, ok := r.tablesMetadata[0].(*TablePanel); ok {
+				tablePanel.table.SetColumns(tableContentColumns)
+				tablePanel.table.SetRows(tableContentRows)
+			}
 
-		// table indexes.
-		tableIndexColumns, tableIndexRows := populateTable(metadata.Indexes.Columns, metadata.Indexes.Rows)
-		r.tablesMetadata[2].SetColumns(tableIndexColumns)
-		r.tablesMetadata[2].SetRows(tableIndexRows)
+			// table columns.
+			tableStructureColumns, tableStructureRows := populateTable(metadata.Structure.Columns, metadata.Structure.Rows)
+			if tablePanel, ok := r.tablesMetadata[1].(*TablePanel); ok {
+				tablePanel.table.SetColumns(tableStructureColumns)
+				tablePanel.table.SetRows(tableStructureRows)
+			}
 
-		// table constraints.
-		tableConstraintsColumns, tableConstraintsRows := populateTable(metadata.Constraints.Columns, metadata.Constraints.Rows)
-		r.tablesMetadata[3].SetColumns(tableConstraintsColumns)
-		r.tablesMetadata[3].SetRows(tableConstraintsRows)
+			// table indexes.
+			tableIndexColumns, tableIndexRows := populateTable(metadata.Indexes.Columns, metadata.Indexes.Rows)
+			if tablePanel, ok := r.tablesMetadata[2].(*TablePanel); ok {
+				tablePanel.table.SetColumns(tableIndexColumns)
+				tablePanel.table.SetRows(tableIndexRows)
+			}
+
+			// table constraints.
+			tableConstraintsColumns, tableConstraintsRows := populateTable(metadata.Constraints.Columns, metadata.Constraints.Rows)
+			if tablePanel, ok := r.tablesMetadata[3].(*TablePanel); ok {
+				tablePanel.table.SetColumns(tableConstraintsColumns)
+				tablePanel.table.SetRows(tableConstraintsRows)
+			}
+		} else {
+			r.setupViews()
+			r.tabs = []string{"View Def", "Data"}
+			r.activeTab = 0
+
+			if textPanel, ok := r.tablesMetadata[0].(*TextPanel); ok {
+				if len(metadata.ViewDef.Rows) > 0 {
+					if len(metadata.ViewDef.Columns[0]) > 0 {
+						textPanel.SetContent(metadata.ViewDef.Rows[0][0])
+					}
+				}
+			}
+
+			viewContentColumns, viewContentRows := populateTable(metadata.TableContent.Columns, metadata.TableContent.Rows)
+			if tablePanel, ok := r.tablesMetadata[1].(*TablePanel); ok {
+				tablePanel.table.SetColumns(viewContentColumns)
+				tablePanel.table.SetRows(viewContentRows)
+			}
+		}
 	}
 }
 
@@ -302,8 +388,7 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	return border
 }
 
-// prepare method sets up the client defaults, such as the tables, the editor, the initial queries to show the either the databases or tables the user has access to and the styles.
-func setupTable(height, width int) table.Model {
+func newTablePanel(height, width int) *TablePanel {
 	t := table.New(
 		table.WithFocused(true),
 		table.WithWidth(width-2),
@@ -326,13 +411,19 @@ func setupTable(height, width int) table.Model {
 
 	t.SetStyles(s)
 
-	return t
+	return &TablePanel{
+		table: t,
+	}
+}
+
+func newTextPanel() *TextPanel {
+	return &TextPanel{}
 }
 
 func populateTable(headers []string, data [][]string) ([]table.Column, []table.Row) {
 	colWidths := make([]int, len(headers))
-
 	var rows []table.Row
+
 	for _, stringRow := range data {
 		row := make(table.Row, len(stringRow))
 
