@@ -110,6 +110,19 @@ func (p *postgres) Indexes(table TableRef) (string, []any, error) {
 	return sql, args, err
 }
 
+// Catalog returns a the pointer to a DBNode instance,
+// which is the root of the current PostgreSQL database graph.
+// It starts with the database itself,
+// then the schemas and the correspondent lists of tables and views.
+// PostgreSQL topography:
+//
+//					 [Database]
+//				       |
+//				       v
+//			     [Schemas]
+//			      /     \
+//			     v       v
+//	 		 [Tables] 	[Views]
 func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 	rootID := fmt.Sprintf("db:%s", p.dbName)
 	root := &DBNode{ID: rootID, Name: p.dbName, Type: "database"}
@@ -160,6 +173,7 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
+// GetViewDefinition method returns the SQL definition of a given view.
 func (p *postgres) GetViewDefinition(view ViewRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	query, args, err := psql.
@@ -173,6 +187,7 @@ func (p *postgres) GetViewDefinition(view ViewRef) (string, []any, error) {
 	return query, args, nil
 }
 
+// fetchSchemas method lists all the schemas of the current database.
 func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("schema_name").
 		From("information_schema.schemata").
@@ -214,6 +229,7 @@ func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode
 	return schemas, nil
 }
 
+// fetchTables method returns a list of tables filtered by schema.
 func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("table_name").
 		From("information_schema.tables").
@@ -254,6 +270,7 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 	return tables, nil
 }
 
+// fetchViews method returns a list of views filtered by schema.
 func (p *postgres) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
 	// 'v' is View, 'm' is Materialized View.
 	query, args, err := sq.Select("c.relname AS view_name").

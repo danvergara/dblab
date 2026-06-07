@@ -109,6 +109,19 @@ func (m *mssql) Indexes(table TableRef) (string, []interface{}, error) {
 	return query, args, nil
 }
 
+// Catalog returns a the pointer to a DBNode instance,
+// which is the root of the current SQL Server database graph.
+// It starts with the database itself,
+// then the schemas and the correspondent lists of tables and views.
+// SQL Server topography:
+//
+//					 [Database]
+//				       |
+//				       v
+//			     [Schemas]
+//			      /     \
+//			     v       v
+//	 		 [Tables] 	[Views]
 func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) {
 	rootID := fmt.Sprintf("db:%s", m.dbName)
 	root := &DBNode{ID: rootID, Name: m.dbName, Type: "database"}
@@ -160,6 +173,7 @@ func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
+// GetViewDefinition method returns the SQL definition of a given view.
 func (m *mssql) GetViewDefinition(view ViewRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Question)
 	query, args, err := psql.
@@ -174,6 +188,7 @@ func (m *mssql) GetViewDefinition(view ViewRef) (string, []any, error) {
 	return query, args, nil
 }
 
+// fetchSchemas method lists all the schemas of the current database.
 func (m *mssql) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("s.name").
 		From("sys.schemas AS s").
@@ -214,6 +229,7 @@ func (m *mssql) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, e
 	return schemas, nil
 }
 
+// fetchTables method returns a list of tables filtered by schema.
 func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("TABLE_NAME").
 		From("INFORMATION_SCHEMA.TABLES").
@@ -254,6 +270,7 @@ func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([
 	return tables, nil
 }
 
+// fetchViews method returns a list of views filtered by schema.
 func (m *mssql) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("TABLE_NAME").
 		From("INFORMATION_SCHEMA.VIEWS").

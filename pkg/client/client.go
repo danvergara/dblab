@@ -228,10 +228,6 @@ type Metadata struct {
 	TotalPages   int
 }
 
-type ViewMetadata struct {
-	ViewDef Table
-}
-
 // Metadata returns the most relevant data from a given table.
 func (c *Client) Metadata(table TableRef) (*Metadata, error) {
 	tcRows, tcColumns, err := c.tableContent(table)
@@ -276,6 +272,8 @@ func (c *Client) Metadata(table TableRef) (*Metadata, error) {
 	return &m, nil
 }
 
+// ViewMetadata returns the most relevant data from a given view.
+// It returns the view sql definition.
 func (c *Client) ViewMetadata(view ViewRef) (*Metadata, error) {
 	vdRows, vdColumns, err := c.viewDefintion(view)
 	if err != nil {
@@ -300,7 +298,7 @@ func (c *Client) ViewMetadata(view ViewRef) (*Metadata, error) {
 	return &vm, nil
 }
 
-// TableContent returns all the rows of a table.
+// tableContent returns a portion of the data of a given table scoped by the offset and limit.
 func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 	var query string
 
@@ -341,6 +339,7 @@ func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 	return c.Query(query)
 }
 
+// viewContent returns a portion of the data of a given view scoped by the offset and limit.
 func (c *Client) viewContent(view ViewRef) ([][]string, []string, error) {
 	var query string
 	switch c.driver {

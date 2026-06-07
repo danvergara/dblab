@@ -132,6 +132,9 @@ type Model struct {
 	dump io.Writer
 }
 
+// NewModel returns a pointer to the main dblab bubbletea model.
+// It also buids the sub-models, along with styling and the app title.
+// If DBLAB_DEBUG is set, the constructor function will create a messages.log file to log bubbletui events.
 func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {

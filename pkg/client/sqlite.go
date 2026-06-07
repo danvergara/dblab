@@ -61,6 +61,15 @@ func (s *sqlite) Indexes(table TableRef) (string, []interface{}, error) {
 	return query, nil, nil
 }
 
+// Catalog returns a the pointer to a DBNode instance,
+// which is the root of the current SQLite database graph.
+// It starts with the database itself and a list of tables a views.
+// SQLite topography:
+//
+//			     [Database]
+//			      /     \
+//			     v       v
+//	 			[Tables] 	[Views]
 func (s *sqlite) Catalog(ctx context.Context) (*DBNode, error) {
 	rootID := fmt.Sprintf("db:%s", s.dbName)
 	root := &DBNode{ID: rootID, Name: s.dbName, Type: "database"}
@@ -100,6 +109,7 @@ func (s *sqlite) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
+// GetViewDefinition method returns the SQL definition of a given view.
 func (s *sqlite) GetViewDefinition(view ViewRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Question)
 	query, args, err := psql.
@@ -117,6 +127,7 @@ func (s *sqlite) GetViewDefinition(view ViewRef) (string, []any, error) {
 	return query, args, nil
 }
 
+// fetchTables method lists all the tables of the current database.
 func (s *sqlite) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query := `
 		SELECT
@@ -157,6 +168,7 @@ func (s *sqlite) fetchTables(ctx context.Context, parentName, parentID string) (
 	return tables, nil
 }
 
+// fetchViews method lists all the views of the current database.
 func (s *sqlite) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.
 		Select("name AS view_name").

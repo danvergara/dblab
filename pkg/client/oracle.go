@@ -107,6 +107,19 @@ func (o *oracle) Indexes(table TableRef) (string, []interface{}, error) {
 	return sql, args, nil
 }
 
+// Catalog returns a the pointer to a DBNode instance,
+// which is the root of the current Oracle database graph.
+// It starts with the database itself,
+// then the schemas and the correspondent lists of tables and views.
+// Oracle topography:
+//
+//					 [Database]
+//				       |
+//				       v
+//			     [Schemas]
+//			      /     \
+//			     v       v
+//	 		 [Tables] 	[Views]
 func (o *oracle) Catalog(ctx context.Context) (*DBNode, error) {
 	rootID := fmt.Sprintf("db:%s", o.dbName)
 	root := &DBNode{ID: rootID, Name: o.dbName, Type: "database"}
@@ -156,6 +169,7 @@ func (o *oracle) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
+// GetViewDefinition method returns the SQL definition of a given view.
 func (o *oracle) GetViewDefinition(view ViewRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Question)
 	query, args, err := psql.
@@ -174,6 +188,7 @@ func (o *oracle) GetViewDefinition(view ViewRef) (string, []any, error) {
 	return query, args, nil
 }
 
+// fetchSchemas method lists all the schemas of the current database.
 func (o *oracle) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
 	query := `
 		SELECT DISTINCT owner AS schema_name
@@ -208,18 +223,19 @@ func (o *oracle) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, 
 	return schemas, nil
 }
 
+// fetchTables method returns a list of tables filtered by schema.
 func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
-	query := sq.Select("TABLE_NAME").
+	query, args, err := sq.Select("TABLE_NAME").
 		From("ALL_TABLES").
 		Where(sq.Eq{"OWNER": strings.ToUpper(parentName)}).
-		OrderBy("TABLE_NAME ASC")
-
-	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()
+		OrderBy("TABLE_NAME ASC").
+		PlaceholderFormat(sq.Colon).
+		ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := o.db.Query(sql, args...)
+	rows, err := o.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -248,17 +264,19 @@ func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) (
 	return tables, nil
 }
 
+// fetchViews method returns a list of views filtered by schema.
 func (o *oracle) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
-	query := sq.Select("VIEW_NAME").
+	query, args, err := sq.Select("VIEW_NAME").
 		From("ALL_VIEWS").
 		Where(sq.Eq{"OWNER": strings.ToUpper(parentName)}).
-		OrderBy("VIEW_NAME ASC")
-	sql, args, err := query.PlaceholderFormat(sq.Colon).ToSql()
+		OrderBy("VIEW_NAME ASC").
+		PlaceholderFormat(sq.Colon).
+		ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := o.db.Query(sql, args...)
+	rows, err := o.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
