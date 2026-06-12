@@ -1,0 +1,25 @@
+{
+  "profiles": {
+    "test": {
+      "host": "localhost",
+      "port":  5432,
+      "db": "users",
+      "user": "postgres",
+      "schema": "public",
+      "driver": "postgres"
+    },
+   "ssh-tunnel": {
+      "host": "localhost",
+      "port": 5432,
+      "db": "users",
+      "password": "password",
+      "user": "postgres",,
+      "schema": "public",
+      "driver": "postgres",
+      "ssh-host": "example.com",
+      "ssh-port": 22,
+      "ssh-user": "ssh-user",
+      "ssh-pass": "password"
+    }
+  }
+}
