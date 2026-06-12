@@ -118,14 +118,11 @@ func NewRootCmd() *cobra.Command {
 				}
 			}
 
-			// Set the keybindings values, either the default ones or the found in the config file.
-			opts.UpdateKeybindings(kb)
-
 			if err := connection.ValidateOpts(opts); err != nil {
 				return err
 			}
 
-			app, err := app.New(opts)
+			app, err := app.New(opts, kb)
 			if err != nil {
 				return err
 			}

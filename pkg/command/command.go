@@ -8,45 +8,37 @@ import (
 
 // Options is a struct that stores the provided commands by the user.
 type Options struct {
-	Driver string
-	URL    string
-	Host   string
-	Port   string
-	User   string
-	Pass   string
-	DBName string
-	// PostgreSQL only.
-	Schema string
-	Limit  uint
-	Socket string
-	SSL    string
+	Driver string `json:"driver"`
+	URL    string `json:"url"`
+	Host   string `json:"host"`
+	Port   string `json:"port"`
+	User   string `json:"user"`
+	Pass   string `json:"pass"`
+	DBName string `json:"db_name"`
+	Schema string `json:"schema"`
+	Limit  uint   `json:"limit"`
+	Socket string `json:"socket"`
+	SSL    string `json:"ssl"`
 	// SSH.
-	SSHHost          string
-	SSHPort          string
-	SSHUser          string
-	SSHPass          string
-	SSHKeyFile       string
-	SSHKeyPassphrase string
+	SSHHost          string `json:"ssh_host"`
+	SSHPort          string `json:"ssh_port"`
+	SSHUser          string `json:"ssh_user"`
+	SSHPass          string `json:"ssh_pass"`
+	SSHKeyFile       string `json:"ssh_key_file"`
+	SSHKeyPassphrase string `json:"ssh_key_passphrase"`
 	// SSL connection params.
-	SSLCert     string
-	SSLKey      string
-	SSLPassword string
-	SSLRootcert string
+	SSLCert     string `json:"ssl_cert"`
+	SSLKey      string `json:"ssl_key"`
+	SSLPassword string `json:"ssl_password"`
+	SSLRootcert string `json:"ssl_rootcert"`
 	// oracle specific.
-	TraceFile string
-	SSLVerify string
-	Wallet    string
+	TraceFile string `json:"trace_file"`
+	SSLVerify string `json:"ssl_verify"`
+	Wallet    string `json:"wallet"`
 	// sql server.
-	Encrypt                string
-	TrustServerCertificate string
-	ConnectionTimeout      string
-	// TUI keybidings.
-	TUIKeyBindings TUIKeyMap
-}
-
-// UpdateKeybindings method updates the TUIKeyBindings field, since the keybidings configuration parted ways with the connection configuration.
-func (o *Options) UpdateKeybindings(k TUIKeyMap) {
-	o.TUIKeyBindings = k
+	Encrypt                string `json:"encrypt"`
+	TrustServerCertificate string `json:"trust_server_certificate"`
+	ConnectionTimeout      string `json:"connection_timeout"`
 }
 
 type TUIKeyMap struct {
@@ -82,8 +74,8 @@ type TUINavigationKeyMap struct {
 	Right key.Binding
 }
 
-func DefaultKeyMap() TUIKeyMap {
-	return TUIKeyMap{
+func DefaultKeyMap() *TUIKeyMap {
+	return &TUIKeyMap{
 		NextTab: key.NewBinding(
 			key.WithKeys("tab"),
 			key.WithHelp("tab", "next tab"),
