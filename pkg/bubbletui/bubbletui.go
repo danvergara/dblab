@@ -69,6 +69,7 @@ var (
 // metadataSucessMsg struct used to retrieve a given table's metadata asynchronously.
 type metadataSuccessMsg struct {
 	metadata *client.Metadata
+	isTable  bool
 }
 
 // metadataErrMsg struct used to report error to user at the time to retrieve metadata.
@@ -131,6 +132,9 @@ type Model struct {
 	dump io.Writer
 }
 
+// NewModel returns a pointer to the main dblab bubbletea model.
+// It also buids the sub-models, along with styling and the app title.
+// If DBLAB_DEBUG is set, the constructor function will create a messages.log file to log bubbletui events.
 func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
@@ -252,6 +256,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			tableRef.Schema = msg.Schema
 		}
 		return m, m.runTableMetadata(tableRef)
+	case selectViewMsg:
+		viewRef := client.ViewRef{Name: msg.View}
+		switch m.c.Driver() {
+		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+			viewRef.Schema = msg.Schema
+		}
+		return m, m.runViewMetadata(viewRef)
 	case executeQueryMsg:
 		return m, m.executeQueryCmd(msg.Query)
 	case metadataErrMsg, metadataSuccessMsg, queryErrMsg, querySuccessMsg:
@@ -336,7 +347,8 @@ func (m *Model) Run() error {
 }
 
 // runTableMetadata gets the given table's metadata asynchronously.
-// If the query succeeds, it returns metadataSucessMsg with the metadata, otherwise it returns metadataErrMsg with the error.
+// If the query succeeds, it returns metadataSucessMsg with the metadata,
+// otherwise it returns metadataErrMsg with the error.
 func (m *Model) runTableMetadata(table client.TableRef) tea.Cmd {
 	return func() tea.Msg {
 		metadata, err := m.c.Metadata(table)
@@ -344,7 +356,21 @@ func (m *Model) runTableMetadata(table client.TableRef) tea.Cmd {
 			return metadataErrMsg{err}
 		}
 
-		return metadataSuccessMsg{metadata}
+		return metadataSuccessMsg{metadata: metadata, isTable: true}
+	}
+}
+
+// runViewMetadata gets the given view's metadata asynchronously.
+// If the query succeeds, it returns viewMetadataSucessMsg with the metadata,
+// otherwise it returns viewMetadataErrMsg with the error.
+func (m *Model) runViewMetadata(view client.ViewRef) tea.Cmd {
+	return func() tea.Msg {
+		metadata, err := m.c.ViewMetadata(view)
+		if err != nil {
+			return metadataErrMsg{err}
+		}
+
+		return metadataSuccessMsg{metadata: metadata}
 	}
 }
 

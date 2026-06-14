@@ -110,6 +110,19 @@ func (p *postgres) Indexes(table TableRef) (string, []any, error) {
 	return sql, args, err
 }
 
+// Catalog returns a the pointer to a DBNode instance,
+// which is the root of the current PostgreSQL database graph.
+// It starts with the database itself,
+// then the schemas and the correspondent lists of tables and views.
+// PostgreSQL topography:
+//
+//					 [Database]
+//				       |
+//				       v
+//			     [Schemas]
+//			      /     \
+//			     v       v
+//	 		 [Tables] 	[Views]
 func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 	rootID := fmt.Sprintf("db:%s", p.dbName)
 	root := &DBNode{ID: rootID, Name: p.dbName, Type: "database"}
@@ -119,22 +132,33 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 		current := queue[0]
 		queue = queue[1:]
 
-		var children []*DBNode
+		children := make([]*DBNode, 0)
 		var err error
 		switch current.Type {
 		case "database":
 			if p.schema != "" {
 				children = append(children, &DBNode{
-					ID:       fmt.Sprintf("%s.s:%s", rootID, p.schema),
-					Name:     p.schema,
-					Type:     "schema",
-					ParentID: rootID,
+					ID:         fmt.Sprintf("%s.s:%s", rootID, p.schema),
+					Name:       p.schema,
+					EntityName: p.schema,
+					Type:       "schema",
+					ParentID:   rootID,
 				})
 			} else {
 				children, err = p.fetchSchemas(ctx, current.Name)
 			}
 		case "schema":
-			children, err = p.fetchTables(ctx, current.Name, current.ID)
+			tables, err := p.fetchTables(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, tables...)
+
+			views, err := p.fetchViews(ctx, current.Name, current.ID)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, views...)
 		}
 		if err != nil {
 			return nil, err
@@ -149,6 +173,21 @@ func (p *postgres) Catalog(ctx context.Context) (*DBNode, error) {
 	return root, nil
 }
 
+// GetViewDefinition method returns the SQL definition of a given view.
+func (p *postgres) GetViewDefinition(view ViewRef) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query, args, err := psql.
+		Select().
+		Column(sq.Expr("pg_get_viewdef(?::text::regclass, true) AS view_definition", fmt.Sprintf("%s.%s", view.Schema, view.Name))).
+		ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return query, args, nil
+}
+
+// fetchSchemas method lists all the schemas of the current database.
 func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("schema_name").
 		From("information_schema.schemata").
@@ -175,10 +214,11 @@ func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode
 		}
 		schemas = append(schemas, &DBNode{
 
-			ID:       fmt.Sprintf("%s.s:%s", parentID, name),
-			Name:     name,
-			Type:     "schema",
-			ParentID: parentID,
+			ID:         fmt.Sprintf("%s.s:%s", parentID, name),
+			Name:       name,
+			EntityName: name,
+			Type:       "schema",
+			ParentID:   parentID,
 		})
 	}
 
@@ -189,6 +229,7 @@ func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode
 	return schemas, nil
 }
 
+// fetchTables method returns a list of tables filtered by schema.
 func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("table_name").
 		From("information_schema.tables").
@@ -214,7 +255,8 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 		}
 		tables = append(tables, &DBNode{
 			ID:         fmt.Sprintf("%s.t:%s", parentID, name),
-			Name:       name,
+			Name:       name + " - " + "t",
+			EntityName: name,
 			Type:       "table",
 			ParentName: parentName,
 			ParentID:   parentID,
@@ -226,4 +268,50 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 	}
 
 	return tables, nil
+}
+
+// fetchViews method returns a list of views filtered by schema.
+func (p *postgres) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+	// 'v' is View, 'm' is Materialized View.
+	query, args, err := sq.Select("c.relname AS view_name").
+		From("pg_class c").
+		Join("pg_namespace n ON n.oid = c.relnamespace").
+		Where(sq.Eq{
+			"n.nspname": parentName,
+			"c.relkind": []string{"v", "m"},
+		}).
+		OrderBy("c.relname ASC").
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := p.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	views := make([]*DBNode, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		views = append(views, &DBNode{
+			ID:         fmt.Sprintf("%s.v:%s", parentID, name),
+			Name:       name + " - " + "v",
+			EntityName: name,
+			Type:       "view",
+			ParentName: parentName,
+			ParentID:   parentID,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return views, nil
 }

@@ -28,6 +28,11 @@ type selectTableMsg struct {
 	Table  string
 }
 
+type selectViewMsg struct {
+	Schema string
+	View   string
+}
+
 type SidebarViewport struct {
 	c        *client.Client
 	bindings *command.TUIKeyMap
@@ -140,7 +145,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 				switch (*selectedNode.Data()).Type {
 				case "table":
 					selectTableCmd := func() tea.Msg {
-						stm := selectTableMsg{Table: selectedNode.Name()}
+						stm := selectTableMsg{Table: (*selectedNode.Data()).EntityName}
 						switch s.c.Driver() {
 						case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
 							stm.Schema = (*selectedNode.Data()).ParentName
@@ -149,6 +154,18 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 					}
 
 					return s, selectTableCmd
+				case "view":
+					selectViewCmd := func() tea.Msg {
+						stm := selectViewMsg{View: (*selectedNode.Data()).EntityName}
+						switch s.c.Driver() {
+
+						case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+							stm.Schema = (*selectedNode.Data()).ParentName
+						}
+
+						return stm
+					}
+					return s, selectViewCmd
 				}
 			}
 		}
@@ -268,11 +285,13 @@ func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
 	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), "⛃")
 	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), "📁")
 	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), "📋")
+	viewIconRule := treeview.WithIconRule(dbObjectHasType("view"), "📑")
 
 	return treeview.NewDefaultNodeProvider[*client.DBNode](
 		databaseIconRule,
 		schemaIconRule,
 		tableIconRule,
+		viewIconRule,
 		treeview.WithStyleRule(
 			func(n *treeview.Node[*client.DBNode]) bool { return true },
 			lipgloss.NewStyle().
