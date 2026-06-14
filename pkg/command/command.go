@@ -13,7 +13,7 @@ type Options struct {
 	Host   string `json:"host"`
 	Port   string `json:"port"`
 	User   string `json:"user"`
-	Pass   string `json:"pass"`
+	Pass   string `json:"-"`
 	DBName string `json:"db_name"`
 	Schema string `json:"schema"`
 	Limit  uint   `json:"limit"`
@@ -23,13 +23,13 @@ type Options struct {
 	SSHHost          string `json:"ssh_host"`
 	SSHPort          string `json:"ssh_port"`
 	SSHUser          string `json:"ssh_user"`
-	SSHPass          string `json:"ssh_pass"`
+	SSHPass          string `json:"-"`
 	SSHKeyFile       string `json:"ssh_key_file"`
 	SSHKeyPassphrase string `json:"ssh_key_passphrase"`
 	// SSL connection params.
 	SSLCert     string `json:"ssl_cert"`
 	SSLKey      string `json:"ssl_key"`
-	SSLPassword string `json:"ssl_password"`
+	SSLPassword string `json:"-"`
 	SSLRootcert string `json:"ssl_rootcert"`
 	// oracle specific.
 	TraceFile string `json:"trace_file"`

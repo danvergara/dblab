@@ -40,7 +40,7 @@ run: build
 .PHONY: run-pagila
 ## run-pagila: Runs the application and connects to the pagila database
 run-pagila: build
-	DBLAB_DEBUG="" ./dblab --host localhost --user postgres --db postgres --pass 123456 --schema public --ssl disable --port 5432 --driver postgres --limit 50 -k
+	DBLAB_DEBUG="" ./dblab --host localhost --user postgres --db postgres --pass 123456 --schema public --ssl disable --port 5432 --driver postgres --limit 50 --save-as pagila -k
 
 .PHONY: run-sakila
 ## run-sakila: Runs the application and connects to the sakila database

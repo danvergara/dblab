@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 
+	"github.com/danvergara/dblab/internal/profiles"
 	"github.com/danvergara/dblab/pkg/app"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/config"
@@ -50,6 +54,8 @@ var (
 
 	// keybindings.
 	keybindings bool
+	// save-as.
+	saveAs string
 )
 
 // NewRootCmd returns the root command.
@@ -127,6 +133,20 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
+			// After a successful connection to the database,
+			// store the connection params if the save-as flg is set.
+			if saveAs != "" {
+				// Get the user config path.
+				configDir, err := os.UserConfigDir()
+				if err != nil {
+					return err
+				}
+
+				if err := profiles.SaveProfile(configDir, saveAs, opts); err != nil {
+					return fmt.Errorf("couldn't save database profile %w", err)
+				}
+			}
+
 			if err := app.Run(); err != nil {
 				return err
 			}
@@ -157,6 +177,9 @@ func init() {
 	// keybindings flag.
 	rootCmd.PersistentFlags().
 		BoolVarP(&keybindings, "keybindings", "k", false, "Get the keybindings configuration from the config file (default locations are: current directory, $HOME/.dblab.yaml or $XDG_CONFIG_HOME/.dblab.yaml)")
+
+	// save-as flag.
+	rootCmd.PersistentFlags().StringVar(&saveAs, "save-as", "", "Database profile name to reuse later without the need to type the connection parameters again")
 
 	// cfg-name is used to indicate the name of the config section to be used to establish a
 	// connection with desired database.
