@@ -15,14 +15,6 @@ import (
 
 // ProfileNotFound is a custom error, that implements the error interface.
 // It holds the profile name to erich the error message.
-type ProfileNotFound struct {
-	Name string
-}
-
-func (e *ProfileNotFound) Error() string {
-	return fmt.Sprintf("profile %s not found", e.Name)
-}
-
 // Config struct represents the profile configuration content.
 // The configuration file is machine-driven, which means,
 // is not meant to be manipulated by the user.
@@ -30,29 +22,29 @@ type Config struct {
 	Profiles map[string]command.Options `json:"profiles"`
 }
 
-// FetcProfile function reads the config file and returns a profile, given the file path and the profile name.
-func FetcProfile(filePath, name string) (command.Options, error) {
+// ReadProfiles function reads the config file and returns all the profiles in the file.
+func ReadProfiles(baseDir string) (map[string]command.Options, error) {
+	filePath := filepath.Join(baseDir, "dblab", "dblab.json")
+
 	// Reads the file and always returns the error.
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return command.Options{}, err
+		return nil, err
 	}
 
 	var cfg Config
 	if len(data) > 0 {
 		if err := json.Unmarshal(data, &cfg); err != nil {
-			return command.Options{}, nil
+			return nil, nil
 		}
 	}
 
-	// return the profile from the Profiles map.
+	// return the profiles.
 	if cfg.Profiles != nil {
-		return cfg.Profiles[name], nil
+		return cfg.Profiles, nil
 	}
 
-	// The profile is not found.
-	// Returns custom error with the profile name.
-	return command.Options{}, &ProfileNotFound{Name: name}
+	return nil, fmt.Errorf("no profiles found in the %s config file", filePath)
 }
 
 // addProfileToConfig functions adds a profile to the configuration file.
@@ -102,9 +94,9 @@ func addProfileToConfig(filePath string, name string, profile command.Options) e
 // SaveProfile function creates the offical config path to the configuration file, if it does not exist.
 // Then, saves the password in the OS keyring system.
 // Finally, saves the profile in the dblab's config file.
-func SaveProfile(basedDir, name string, profile command.Options) error {
+func SaveProfile(baseDir, name string, profile command.Options) error {
 	// Build the full path to your intended FILE.
-	fullPath := filepath.Join(basedDir, "dblab", "dblab.json")
+	fullPath := filepath.Join(baseDir, "dblab", "dblab.json")
 	// Extract just the directory portion.
 	// This changes "~/.config/dblab/dblab.json" to "~/.config/dblab"
 	dirOnly := filepath.Dir(fullPath)
