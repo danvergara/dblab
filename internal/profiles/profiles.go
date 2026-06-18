@@ -124,6 +124,12 @@ func SaveProfile(baseDir, name string, profile command.Options) error {
 		return err
 	}
 
+	if profile.SSHPass != "" && profile.SSHUser != "" {
+		if err := keyring.Set(name+"-ssh", profile.SSHUser, profile.SSHPass); err != nil {
+			return err
+		}
+	}
+
 	// Save the profile in the config file. It ignores the password contained in the profile object, which is an instance of command.Option.
 	if err := addProfileToConfig(fullPath, name, profile); err != nil {
 		return err
