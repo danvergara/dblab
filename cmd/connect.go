@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/danvergara/dblab/pkg/app"
 	"github.com/danvergara/dblab/pkg/bubbletui"
@@ -28,6 +30,9 @@ $XDG_CONFIG_HOME/dblab/dblab.json.`,
 
 		opts, err := bubbletui.Run()
 		if err != nil {
+			if errors.Is(err, bubbletui.ErrConnectionFormAborted) {
+				os.Exit(0)
+			}
 			return err
 		}
 
