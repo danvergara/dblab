@@ -13,8 +13,8 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
-// ProfileNotFound is a custom error, that implements the error interface.
-// It holds the profile name to erich the error message.
+var ProfileNotFound = errors.New("profile not found")
+
 // Config struct represents the profile configuration content.
 // The configuration file is machine-driven, which means,
 // is not meant to be manipulated by the user.
@@ -95,7 +95,7 @@ func addProfileToConfig(filePath string, name string, profile command.Options) e
 // Then, saves the password in the OS keyring system.
 // Finally, saves the profile in the dblab's config file.
 func SaveProfile(baseDir, name string, profile command.Options) error {
-	// Build the full path to your intended FILE.
+	// Build the full path to the config file.
 	fullPath := filepath.Join(baseDir, "dblab", "dblab.json")
 	// Extract just the directory portion.
 	// This changes "~/.config/dblab/dblab.json" to "~/.config/dblab"
@@ -133,6 +133,64 @@ func SaveProfile(baseDir, name string, profile command.Options) error {
 	// Save the profile in the config file. It ignores the password contained in the profile object, which is an instance of command.Option.
 	if err := addProfileToConfig(fullPath, name, profile); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// DeleteProfile function deletes a profiles from the official config file, if it exists.
+// Then, removes the password from the OS keyring system.
+// Finally, saves updated profiles set in the dblab's config file, without the given profile.
+func DeleteProfile(baseDir, name string) error {
+	// Build the full path to the config file.
+	filePath := filepath.Join(baseDir, "dblab", "dblab.json")
+
+	// Reads the file and always returns the error.
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal the config file content into the cfg instance.
+	var cfg Config
+	if len(data) > 0 {
+		if err := json.Unmarshal(data, &cfg); err != nil {
+			return err
+		}
+	}
+
+	// Check if the profiles map is not nil.
+	if cfg.Profiles != nil {
+		// Check if the profile exists.
+		// This is so importance because we need to make sure the profile is worth the effort to
+		// go and delete the password from the OS keyring and update the config file.
+		if _, ok := cfg.Profiles[name]; ok {
+			// Delete the password from the OS keyring, using the found profile.
+			err := keyring.Delete(name, cfg.Profiles[name].User)
+			if err != nil {
+				return err
+			}
+
+			// delete the profile from the profiles map.
+			delete(cfg.Profiles, name)
+
+			// The, update the configuration file content.
+			out, err := json.MarshalIndent(cfg, "", "  ")
+			if err != nil {
+				return err
+			}
+
+			tempFile := filePath + ".tmp"
+			if err := os.WriteFile(tempFile, out, 0644); err != nil {
+				return fmt.Errorf("failed to write to the file: %w", err)
+			}
+
+			// renames the temporary file back to the original path.
+			// If the file does not exists, the new one will be renamed to the desired path.
+			return os.Rename(tempFile, filePath)
+		} else {
+			return ProfileNotFound
+		}
 	}
 
 	return nil

@@ -83,3 +83,47 @@ func TestSaveProfile(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProfile(t *testing.T) {
+	keyring.MockInit()
+	sandboxDir := t.TempDir()
+
+	sakilaProfile := command.Options{
+		Driver: "mysql",
+		Host:   "localhost",
+		Port:   "3306",
+		User:   "sakila",
+		Pass:   "12345",
+		DBName: "sakila",
+		Limit:  50,
+	}
+
+	saveTestProfile(sandboxDir, "sakila", sakilaProfile)
+
+	pagilaProfile := command.Options{
+		Driver: "postgres",
+		Host:   "localhost",
+		Port:   "5432",
+		User:   "pagila",
+		Pass:   "12345",
+		DBName: "pagila",
+		Limit:  50,
+	}
+
+	saveTestProfile(sandboxDir, "pagila", pagilaProfile)
+
+	err := DeleteProfile(sandboxDir, "sakila")
+	require.NoError(t, err)
+
+	prs, err := ReadProfiles(sandboxDir)
+	require.NoError(t, err)
+
+	_, found := prs["sakila"]
+	require.False(t, found)
+
+	_, found = prs["pagila"]
+	require.True(t, found)
+
+	err = DeleteProfile(sandboxDir, "not-existing")
+	require.Error(t, err)
+}
