@@ -26,12 +26,12 @@ require (
 	github.com/testcontainers/testcontainers-go v0.39.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.39.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.39.0
+	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/crypto v0.39.0
 	modernc.org/sqlite v1.37.0
 )
 
 require (
-	charm.land/huh/v2 v2.0.3 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
@@ -43,13 +43,10 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/catppuccin/go v0.3.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260615092913-2399af76d5b1 // indirect
 	github.com/charmbracelet/x/ansi v0.11.7 // indirect
-	github.com/charmbracelet/x/exp/ordered v0.1.0 // indirect
-	github.com/charmbracelet/x/exp/strings v0.1.0 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
@@ -60,6 +57,7 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
+	github.com/creack/pty v1.1.24 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v28.3.3+incompatible // indirect
@@ -89,7 +87,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.24 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
-	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.1.0 // indirect
@@ -109,6 +106,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/sahilm/fuzzy v0.1.3 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
@@ -116,7 +114,6 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zalando/go-keyring v0.2.8 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect

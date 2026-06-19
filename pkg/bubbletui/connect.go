@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
-	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 	databaseProfiles "github.com/danvergara/dblab/internal/profiles"
 	"github.com/danvergara/dblab/pkg/command"
@@ -24,13 +24,32 @@ const (
 	stateForm
 )
 
+type dbProfile struct {
+	name  string
+	label string
+}
+
+// Implement the list.Item interface
+func (d dbProfile) Title() string       { return d.label }
+func (d dbProfile) Description() string { return "" }
+func (d dbProfile) FilterValue() string { return d.label }
+
 // profilesLoadedMsg struct is a message what will carry the profiles back to the update loop.
 type profilesLoadedMsg struct {
-	options  []huh.Option[string]
+	items    []list.Item
 	profiles map[string]command.Options
 }
 
 type errMsg struct{ err error }
+
+type itemDeletedMsg struct {
+	index int
+}
+
+type deleteFailedMsg struct {
+	err  error
+	item dbProfile
+}
 
 func fetchProfilesCmd() tea.Cmd {
 	return func() tea.Msg {
@@ -44,7 +63,7 @@ func fetchProfilesCmd() tea.Cmd {
 			return errMsg{err: err}
 		}
 
-		var options []huh.Option[string]
+		var items []list.Item
 		for name, profile := range profiles {
 			var label string
 			if profile.Driver == drivers.SQLite {
@@ -52,16 +71,31 @@ func fetchProfilesCmd() tea.Cmd {
 			} else {
 				label = fmt.Sprintf("%s (%s://%s@%s)", name, profile.Driver, profile.User, profile.Host)
 			}
-			options = append(options, huh.NewOption(label, name))
+			items = append(items, dbProfile{name: name, label: label})
 		}
 
-		return profilesLoadedMsg{options: options, profiles: profiles}
+		return profilesLoadedMsg{items: items, profiles: profiles}
+	}
+}
+
+func deleteItemCmd(name string, index int) tea.Cmd {
+	return func() tea.Msg {
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			return errMsg{err: err}
+		}
+
+		if err := databaseProfiles.DeleteProfile(configDir, name); err != nil {
+			return errMsg{err: err}
+		}
+
+		return itemDeletedMsg{index: index}
 	}
 }
 
 type ConnectModel struct {
 	state          state
-	form           *huh.Form
+	list           list.Model
 	spinner        spinner.Model
 	selectedOption string
 	err            error
@@ -69,15 +103,37 @@ type ConnectModel struct {
 	width          int
 	height         int
 	aborted        bool
+	loadingAction  string
 }
 
 func initConnectModel() *ConnectModel {
+	delegate := list.NewDefaultDelegate()
+	delegate.ShowDescription = false
+
+	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
+		Foreground(whiteText)
+
+	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
+		Foreground(cyberGreen).
+		BorderLeftForeground(hiMagenta)
+
+	profileList := list.New([]list.Item{}, delegate, 0, 0)
+	profileList.Title = "Select your database"
+	profileList.Styles.Title = profileList.Styles.Title.
+		Background(darkPurple).
+		Foreground(hiMagenta).
+		Bold(true)
+	profileList.SetShowStatusBar(false)
+	profileList.SetShowHelp(true)
+
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 
 	return &ConnectModel{
-		state:   stateLoading,
-		spinner: s,
+		state:         stateLoading,
+		spinner:       s,
+		list:          profileList,
+		loadingAction: "Fetch profiles from the config file...",
 	}
 }
 
@@ -123,34 +179,41 @@ func (m *ConnectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		if m.form != nil {
-			totalWidth := min(50, m.width)
-			m.form.WithWidth(totalWidth - 6)
-		}
+		m.list.SetSize(min(50, m.width)-6, 14)
 	case tea.KeyPressMsg:
-		if msg.String() == "ctrl+c" {
+		switch msg.String() {
+		case "ctrl+c":
 			m.aborted = true
 			return m, tea.Quit
+		case "ctrl+d":
+			if m.state == stateForm {
+				if i, ok := m.list.SelectedItem().(dbProfile); ok {
+					m.state = stateLoading
+					index := m.list.Index()
+					m.loadingAction = fmt.Sprintf("Deleting %s...", i.name)
+					return m, tea.Batch(m.spinner.Tick, deleteItemCmd(i.name, index))
+				}
+			}
+		case "enter":
+			if m.state == stateForm {
+				if i, ok := m.list.SelectedItem().(dbProfile); ok {
+					m.selectedOption = i.name
+					return m, tea.Quit
+				}
+			}
 		}
 	case errMsg:
 		m.err = msg.err
 		return m, tea.Quit
-	case profilesLoadedMsg:
-		totalWidth := min(50, m.width)
-		formWidth := totalWidth - 6
-
-		m.profiles = msg.profiles
-		m.form = huh.NewForm(
-			huh.NewGroup(
-				huh.NewSelect[string]().
-					Title("Select the connection database profile").
-					Options(msg.options...).
-					Value(&m.selectedOption).WithWidth(formWidth),
-			),
-		)
-
+	case itemDeletedMsg:
+		m.list.RemoveItem(msg.index)
 		m.state = stateForm
-		return m, m.form.Init()
+		return m, fetchProfilesCmd()
+	case profilesLoadedMsg:
+		m.profiles = msg.profiles
+		cmd := m.list.SetItems(msg.items)
+		m.state = stateForm
+		return m, cmd
 	}
 
 	switch m.state {
@@ -160,14 +223,8 @@ func (m *ConnectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case stateForm:
-		form, cmd := m.form.Update(msg)
-		if f, ok := form.(*huh.Form); ok {
-			m.form = f
-		}
-
-		if m.form.State == huh.StateCompleted {
-			return m, tea.Quit
-		}
+		var cmd tea.Cmd
+		m.list, cmd = m.list.Update(msg)
 		return m, cmd
 	}
 
@@ -184,13 +241,14 @@ func (m *ConnectModel) View() tea.View {
 
 	switch m.state {
 	case stateLoading:
-		content = fmt.Sprintf("\n %s Fetch profiles from the config file...\n", m.spinner.View())
+		spinnerView := fmt.Sprintf("\n %s %s\n", m.spinner.View(), m.loadingAction)
+		content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, spinnerView)
 	case stateForm:
 		formStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62")).
+			BorderForeground(neonPurple).
 			Padding(1, 2)
-		boxedForm := formStyle.Render(m.form.View())
+		boxedForm := formStyle.Render(m.list.View())
 		content = lipgloss.Place(
 			m.width,
 			m.height,
