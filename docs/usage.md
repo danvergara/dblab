@@ -14,8 +14,9 @@ $ dblab [command]
 
 ### Available Commands                               
 
-|         `help`         |    Help about any command    | 
+|         `connect`      |  Re-use saved connection profiles  | 
 |:----------------------:|:----------------------------:|
+|         `help`         |    Help about any command    | 
 |       `version`        |  The version of the project  |
 
 ### Flags
@@ -28,6 +29,7 @@ Usage:
   dblab [command]
 
 Available Commands:
+  connect     Re-use saved connection profiles
   help        Help about any command
   version     The version of the project
 
@@ -43,6 +45,7 @@ Flags:
       --limit uint                        Size of the result set for the table content query (should be greater than zero, otherwise the app will error out) (default 100)
       --pass string                       Password for user
       --port string                       Server port
+      --save-as string                    Save the connection as a named profile for later reuse
       --schema string                     Database schema (optional for postgres and oracle only)
       --socket string                     Path to a Unix socket file
       --ssh-host string                   SSH Server Hostname/IP
@@ -390,3 +393,57 @@ database:
 ```
 
 Only the `host`, `ssl`, and `schema` fields are optional. `host` defaults to `127.0.0.1`, `ssl` defaults to `disable`. The `schema` field is only applicable to PostgreSQL and Oracle; if omitted, all accessible schemas are shown.
+
+### Connection Profiles
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/dblab-connect.png){ width="700" : .center }
+
+dblab supports saving and reusing database connection profiles. When you successfully connect to a database, you can store the connection parameters as a named profile using the `--save-as` flag. Both the database password and the SSH tunnel password (when using SSH connections) are stored securely in your operating system's keyring (e.g., GNOME Keyring, macOS Keychain, or Windows Credential Manager) rather than in plain text.
+
+#### Saving a profile
+
+Use the `--save-as` flag with any connection to save it as a named profile:
+
+```{ .sh .copy }
+dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50 --save-as myprofile
+```
+
+The connection parameters are saved to `$XDG_CONFIG_HOME/dblab/dblab.json` (excluding passwords), while the database password and SSH password (if provided) are stored in the OS keyring.
+
+#### Using saved profiles
+
+Use the `connect` command to launch an interactive menu that lists all saved profiles:
+
+```{ .sh .copy }
+dblab connect
+```
+
+This opens a TUI selector where you can:
+
+- Browse saved database profiles
+- Press <kbd>Enter</kbd> to connect to the selected profile
+- Press <kbd>Ctrl+D</kbd> to delete a profile
+- Press <kbd>Ctrl+C</kbd> to quit
+
+The password is automatically retrieved from the OS keyring when connecting.
+
+#### Profile storage format
+
+Profiles are stored in `$XDG_CONFIG_HOME/dblab/dblab.json`:
+
+```{ .json .copy }
+{
+  "profiles": {
+    "myprofile": {
+      "host": "localhost",
+      "port": "5432",
+      "db": "users",
+      "user": "postgres",
+      "schema": "public",
+      "driver": "postgres"
+    }
+  }
+}
+```
+
+Sensitive fields (database password, SSH password, and SSL password) are never written to the configuration file. They are stored exclusively in the OS keyring and retrieved automatically when you connect using a saved profile.

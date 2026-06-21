@@ -110,3 +110,19 @@ database:
 ```
 
 Only the `host`, `ssl`, and `schema` fields are optional. `host` defaults to `127.0.0.1`, `ssl` defaults to `disable`. The `schema` field is only applicable to PostgreSQL and Oracle; if omitted, all accessible schemas are shown.
+
+### Using connection profiles
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/dblab-connect.png){ width="700" : .center }
+
+You can save a connection as a named profile for later reuse. The database password and SSH password (if applicable) are stored securely in the OS keyring:
+
+```{ .sh .copy }
+dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50 --save-as myprofile
+```
+
+Then reconnect without typing credentials again:
+
+```{ .sh .copy }
+dblab connect
+```
