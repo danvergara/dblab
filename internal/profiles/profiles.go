@@ -13,7 +13,7 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
-var ProfileNotFound = errors.New("profile not found")
+var ErrProfileNotFound = errors.New("profile not found")
 
 // Config struct represents the profile configuration content.
 // The configuration file is machine-driven, which means,
@@ -199,7 +199,7 @@ func DeleteProfile(baseDir, name string) error {
 			// If the file does not exists, the new one will be renamed to the desired path.
 			return os.Rename(tempFile, filePath)
 		} else {
-			return ProfileNotFound
+			return ErrProfileNotFound
 		}
 	}
 
