@@ -144,36 +144,52 @@ func Run() (command.Options, error) {
 		return command.Options{}, nil
 	}
 
+	// Check if the connect method was ended by pressing ctrl+c.
 	if cm, ok := model.(*ConnectModel); ok {
 		if cm.aborted {
 			return command.Options{}, ErrConnectionFormAborted
 		}
 	}
 
+	// Get the selected profile to connect to.
 	profile := m.profiles[m.selectedOption]
+	// Get the password from the OS keyring.
 	pass, err := keyring.Get(m.selectedOption, profile.User)
 	if err != nil {
 		return command.Options{}, nil
 	}
 
+	// add the password to the profile.
 	profile.Pass = pass
 
+	// if the profile contains ssh credentials.
 	if profile.SSHUser != "" {
+		// Get the ssh password, if any.
 		sshPass, err := keyring.Get(m.selectedOption+"-ssh", profile.SSHUser)
 		if err != nil {
-			return command.Options{}, nil
+			// If the error is different than ErrNotFound, return the error.
+			if !errors.Is(err, keyring.ErrNotFound) {
+				return command.Options{}, err
+			}
+		} else {
+			profile.SSHPass = sshPass
 		}
-
-		profile.SSHPass = sshPass
 	}
 
 	return profile, nil
 }
 
+// Init method starts with the spinner and fetching the profiles asynchronously.
 func (m *ConnectModel) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Tick, fetchProfilesCmd())
 }
 
+// Update method  manages four different events:
+// Windows re-size to re-calculate the size of the terminal,
+// ctrl+c to exit the form,
+// ctrl+d to delete a profile from the config file,
+// enter to connect to a database profile.
+// It also manages async messages and the menu state.
 func (m *ConnectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:

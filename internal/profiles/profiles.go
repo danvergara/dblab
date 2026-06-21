@@ -166,9 +166,19 @@ func DeleteProfile(baseDir, name string) error {
 		// go and delete the password from the OS keyring and update the config file.
 		if _, ok := cfg.Profiles[name]; ok {
 			// Delete the password from the OS keyring, using the found profile.
-			err := keyring.Delete(name, cfg.Profiles[name].User)
+			profile := cfg.Profiles[name]
+			err := keyring.Delete(name, profile.User)
 			if err != nil {
 				return err
+			}
+
+			// Delete the ssh password, if any.
+			if cfg.Profiles[name].SSHUser != "" {
+				if err := keyring.Delete(name+"-ssh", profile.SSHUser); err != nil {
+					if !errors.Is(err, keyring.ErrNotFound) {
+						return err
+					}
+				}
 			}
 
 			// delete the profile from the profiles map.
