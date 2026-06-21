@@ -15,7 +15,7 @@ type App struct {
 }
 
 // New bootstrap a new application.
-func New(opts command.Options) (*App, error) {
+func New(opts command.Options, tuiKeyBindings *command.TUIKeyMap) (*App, error) {
 	var sc *sshdb.SSHConfig
 
 	if opts.SSHHost != "" {
@@ -40,7 +40,7 @@ func New(opts command.Options) (*App, error) {
 		return nil, err
 	}
 
-	m, err := bubbletui.NewModel(c, &opts.TUIKeyBindings)
+	m, err := bubbletui.NewModel(c, tuiKeyBindings)
 	if err != nil {
 		return nil, err
 	}

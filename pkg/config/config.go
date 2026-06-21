@@ -20,7 +20,7 @@ import (
 
 // Config struct is used to store the db connection data.
 type Config struct {
-	Database []Database
+	Database []Profile
 	User     string
 	Pswd     string
 	Host     string
@@ -34,7 +34,7 @@ type KeyMapConfig struct {
 	KeyBindings KeyBindings
 }
 
-type Database struct {
+type Profile struct {
 	Name string `fig:"name"`
 
 	Host     string
@@ -124,7 +124,7 @@ func New(cmd *cobra.Command) *Config {
 func Init(configName string) (command.Options, error) {
 	var opts command.Options
 	var cfg Config
-	var db Database
+	var db Profile
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
@@ -185,22 +185,22 @@ func Init(configName string) (command.Options, error) {
 	return opts, nil
 }
 
-func SetupKeyMap() (command.TUIKeyMap, error) {
+func SetupKeyMap() (*command.TUIKeyMap, error) {
 	var kbc KeyMapConfig
 	var tkb command.TUIKeyMap
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return tkb, err
+		return nil, err
 	}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return tkb, err
+		return nil, err
 	}
 
 	if err := fig.Load(&kbc, fig.File(".dblab.yaml"), fig.Dirs(".", home, configDir)); err != nil {
-		return tkb, err
+		return nil, err
 	}
 
 	tkb = command.TUIKeyMap{
@@ -227,7 +227,7 @@ func SetupKeyMap() (command.TUIKeyMap, error) {
 		},
 	}
 
-	return tkb, nil
+	return &tkb, nil
 }
 
 // Open returns a db connection using the data from the config object.

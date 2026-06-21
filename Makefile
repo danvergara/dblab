@@ -29,18 +29,23 @@ docker-build:
 .PHONY: build
 ## build: Builds the Go program
 build:
-	CGO_ENABLED=0 \
+	@CGO_ENABLED=0 \
 	go build -o dblab .
+
+.PHONY: connect
+## connect: Runs the connect command to list the previous connections available
+connect: build
+	@./dblab connect
 
 .PHONY: run
 ## run: Runs the application
 run: build
-	DBLAB_DEBUG="" ./dblab --host localhost --user postgres --db users --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 -k
+	DBLAB_DEBUG="" ./dblab --host localhost --user postgres --db users --pass password --schema public --ssl disable --port 5432 --driver postgres --limit 50 -k --save-as postgres
 
 .PHONY: run-pagila
 ## run-pagila: Runs the application and connects to the pagila database
 run-pagila: build
-	DBLAB_DEBUG="" ./dblab --host localhost --user postgres --db postgres --pass 123456 --schema public --ssl disable --port 5432 --driver postgres --limit 50 -k
+	DBLAB_DEBUG="" ./dblab --host localhost --user postgres --db postgres --pass 123456 --schema public --ssl disable --port 5432 --driver postgres --limit 50 --save-as pagila -k
 
 .PHONY: run-sakila
 ## run-sakila: Runs the application and connects to the sakila database
@@ -65,7 +70,7 @@ run-ssh-key: build
 .PHONY: run-mysql
 ## run-mysql: Runs the application with a connection to mysql
 run-mysql: build
-	./dblab --host localhost --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql
+	./dblab --host localhost --user myuser --db mydb --pass 5@klkbN#ABC --ssl enable --port 3306 --driver mysql --save-as mysql
 
 .PHONY: run-mysql-ssh
 ## run-mysql-ssh: Runs the application through a ssh tunnel
