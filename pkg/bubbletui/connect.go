@@ -60,7 +60,7 @@ type dbProfile struct {
 	label string
 }
 
-// Implement the list.Item interface
+// Implement the list.Item interface.
 func (d dbProfile) Title() string       { return d.label }
 func (d dbProfile) Description() string { return "" }
 func (d dbProfile) FilterValue() string { return d.label }
