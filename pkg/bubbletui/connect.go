@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
@@ -16,6 +17,30 @@ import (
 )
 
 var ErrConnectionFormAborted = errors.New("connection form exited with ctrl+c")
+
+// Connect model custom keys.
+type customKeyMap struct {
+	connect key.Binding
+	delete  key.Binding
+	quit    key.Binding
+}
+
+func newCustomKeyMap() customKeyMap {
+	return customKeyMap{
+		connect: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "connect"),
+		),
+		delete: key.NewBinding(
+			key.WithKeys("ctrl+d"),
+			key.WithHelp("ctrl+d", "delete"),
+		),
+		quit: key.NewBinding(
+			key.WithKeys("ctrl+c"),
+			key.WithHelp("ctrl+c", "quit"),
+		),
+	}
+}
 
 // state of the menu.
 type state int
@@ -143,6 +168,23 @@ func initConnectModel() *ConnectModel {
 		Bold(true)
 	profileList.SetShowStatusBar(false)
 	profileList.SetShowHelp(true)
+	profileList.KeyMap.Quit.Unbind()
+	customKeys := newCustomKeyMap()
+	profileList.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			customKeys.connect,
+			customKeys.delete,
+			customKeys.quit,
+		}
+	}
+
+	profileList.AdditionalFullHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			customKeys.connect,
+			customKeys.delete,
+			customKeys.quit,
+		}
+	}
 
 	s := spinner.New()
 	s.Spinner = spinner.Dot
