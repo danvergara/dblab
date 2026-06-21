@@ -17,13 +17,19 @@ import (
 
 var ErrConnectionFormAborted = errors.New("connection form exited with ctrl+c")
 
+// state of the menu.
 type state int
 
 const (
+	// state for loading is used during the connections loading.
 	stateLoading state = iota
+	// state used when the data is loaded and available.
 	stateForm
 )
 
+// dbProfile struct is used as the bubble list model item.
+// label field is used to show the data on the menu.
+// name field matches the name of the database profile in the config file.
 type dbProfile struct {
 	name  string
 	label string
@@ -40,37 +46,41 @@ type profilesLoadedMsg struct {
 	profiles map[string]command.Options
 }
 
+// errMsg used to communicate errors asynchronously when reading or deleting profiles from the config file.
 type errMsg struct{ err error }
 
+// itemDeletedMsg struct is used communicate the index of the profile on the list to be deleted.
 type itemDeletedMsg struct {
 	index int
 }
 
-type deleteFailedMsg struct {
-	err  error
-	item dbProfile
-}
-
+// fetchProfilesCmd async function fetches a profiles from the config file.
+// returns a tea.Cmd so it does not block the main bubbletea's thread.
 func fetchProfilesCmd() tea.Cmd {
 	return func() tea.Msg {
+		// Read the config based dir path.
 		configDir, err := os.UserConfigDir()
 		if err != nil {
 			return errMsg{err: err}
 		}
 
+		// Call the ReadProfiles function to get the profiles in the official config file.
 		profiles, err := databaseProfiles.ReadProfiles(configDir)
 		if err != nil {
 			return errMsg{err: err}
 		}
 
+		// This part will come up with a list of items.
 		var items []list.Item
 		for name, profile := range profiles {
 			var label string
+			// SQLite is the only special case, since the database is a file.
 			if profile.Driver == drivers.SQLite {
 				label = fmt.Sprintf("%s (sqlite://%s)", name, profile.Host)
 			} else {
 				label = fmt.Sprintf("%s (%s://%s@%s)", name, profile.Driver, profile.User, profile.Host)
 			}
+			// append a new dbProfile, being the name the profile name and the label the data to be showed on the menu.
 			items = append(items, dbProfile{name: name, label: label})
 		}
 
@@ -78,21 +88,29 @@ func fetchProfilesCmd() tea.Cmd {
 	}
 }
 
+// deleteItemCmd asyc function to deleted a selected profile from the menu.
 func deleteItemCmd(name string, index int) tea.Cmd {
 	return func() tea.Msg {
+		// Read the base config file path.
 		configDir, err := os.UserConfigDir()
 		if err != nil {
 			return errMsg{err: err}
 		}
 
+		// Delete a profile given the name.
 		if err := databaseProfiles.DeleteProfile(configDir, name); err != nil {
 			return errMsg{err: err}
 		}
 
+		// communicate the index being deleted to remove from the UI list.
 		return itemDeletedMsg{index: index}
 	}
 }
 
+// ConnectModel struct is the main model for the connect feature.
+// Manages the list and the spinner sub-models,
+// keeps track of the app state,
+// and stores the profiles to be returned to the main dblab app.
 type ConnectModel struct {
 	state          state
 	list           list.Model
@@ -137,6 +155,7 @@ func initConnectModel() *ConnectModel {
 	}
 }
 
+// Run function is the main method called to run the database profiles menu.
 func Run() (command.Options, error) {
 	m := initConnectModel()
 	model, err := tea.NewProgram(m).Run()
@@ -247,6 +266,8 @@ func (m *ConnectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// View method shows the spinner if the data is loading,
+// and the list of profiles if the data is already fetched from the config file.
 func (m *ConnectModel) View() tea.View {
 	var (
 		v       tea.View
