@@ -1,9 +1,11 @@
 package bubbletui
 
 import (
+	"cmp"
 	"context"
 	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -17,6 +19,9 @@ import (
 	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
 )
+
+// MaxQueries limits the total number of queries executed per batch.
+const MaxQueries = 5
 
 type focusState int
 
@@ -82,6 +87,7 @@ type querySuccessMsg struct {
 	rows          [][]string
 	tables        []string
 	reloadCatalog bool
+	queriesResult []client.QueryResult
 }
 
 // queryErrMsg struct used to report when the query execution fails.
@@ -130,6 +136,9 @@ type Model struct {
 	renderedTitle string
 
 	dump io.Writer
+
+	// Stores the kill switch.
+	cancelQuery context.CancelFunc
 }
 
 // NewModel returns a pointer to the main dblab bubbletea model.
@@ -210,9 +219,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
-			return m, tea.Quit
+			if m.cancelQuery != nil {
+				m.cancelQuery()
+				m.cancelQuery = nil
+			} else if msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
 		}
-
 		switch {
 		case key.Matches(msg, m.bindings.Navigation.Right):
 			if m.focus == focusList {
@@ -264,7 +277,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, m.runViewMetadata(viewRef)
 	case executeQueryMsg:
-		return m, m.executeQueryCmd(msg.Query)
+		ctx, cancel := context.WithCancel(context.Background())
+
+		m.cancelQuery = cancel
+		return m, m.runConcurrentlyCmd(ctx, msg.queriesToRun, 4)
 	case metadataErrMsg, metadataSuccessMsg, queryErrMsg, querySuccessMsg:
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
@@ -374,29 +390,54 @@ func (m *Model) runViewMetadata(view client.ViewRef) tea.Cmd {
 	}
 }
 
-// executeQueryCmd method executes queryes asynchronously, so it does not block the bubbletea execution.
-// If it succeeds, returns a querySuccessMsg with the resultset. Otherwise, it returns queryErrMsg with the error.
-func (m *Model) executeQueryCmd(query string) tea.Cmd {
+func (m *Model) runConcurrentlyCmd(ctx context.Context, queries []string, maxConcurrency int) tea.Cmd {
 	return func() tea.Msg {
-		var ts []string
-		rows, columns, err := m.c.Query(query)
-		if err != nil {
-			return queryErrMsg{err}
+		qsMsg := querySuccessMsg{}
+
+		for _, q := range queries {
+			cleanQuery := strings.TrimSpace(q)
+			firstWord := ""
+			if parts := strings.Fields(cleanQuery); len(parts) > 0 {
+				firstWord = strings.ToLower(parts[0])
+			}
+			switch firstWord {
+			case "create", "drop", "alter", "truncate", "rename":
+				qsMsg.reloadCatalog = true
+			}
 		}
 
-		qsMsg := querySuccessMsg{columns: columns, rows: rows, tables: ts}
+		resultChan := m.c.AsyncQuery(ctx, queries, maxConcurrency)
 
-		cleanQuery := strings.TrimSpace(query)
-		firstWord := ""
-		if parts := strings.Fields(cleanQuery); len(parts) > 0 {
-			firstWord = strings.ToLower(parts[0])
+		var finalResults []client.QueryResult
+
+		for res := range resultChan {
+			finalResults = append(finalResults, res)
 		}
 
-		switch firstWord {
-		case "create", "drop", "alter", "truncate", "rename":
-			qsMsg.reloadCatalog = true
-		}
+		slices.SortFunc(finalResults, func(a, b client.QueryResult) int {
+			return cmp.Compare(a.QueryIndex, b.QueryIndex)
+		})
 
+		qsMsg.queriesResult = finalResults
 		return qsMsg
 	}
+}
+
+func prepareQueriesForExecution(rawText string) []string {
+	rawQueries := strings.Split(rawText, ";")
+
+	var validQueries []string
+
+	for _, q := range rawQueries {
+		cleanQ := strings.TrimSpace(q)
+		if cleanQ != "" {
+			validQueries = append(validQueries, cleanQ)
+		}
+	}
+
+	if len(validQueries) > MaxQueries {
+		validQueries = validQueries[:MaxQueries]
+	}
+
+	return validQueries
 }
