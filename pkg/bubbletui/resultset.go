@@ -109,6 +109,7 @@ func NewResultSet(kb *command.TUIKeyMap) ResultSet {
 	}
 
 	rs.tabStyles = newTabStyles()
+	rs.setupTables()
 
 	return rs
 }
