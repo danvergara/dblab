@@ -225,17 +225,31 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		return r, nil
 	case querySuccessMsg:
 		r.clearTables()
-		r.setupTables()
-		r.tabs = []string{"Data", "Columns", "Indexes", "Constraints"}
-		r.activeTab = 0
-		tableContentColumns, tableContentRows := populateTable(msg.columns, msg.rows)
-		if tablePanel, ok := r.tablesMetadata[0].(*TablePanel); ok {
-			tablePanel.table.SetColumns(tableContentColumns)
-			tablePanel.table.SetRows(tableContentRows)
-			r.tablesMetadata[0] = tablePanel
-			r.viewport.SetContent(r.tablesMetadata[0].View().Content)
-			r.viewport.GotoTop()
+
+		r.tabs = make([]string, len(msg.queriesResult))
+		r.tablesMetadata = make([]MetadataPanel, len(msg.queriesResult))
+
+		for i, qr := range msg.queriesResult {
+			r.tabs[i] = fmt.Sprintf("query #%d", i+1)
+
+			if qr.Error != nil {
+				errPanel := newTextPanel()
+				errPanel.SetContent(fmt.Sprintf("query #%d failed\n\n%s", i+1, qr.Error.Error()))
+				r.tablesMetadata[i] = errPanel
+				continue
+			}
+
+			panel := newTablePanel(r.height, r.width)
+			tableContentColumns, tableContentRows := populateTable(qr.Headers, qr.ResultSet)
+			panel.table.SetColumns(tableContentColumns)
+			panel.table.SetRows(tableContentRows)
+			r.tablesMetadata[i] = panel
 		}
+
+		r.activeTab = 0
+		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
+		r.viewport.GotoTop()
+
 		return r, nil
 	case metadataSuccessMsg:
 		r.updateMetadataOnChange(msg.metadata, msg.isTable)
