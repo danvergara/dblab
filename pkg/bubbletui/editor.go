@@ -22,7 +22,7 @@ const (
 )
 
 type executeQueryMsg struct {
-	Query string
+	queriesToRun []string
 }
 
 type Editor struct {
@@ -85,13 +85,12 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if key.Matches(msg, e.bindings.Editor.ExecuteQuery) {
-			query := e.editor.Value()
-			if strings.TrimSpace(query) == "" {
-				return e, nil
-			}
+			editorContent := e.editor.Value()
+
+			queriesToRun := prepareQueriesForExecution(editorContent)
 
 			fireQueryCmd := func() tea.Msg {
-				return executeQueryMsg{Query: query}
+				return executeQueryMsg{queriesToRun: queriesToRun}
 			}
 
 			return e, fireQueryCmd
