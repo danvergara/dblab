@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -26,6 +27,13 @@ type TableRef struct {
 type ViewRef struct {
 	Schema string
 	Name   string
+}
+
+type QueryResult struct {
+	QueryIndex int
+	ResultSet  [][]string
+	Headers    []string
+	Error      error
 }
 
 type DBNode struct {
@@ -139,6 +147,116 @@ func (c *Client) Driver() string {
 
 func (c *Client) Host() string {
 	return c.host
+}
+
+// AsyncQuery runs multiple queries concurrently and it returns the results through a channel.
+// It relies on a fuffered channel (Semaphore): To cap the maximum number of concurrent database connections.
+func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrency int, args ...any) <-chan QueryResult {
+	resultChan := make(chan QueryResult, len(queries))
+
+	// Create a semaphore to cap concurrent executions.
+	semaphore := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+
+	for i, q := range queries {
+		wg.Add(1)
+		go func(index int, query string) {
+			defer wg.Done()
+
+			// Acquire token (blocks if semaphore is full).
+			select {
+			case semaphore <- struct{}{}:
+			case <-ctx.Done():
+				resultChan <- QueryResult{QueryIndex: index, Error: ctx.Err()}
+				return
+			}
+			// Ensure token is released when this query completes.
+			defer func() { <-semaphore }()
+
+			// Execute the query using the passed context.
+			// If the user cancels or it times out, the driver halts execution.
+			rows, err := c.db.QueryxContext(ctx, q, args...)
+			if err != nil {
+				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				return
+			}
+
+			defer rows.Close()
+
+			columnNames, err := rows.Columns()
+			if err != nil {
+				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				return
+			}
+
+			colTypes, err := rows.ColumnTypes()
+			if err != nil {
+				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				return
+			}
+
+			resultSet := make([][]string, 0)
+
+			for rows.Next() {
+				// cols is an []any of all of the column results.
+				cols, err := rows.SliceScan()
+				if err != nil {
+					resultChan <- QueryResult{QueryIndex: index, Error: err}
+					return
+				}
+
+				// Convert []any into []string.
+				s := make([]string, len(cols))
+				for i, v := range cols {
+					switch val := v.(type) {
+					case []byte:
+						// Isolate []byte and check the database type
+						dbType := colTypes[i].DatabaseTypeName()
+
+						// Check for both MySQL BLOBs and Postgres BYTEA
+						switch dbType {
+						case "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "BYTEA":
+							// Safely represent the BLOB without printing raw binary
+							s[i] = fmt.Sprintf("[BLOB - %d bytes]", len(val))
+						default:
+							// It's a normal string/text type returned as []byte, safe to convert
+							s[i] = string(val)
+						}
+					case string, rune:
+						s[i] = fmt.Sprintf("%s", val)
+					case nil:
+						s[i] = fmt.Sprint(val)
+					default:
+						s[i] = fmt.Sprintf("%v", val)
+					}
+				}
+
+				resultSet = append(resultSet, s)
+			}
+			if err := rows.Err(); err != nil {
+				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				return
+			}
+
+			// Send the result back over the thread-safe channel.
+			resultChan <- QueryResult{
+				QueryIndex: index,
+				ResultSet:  resultSet,
+				Headers:    columnNames,
+				Error:      nil,
+			}
+
+		}(i, q)
+	}
+
+	// Wait for all goroutines to finish in a separate thread,
+	// then close the channel to signal completion to the consumer.
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	return resultChan
 }
 
 // Query returns performs the query and returns the result set and the column names.
