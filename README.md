@@ -440,6 +440,8 @@ The query editor uses **normal** and **insert** modes (similar to Vim). When you
 
 #### Multi-query execution
 
+<img src="screenshots/dblab-multi-query.png" />
+
 You can write multiple SQL statements in the editor separated by semicolons (`;`) and execute them all at once with <kbd>ctrl+e</kbd>. The queries are run concurrently and each result is displayed in its own tab (e.g., "query #1", "query #2", etc.). If a query fails, its tab will display the error message while other successful queries still show their results. A maximum of 5 queries can be executed per batch. Press <kbd>Ctrl+c</kbd> while queries are running to cancel the in-flight batch; pressing <kbd>Ctrl+c</kbd> again will quit the application.
 
 Otherwise, you might be located at the tables panel, where you can navigate using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the schema of a table, locate yourself on the `tables` panel and press <kbd>tab</kbd> to switch to the `columns` panel, then use <kbd>shift+tab</kbd> to switch back.
