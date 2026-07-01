@@ -387,6 +387,12 @@ func (m *Model) runViewMetadata(view client.ViewRef) tea.Cmd {
 	}
 }
 
+// runConcurrentlyCmd runs multiple queries concurrently by calling AsyncQuery.
+// First off, it check if any query is about to alter the database graph shown in the UI.
+// If so, then sets reloadCatalog to true.
+// Then, it calls AsyncQuery to run multiple concurrently.
+// Finally, it reads results from the resultChan channel, in a blocking way, but it does not matter,
+// because this is an asynchronous function handled by the bubbletea runtime, so it does not freeze the app execution.
 func (m *Model) runConcurrentlyCmd(ctx context.Context, queries []string, maxConcurrency int) tea.Cmd {
 	return func() tea.Msg {
 		qsMsg := querySuccessMsg{}
@@ -397,6 +403,7 @@ func (m *Model) runConcurrentlyCmd(ctx context.Context, queries []string, maxCon
 			if parts := strings.Fields(cleanQuery); len(parts) > 0 {
 				firstWord = strings.ToLower(parts[0])
 			}
+			// Check if any query runs a DDL commands.
 			switch firstWord {
 			case "create", "drop", "alter", "truncate", "rename":
 				qsMsg.reloadCatalog = true
@@ -407,10 +414,15 @@ func (m *Model) runConcurrentlyCmd(ctx context.Context, queries []string, maxCon
 
 		var finalResults []client.QueryResult
 
+		// Range over the channel to collect results.
+		// NOTE: This blocks, but because it is inside a tea.Cmd,
+		// Bubble Tea is running it in a background goroutine.
 		for res := range resultChan {
 			finalResults = append(finalResults, res)
 		}
 
+		// Sort the finalResults by the query index, because they ared added in a random order to the finalResults slice,
+		// due to the concurrent nature of the AsyncQuery method.
 		slices.SortFunc(finalResults, func(a, b client.QueryResult) int {
 			return cmp.Compare(a.QueryIndex, b.QueryIndex)
 		})
@@ -420,6 +432,10 @@ func (m *Model) runConcurrentlyCmd(ctx context.Context, queries []string, maxCon
 	}
 }
 
+// prepareQueriesForExecution functions splits the text coming from the text editor by ';',
+// into multiple queries,
+// then, it removes the leading and trailing white spaces from every query.
+// To keep resources under control, the maximum numbers allowed are 5 (MaxQueries).
 func prepareQueriesForExecution(rawText string) []string {
 	rawQueries := strings.Split(rawText, ";")
 
