@@ -375,6 +375,202 @@ func (suite *ClientTestSuite) TestMetadata() {
 	suite.Len(m.TableContent.Columns, 3)
 }
 
+func (suite *ClientTestSuite) TestAsyncQuerySingleQuery() {
+	opts := command.Options{
+		Driver: suite.driver,
+		User:   suite.user,
+		Pass:   suite.password,
+		Host:   suite.host,
+		Port:   suite.port.Port(),
+		DBName: suite.dbName,
+		Schema: suite.dbSchema,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, err := New(opts)
+	suite.Require().NoError(err)
+
+	query := "SELECT * FROM public.products;"
+	if suite.driver == "mysql" {
+		query = "SELECT * FROM products;"
+	}
+
+	resultChan := c.AsyncQuery(context.Background(), []string{query}, 5)
+
+	var results []QueryResult
+	for r := range resultChan {
+		results = append(results, r)
+	}
+
+	suite.Len(results, 1)
+	suite.NoError(results[0].Error)
+	suite.Equal(0, results[0].QueryIndex)
+	suite.Len(results[0].Headers, 3)
+	suite.Len(results[0].ResultSet, 100)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryMultipleQueries() {
+	opts := command.Options{
+		Driver: suite.driver,
+		User:   suite.user,
+		Pass:   suite.password,
+		Host:   suite.host,
+		Port:   suite.port.Port(),
+		DBName: suite.dbName,
+		Schema: suite.dbSchema,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, err := New(opts)
+	suite.Require().NoError(err)
+
+	productsQuery := "SELECT * FROM public.products;"
+	customersQuery := "SELECT * FROM public.customers;"
+	if suite.driver == "mysql" {
+		productsQuery = "SELECT * FROM products;"
+		customersQuery = "SELECT * FROM customers;"
+	}
+
+	queries := []string{productsQuery, customersQuery}
+	resultChan := c.AsyncQuery(context.Background(), queries, 5)
+
+	resultsByIndex := make(map[int]QueryResult)
+	for r := range resultChan {
+		resultsByIndex[r.QueryIndex] = r
+	}
+
+	suite.Len(resultsByIndex, 2)
+
+	prodResult := resultsByIndex[0]
+	suite.NoError(prodResult.Error)
+	suite.Len(prodResult.Headers, 3)
+	suite.Len(prodResult.ResultSet, 100)
+
+	custResult := resultsByIndex[1]
+	suite.NoError(custResult.Error)
+	suite.NotEmpty(custResult.Headers)
+	suite.NotEmpty(custResult.ResultSet)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryWithInvalidQuery() {
+	opts := command.Options{
+		Driver: suite.driver,
+		User:   suite.user,
+		Pass:   suite.password,
+		Host:   suite.host,
+		Port:   suite.port.Port(),
+		DBName: suite.dbName,
+		Schema: suite.dbSchema,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, err := New(opts)
+	suite.Require().NoError(err)
+
+	validQuery := "SELECT * FROM public.products;"
+	if suite.driver == "mysql" {
+		validQuery = "SELECT * FROM products;"
+	}
+	invalidQuery := "SELECT * FROM nonexistent_table_xyz;"
+
+	queries := []string{validQuery, invalidQuery}
+	resultChan := c.AsyncQuery(context.Background(), queries, 5)
+
+	resultsByIndex := make(map[int]QueryResult)
+	for r := range resultChan {
+		resultsByIndex[r.QueryIndex] = r
+	}
+
+	suite.Len(resultsByIndex, 2)
+
+	suite.NoError(resultsByIndex[0].Error)
+	suite.Len(resultsByIndex[0].Headers, 3)
+	suite.Len(resultsByIndex[0].ResultSet, 100)
+
+	suite.Error(resultsByIndex[1].Error)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryContextCancellation() {
+	opts := command.Options{
+		Driver: suite.driver,
+		User:   suite.user,
+		Pass:   suite.password,
+		Host:   suite.host,
+		Port:   suite.port.Port(),
+		DBName: suite.dbName,
+		Schema: suite.dbSchema,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, err := New(opts)
+	suite.Require().NoError(err)
+
+	query := "SELECT * FROM public.products;"
+	if suite.driver == "mysql" {
+		query = "SELECT * FROM products;"
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	queries := []string{query, query, query}
+	resultChan := c.AsyncQuery(ctx, queries, 5)
+
+	var results []QueryResult
+	for r := range resultChan {
+		results = append(results, r)
+	}
+
+	suite.Len(results, len(queries))
+
+	for _, r := range results {
+		suite.Error(r.Error)
+	}
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryConcurrencyLimit() {
+	opts := command.Options{
+		Driver: suite.driver,
+		User:   suite.user,
+		Pass:   suite.password,
+		Host:   suite.host,
+		Port:   suite.port.Port(),
+		DBName: suite.dbName,
+		Schema: suite.dbSchema,
+		SSL:    "disable",
+		Limit:  100,
+	}
+
+	c, err := New(opts)
+	suite.Require().NoError(err)
+
+	query := "SELECT * FROM public.products;"
+	if suite.driver == "mysql" {
+		query = "SELECT * FROM products;"
+	}
+
+	queries := []string{query, query, query, query, query}
+	resultChan := c.AsyncQuery(context.Background(), queries, 1)
+
+	resultsByIndex := make(map[int]QueryResult)
+	for r := range resultChan {
+		resultsByIndex[r.QueryIndex] = r
+	}
+
+	suite.Len(resultsByIndex, 5)
+	for i := 0; i < 5; i++ {
+		r, ok := resultsByIndex[i]
+		suite.True(ok, "missing result for query index %d", i)
+		suite.NoError(r.Error)
+		suite.Len(r.Headers, 3)
+		suite.Len(r.ResultSet, 100)
+	}
+}
+
 func TestClietnTestSuite(t *testing.T) {
 	suite.Run(t, new(ClientTestSuite))
 }
