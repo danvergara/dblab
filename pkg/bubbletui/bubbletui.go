@@ -83,9 +83,6 @@ type metadataErrMsg struct{ err error }
 // querySuccessMsg struct used to get result sets from executed queries asynchronously.
 // Sometimes, tables can be created, altered of deleted, so the this returns a refreshed list of tables.
 type querySuccessMsg struct {
-	columns       []string
-	rows          [][]string
-	tables        []string
 	reloadCatalog bool
 	queriesResult []client.QueryResult
 }
