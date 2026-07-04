@@ -279,6 +279,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.cancelQuery = cancel
 		return m, m.runConcurrentlyCmd(ctx, msg.queriesToRun, 4)
 	case metadataErrMsg, metadataSuccessMsg, queryErrMsg, querySuccessMsg:
+		m.cancelQuery = nil
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
 		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
