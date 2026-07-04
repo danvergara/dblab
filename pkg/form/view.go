@@ -13,7 +13,7 @@ func driverView(m *Model) string {
 	var choices strings.Builder
 	// Iterate over the drivers.
 	for i, driver := range m.drivers {
-		choices.WriteString(fmt.Sprintf("%s\n", checkbox(driver, m.cursor == i)))
+		fmt.Fprintf(&choices, "%s\n", checkbox(driver, m.cursor == i))
 	}
 
 	return fmt.Sprintf("%s\n\n%s", s, choices.String())
@@ -81,7 +81,7 @@ func sslView(m *Model) string {
 	var choices strings.Builder
 	// Iterate over the driver.
 	for i, mode := range sslModes {
-		choices.WriteString(fmt.Sprintf("%s\n", checkbox(mode, m.cursor == i)))
+		fmt.Fprintf(&choices, "%s\n", checkbox(mode, m.cursor == i))
 	}
 
 	return fmt.Sprintf("%s\n\n%s", s, choices.String())
