@@ -9,7 +9,7 @@ import (
 
 // CustomerSeed seeds the database with customers.
 func (s Seed) CustomerSeed() {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		var err error
 
 		// execute query.

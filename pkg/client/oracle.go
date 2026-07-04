@@ -36,7 +36,7 @@ func newOracle(dbName, schema string, db *sqlx.DB) *oracle {
 }
 
 // TableStructure returns a query string to get all the relevant information of a given table.
-func (o *oracle) TableStructure(table TableRef) (string, []interface{}, error) {
+func (o *oracle) TableStructure(table TableRef) (string, []any, error) {
 	var query sq.SelectBuilder
 
 	query = sq.Select("*").
@@ -58,7 +58,7 @@ func (o *oracle) TableStructure(table TableRef) (string, []interface{}, error) {
 }
 
 // Constraints returns all the constraints of a given table.
-func (o *oracle) Constraints(table TableRef) (string, []interface{}, error) {
+func (o *oracle) Constraints(table TableRef) (string, []any, error) {
 	var query sq.SelectBuilder
 
 	query = sq.Select(
@@ -86,7 +86,7 @@ func (o *oracle) Constraints(table TableRef) (string, []interface{}, error) {
 }
 
 // Indexes returns the indexes of a table.
-func (o *oracle) Indexes(table TableRef) (string, []interface{}, error) {
+func (o *oracle) Indexes(table TableRef) (string, []any, error) {
 	var query sq.SelectBuilder
 
 	query = sq.Select("*").

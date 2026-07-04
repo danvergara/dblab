@@ -28,15 +28,14 @@ func Execute(db *sqlx.DB, driver string, seedMethodNames ...string) {
 		driver: driver,
 	}
 
-	seedType := reflect.TypeOf(s)
+	seedType := reflect.TypeFor[Seed]()
 
 	// Executes all seeders if no method is given.
 	if len(seedMethodNames) == 0 {
 		log.Println("running all seeder...")
 		// We are looping over the method on a Seed struct.
-		for i := 0; i < seedType.NumMethod(); i++ {
+		for method := range seedType.Methods() {
 			// Get the method in the current iteration.
-			method := seedType.Method(i)
 			// Execute seeder.
 			seed(s, method.Name)
 		}
