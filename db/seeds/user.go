@@ -9,7 +9,7 @@ import (
 
 // UserSeed seeds the database with users.
 func (s Seed) UserSeed() {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		var err error
 
 		// execute query.

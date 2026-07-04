@@ -265,7 +265,6 @@ func TestBuildConnectionFromOptsFromURL(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -679,7 +678,6 @@ func TestBuildConnectionFromOptsUserData(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -798,7 +796,6 @@ func TestFormatPostgresURL(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			uri, err := formatPostgresURL(tc.given.opts)
@@ -948,7 +945,6 @@ func TestFormatMySQLURL(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -1022,7 +1018,6 @@ func TestParseDSN(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

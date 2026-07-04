@@ -29,7 +29,7 @@ func newMSSQL(dbName, schema string, db *sqlx.DB) *mssql {
 }
 
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
-func (m *mssql) TableStructure(table TableRef) (string, []interface{}, error) {
+func (m *mssql) TableStructure(table TableRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 	query, args, err := psql.Select(
 		"c.name AS ColumnName",
@@ -51,7 +51,7 @@ func (m *mssql) TableStructure(table TableRef) (string, []interface{}, error) {
 }
 
 // Constraints returns all the constraints of a given table.
-func (m *mssql) Constraints(table TableRef) (string, []interface{}, error) {
+func (m *mssql) Constraints(table TableRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 
 	query, args, err := psql.Select(
@@ -70,7 +70,7 @@ func (m *mssql) Constraints(table TableRef) (string, []interface{}, error) {
 }
 
 // Indexes returns the indexes of a table.
-func (m *mssql) Indexes(table TableRef) (string, []interface{}, error) {
+func (m *mssql) Indexes(table TableRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 	query, args, err := psql.Select(
 		"ind.name AS IndexName",

@@ -186,11 +186,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				}
 			}
 
-			maxOffset := maxWidth - r.viewport.Width()
-
-			if maxOffset < 0 {
-				maxOffset = 0
-			}
+			maxOffset := max(maxWidth-r.viewport.Width(), 0)
 
 			r.viewport.SetXOffset(maxOffset)
 			return r, nil

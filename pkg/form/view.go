@@ -2,6 +2,7 @@ package form
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/danvergara/dblab/pkg/drivers"
 )
@@ -9,29 +10,30 @@ import (
 func driverView(m *Model) string {
 	// The header.
 	s := "Select the database driver:"
-	var choices string
+	var choices strings.Builder
 	// Iterate over the drivers.
 	for i, driver := range m.drivers {
-		choices += fmt.Sprintf("%s\n", checkbox(driver, m.cursor == i))
+		choices.WriteString(fmt.Sprintf("%s\n", checkbox(driver, m.cursor == i)))
 	}
 
-	return fmt.Sprintf("%s\n\n%s", s, choices)
+	return fmt.Sprintf("%s\n\n%s", s, choices.String())
 }
 
 func standardView(m *Model) string {
-	s := "Introduce the connection params:\n\n"
+	var s strings.Builder
+	s.WriteString("Introduce the connection params:\n\n")
 
 	inputs := viewInputs(m)
 
-	for i := 0; i < len(inputs); i++ {
-		s += inputs[i]
+	for i := range inputs {
+		s.WriteString(inputs[i])
 		if i < len(inputs)-1 {
-			s += "\n"
+			s.WriteString("\n")
 		}
 	}
 
-	s += "\n"
-	return s
+	s.WriteString("\n")
+	return s.String()
 }
 
 func viewInputs(m *Model) []string {
@@ -76,30 +78,31 @@ func sslView(m *Model) string {
 
 	// The header.
 	s := "\nSelect the ssl mode (just press enter if you selected sqlite3):"
-	var choices string
+	var choices strings.Builder
 	// Iterate over the driver.
 	for i, mode := range sslModes {
-		choices += fmt.Sprintf("%s\n", checkbox(mode, m.cursor == i))
+		choices.WriteString(fmt.Sprintf("%s\n", checkbox(mode, m.cursor == i)))
 	}
 
-	return fmt.Sprintf("%s\n\n%s", s, choices)
+	return fmt.Sprintf("%s\n\n%s", s, choices.String())
 }
 
 func sslConnView(m *Model) string {
-	s := "Introduce the SSL connection params:\n\n"
+	var s strings.Builder
+	s.WriteString("Introduce the SSL connection params:\n\n")
 
 	inputs := sslConnViewInputs(m)
 
-	for i := 0; i < len(inputs); i++ {
-		s += inputs[i]
+	for i := range inputs {
+		s.WriteString(inputs[i])
 		if i < len(inputs)-1 {
-			s += "\n"
+			s.WriteString("\n")
 		}
 	}
 
-	s += "\n"
+	s.WriteString("\n")
 
-	return s
+	return s.String()
 }
 
 func sslConnViewInputs(m *Model) []string {

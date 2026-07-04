@@ -70,7 +70,6 @@ func TestPaginationLifeCycle(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			m, err := New(tc.given.limit, tc.given.count, "users")
 			assert.NoError(t, err)

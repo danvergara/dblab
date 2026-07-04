@@ -10,7 +10,7 @@ import (
 
 // ProductSeed seeds product data.
 func (s Seed) ProductSeed() {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		var err error
 
 		// execute query.
