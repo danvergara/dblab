@@ -85,7 +85,7 @@ The query editor uses **normal** and **insert** modes (similar to Vim). When you
 
 You can write multiple SQL statements in the editor separated by semicolons (`;`) and execute them all at once with <kbd>ctrl+e</kbd>. The queries are run concurrently and each result is displayed in its own tab (e.g., "query #1", "query #2", etc.). If a query fails, its tab will display the error message while other successful queries still show their results. A maximum of 5 queries can be executed per batch.
 
-Press <kbd>Ctrl+c</kbd> while queries are running to cancel the in-flight batch; pressing <kbd>Ctrl+c</kbd> again will quit the application.
+Pressing <kbd>Ctrl+c</kbd> quits the application. If queries are currently running, they are cancelled before exiting.
 
 **Example:**
 
@@ -139,7 +139,7 @@ When navigating query result sets, the cell will be highlighted so the user can 
 |<kbd>G</kbd>                            | If the results panel is focused, move to the bottom of the dataset (all tabs on the results panel). |
 |<kbd>0</kbd>                            | If the query editor is focused in normal mode, move to the start of the current line. If the results panel is focused, move to the left edge of the row (all tabs on the results panel). |
 |<kbd>$</kbd>                            | If the query editor is focused in normal mode, move to the end of the current line. If the results panel is focused, move to the right edge of the row (all tabs on the results panel). |
-|<kbd>Ctrl+c</kbd>                       | Cancel running queries (if any), otherwise quit |
+|<kbd>Ctrl+c</kbd>                       | Quit the application (cancels in-flight queries if any) |
 
 
 ## Connection Examples
