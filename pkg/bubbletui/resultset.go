@@ -125,9 +125,14 @@ func (r *ResultSet) Blur() {
 func (r *ResultSet) SetSize(w, h int) {
 	r.width = w
 	r.height = h
-
 	r.viewport.SetWidth(w - 4)
 	r.viewport.SetHeight(h)
+	for _, panel := range r.tablesMetadata {
+		if tp, ok := panel.(*TablePanel); ok {
+			tp.table.SetHeight(h - 2)
+			tp.table.SetWidth(w - 2)
+		}
+	}
 }
 
 func (r *ResultSet) setupViews() {
@@ -402,8 +407,8 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 func newTablePanel(height, width int) *TablePanel {
 	t := table.New(
 		table.WithFocused(true),
-		table.WithWidth(width-2),
-		table.WithHeight(height-2),
+		table.WithWidth(max(width-2, 0)),
+		table.WithHeight(max(height-2, 0)),
 	)
 
 	s := table.DefaultStyles()
