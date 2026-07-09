@@ -214,6 +214,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
 		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
+		m.queryHistory.SetSize(msg.Width, msg.Height)
+
 		return m, tea.Batch(cmds...)
 
 	case tea.KeyPressMsg:
@@ -227,6 +229,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "f8":
 			m.focus = focusHistory
+			m.queryHistory.state = stateLoading
+			cmd = m.queryHistory.Init()
+			cmds = append(cmds, cmd)
 		}
 		switch {
 		case key.Matches(msg, m.bindings.Navigation.Right):

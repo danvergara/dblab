@@ -21,7 +21,6 @@ type QueryHistory struct {
 	Success   bool
 }
 
-// Implement the list.Item interface.
 func (q QueryHistory) Title() string       { return q.QueryText }
 func (q QueryHistory) Description() string { return "" }
 func (q QueryHistory) FilterValue() string { return q.QueryText }
@@ -60,11 +59,17 @@ func NewHistoryModel() *HistoryModel {
 	s.Spinner = spinner.Dot
 
 	return &HistoryModel{
-		state:         stateForm,
+		state:         stateLoading,
 		spinner:       s,
 		list:          queryList,
 		loadingAction: "Fetch queries from the history file...",
 	}
+}
+
+func (h *HistoryModel) SetSize(width, height int) {
+	h.height = height
+	h.width = width
+	h.list.SetSize(min(50, h.width)-6, 14)
 }
 
 func (h *HistoryModel) Init() tea.Cmd {
@@ -133,6 +138,7 @@ func fetchQueryHistoryCmd() tea.Cmd {
 	return func() tea.Msg {
 		var items []list.Item
 		items = append(items, QueryHistory{QueryText: "SELECT * FROM user;", Success: true})
+		items = append(items, QueryHistory{QueryText: "SELECT * FROM products;", Success: true})
 		return queryHistoryLoadedMsg{items: items}
 	}
 }
