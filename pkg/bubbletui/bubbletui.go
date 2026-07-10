@@ -299,6 +299,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
+	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
+		m.focus = focusEditor
+		m.editor.Focus()
+		m.editor, cmd = m.editor.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	switch m.focus {

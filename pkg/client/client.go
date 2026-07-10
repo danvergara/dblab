@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -31,8 +32,10 @@ type ViewRef struct {
 
 type QueryResult struct {
 	QueryIndex int
+	Query      string
 	ResultSet  [][]string
 	Headers    []string
+	Timestamp  time.Time
 	Error      error
 }
 
@@ -167,7 +170,7 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 			select {
 			case semaphore <- struct{}{}:
 			case <-ctx.Done():
-				resultChan <- QueryResult{QueryIndex: index, Error: ctx.Err()}
+				resultChan <- QueryResult{QueryIndex: index, Query: query, Error: ctx.Err()}
 				return
 			}
 			// Ensure token is released when this query completes.
@@ -177,7 +180,7 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 			// If the user cancels or it times out, the driver halts execution.
 			rows, err := c.db.QueryxContext(ctx, q, args...)
 			if err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
 				return
 			}
 
@@ -185,13 +188,13 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 
 			columnNames, err := rows.Columns()
 			if err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
 				return
 			}
 
 			colTypes, err := rows.ColumnTypes()
 			if err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
 				return
 			}
 
@@ -201,7 +204,7 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 				// cols is an []any of all of the column results.
 				cols, err := rows.SliceScan()
 				if err != nil {
-					resultChan <- QueryResult{QueryIndex: index, Error: err}
+					resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
 					return
 				}
 
@@ -234,18 +237,19 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 				resultSet = append(resultSet, s)
 			}
 			if err := rows.Err(); err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Error: err}
+				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
 				return
 			}
 
 			// Send the result back over the thread-safe channel.
 			resultChan <- QueryResult{
 				QueryIndex: index,
+				Query:      query,
 				ResultSet:  resultSet,
 				Headers:    columnNames,
+				Timestamp:  time.Now(),
 				Error:      nil,
 			}
-
 		}(i, q)
 	}
 

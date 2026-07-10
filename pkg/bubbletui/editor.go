@@ -83,6 +83,8 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	}
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case querySelectedMsg:
+		e.editor.SetValue(msg.QueryText)
 	case tea.KeyPressMsg:
 		if key.Matches(msg, e.bindings.Editor.ExecuteQuery) {
 			editorContent := e.editor.Value()

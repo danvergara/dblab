@@ -2,28 +2,26 @@ package bubbletui
 
 import (
 	"fmt"
-	"time"
+	"os"
 
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/danvergara/dblab/internal/history"
 )
+
+type querySelectedMsg struct {
+	QueryText string
+}
 
 type queryHistoryLoadedMsg struct {
 	items []list.Item
 }
 
-type QueryHistory struct {
-	ID        int
-	QueryText string
-	Timestamp time.Time
-	Success   bool
-}
+type backToNormalMsg struct{}
 
-func (q QueryHistory) Title() string       { return q.QueryText }
-func (q QueryHistory) Description() string { return "" }
-func (q QueryHistory) FilterValue() string { return q.QueryText }
+type queryHistoryErrMsg struct{ err error }
 
 type HistoryModel struct {
 	state         state
@@ -36,7 +34,7 @@ type HistoryModel struct {
 
 func NewHistoryModel() *HistoryModel {
 	delegate := list.NewDefaultDelegate()
-	delegate.ShowDescription = false
+	// delegate.ShowDescription = false
 
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
 		Foreground(whiteText)
@@ -82,6 +80,19 @@ func (h *HistoryModel) Update(msg tea.Msg) (*HistoryModel, tea.Cmd) {
 		h.width = msg.Width
 		h.height = msg.Height
 		h.list.SetSize(min(50, h.width)-6, 14)
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "enter":
+			selectedQuery := h.list.SelectedItem().(history.QueryHistory).QueryText
+
+			return h, func() tea.Msg {
+				return querySelectedMsg{QueryText: selectedQuery}
+			}
+		case "esc":
+			return h, func() tea.Msg {
+				return backToNormalMsg{}
+			}
+		}
 	case queryHistoryLoadedMsg:
 		cmd := h.list.SetItems(msg.items)
 		h.state = stateForm
@@ -136,9 +147,21 @@ func (h *HistoryModel) View() tea.View {
 
 func fetchQueryHistoryCmd() tea.Cmd {
 	return func() tea.Msg {
+		// Read the config based dir path.
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			return errMsg{err: err}
+		}
+
 		var items []list.Item
-		items = append(items, QueryHistory{QueryText: "SELECT * FROM user;", Success: true})
-		items = append(items, QueryHistory{QueryText: "SELECT * FROM products;", Success: true})
+		queryHistory, err := history.ReadHistory(configDir)
+		if err != nil {
+			return queryHistoryErrMsg{err: err}
+		}
+
+		for _, query := range queryHistory {
+			items = append(items, query)
+		}
 		return queryHistoryLoadedMsg{items: items}
 	}
 }
