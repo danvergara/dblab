@@ -13,8 +13,8 @@ func TestSaveHistory(t *testing.T) {
 	sandboxDir := t.TempDir()
 
 	type input struct {
-		baseDir  string
-		queries  []QueryHistory
+		baseDir string
+		queries []QueryHistory
 	}
 
 	type expected struct {
