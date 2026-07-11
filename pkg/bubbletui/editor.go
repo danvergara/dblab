@@ -135,6 +135,9 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			case "$":
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
 				return e, cmd
+			case "ctrl+d":
+				e.editor.Reset() // Clears text, cursor, and history
+				return e, nil
 			}
 
 			switch {
