@@ -6,3 +6,4 @@ The key features are:
   * Vim-style query editor (normal and insert modes, line-oriented editing commands).  
   * Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results in separate tabs.  
   * Connection profiles with secure credential storage in the OS keyring.  
+  * Query history: executed queries are automatically saved and can be browsed or re-used from a searchable list.  
