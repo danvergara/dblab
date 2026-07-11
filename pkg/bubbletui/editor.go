@@ -138,6 +138,19 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			case "ctrl+d":
 				e.editor.Reset() // Clears text, cursor, and history
 				return e, nil
+			case "G":
+				// LineCount() returns the total number of lines.
+				// Line() returns the current 0-indexed line position.
+				lastLine := e.editor.LineCount() - 1
+				for e.editor.Line() < lastLine {
+					e.editor.CursorDown()
+				}
+				return e, nil
+			case "g":
+				for e.editor.Line() > 0 {
+					e.editor.CursorUp()
+				}
+				return e, nil
 			}
 
 			switch {
