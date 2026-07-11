@@ -3,6 +3,7 @@ package bubbletui
 import (
 	"fmt"
 	"os"
+	"slices"
 
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/spinner"
@@ -79,26 +80,32 @@ func (h *HistoryModel) Update(msg tea.Msg) (*HistoryModel, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		h.width = msg.Width
 		h.height = msg.Height
-		h.list.SetSize(min(50, h.width)-6, 14)
+		h.list.SetSize(h.width-6, 14)
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "enter":
+			// Select the current query from the list.
 			selectedQuery := h.list.SelectedItem().(history.QueryHistory).QueryText
-
 			return h, func() tea.Msg {
 				return querySelectedMsg{QueryText: selectedQuery}
 			}
 		case "esc":
+			// Press esc to get back to the main app if a query was not selected.
 			return h, func() tea.Msg {
 				return backToNormalMsg{}
 			}
 		}
+	// catch the queryHistoryLoadedMsg with the query history and reverse the content to show the history in descending order based on the timestamp.
 	case queryHistoryLoadedMsg:
+		slices.Reverse(msg.items)
 		cmd := h.list.SetItems(msg.items)
 		h.state = stateForm
 		return h, cmd
 	}
 
+	// Manage the state of this model.
+	// If it's loading, routes the messages to the spinner,
+	// otherwise, it routes the messages to the list.
 	switch h.state {
 	case stateLoading:
 		var cmd tea.Cmd
