@@ -12,38 +12,50 @@ import (
 	"github.com/danvergara/dblab/internal/history"
 )
 
+// querySelectedMsg async message to let the bubbletea app know about a query selected from the confi file.
 type querySelectedMsg struct {
 	QueryText string
 }
 
+// queryHistoryLoadedMsg async message load the query history from the config file.
 type queryHistoryLoadedMsg struct {
 	items []list.Item
 }
 
+// backToNormalMsg asyn message to escape from the query history view.
 type backToNormalMsg struct{}
 
+// queryHistoryErrMsg message to communicate errors while trying to get query history from the config file.
 type queryHistoryErrMsg struct{ err error }
 
+// HistoryModel struct is the model use to display the query history.
 type HistoryModel struct {
-	state         state
-	spinner       spinner.Model
-	list          list.Model
+	// checks if the history is loading or ready to show.
+	state state
+	// spinner model to show while the data is loading.
+	spinner spinner.Model
+	// list model to show the query history.
+	list list.Model
+	// model size.
 	width         int
 	height        int
 	loadingAction string
 }
 
+// NewHistoryModel returns a pointer to the HistoryModel, with the models initialized.
 func NewHistoryModel() *HistoryModel {
 	delegate := list.NewDefaultDelegate()
-	// delegate.ShowDescription = false
 
+	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
 		Foreground(whiteText)
 
+	// Cyber green color for the selected items with a magent border foreground.
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
 		Foreground(cyberGreen).
 		BorderLeftForeground(hiMagenta)
 
+	// Set up the list model.
 	queryList := list.New([]list.Item{}, delegate, 0, 0)
 	queryList.Title = "Select a query from the history"
 	queryList.Styles.Title = queryList.Styles.Title.
@@ -52,8 +64,8 @@ func NewHistoryModel() *HistoryModel {
 		Bold(true)
 	queryList.SetShowStatusBar(false)
 	queryList.SetShowHelp(true)
-	queryList.KeyMap.Quit.Unbind()
 
+	// Set up the spinner model.
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 
@@ -65,12 +77,14 @@ func NewHistoryModel() *HistoryModel {
 	}
 }
 
+// SetSize method is used to set the model size when the main tui model routes the size from the tea.WindowSizeMsg message to this model.
 func (h *HistoryModel) SetSize(width, height int) {
 	h.height = height
 	h.width = width
-	h.list.SetSize(min(50, h.width)-6, 14)
+	h.list.SetSize(h.width-6, 14)
 }
 
+// Init method is used to initialize the spinner Tick command and fetch the query history.
 func (h *HistoryModel) Init() tea.Cmd {
 	return tea.Batch(h.spinner.Tick, fetchQueryHistoryCmd())
 }
@@ -121,6 +135,7 @@ func (h *HistoryModel) Update(msg tea.Msg) (*HistoryModel, tea.Cmd) {
 	return h, nil
 }
 
+// View method renders the spinner or the list content.
 func (h *HistoryModel) View() tea.View {
 	var (
 		v       tea.View
@@ -152,6 +167,7 @@ func (h *HistoryModel) View() tea.View {
 	return v
 }
 
+// fetchQueryHistoryCmd is used to fetch the query history when the model is loaded.
 func fetchQueryHistoryCmd() tea.Cmd {
 	return func() tea.Msg {
 		// Read the config based dir path.
@@ -160,12 +176,14 @@ func fetchQueryHistoryCmd() tea.Cmd {
 			return errMsg{err: err}
 		}
 
-		var items []list.Item
+		// Retrieve the query history from the config file.
 		queryHistory, err := history.ReadHistory(configDir)
 		if err != nil {
 			return queryHistoryErrMsg{err: err}
 		}
 
+		// Populate the items slice with queryHistory which is []history.QueryHistory that implements the item interface.
+		var items []list.Item
 		for _, query := range queryHistory {
 			items = append(items, query)
 		}
