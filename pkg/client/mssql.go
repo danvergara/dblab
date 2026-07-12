@@ -178,7 +178,7 @@ func (m *mssql) GetViewDefinition(view ViewRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 	query, args, err := psql.
 		Select().
-		Column(sq.Expr("OBJECT_DEFINITION(OBJECT_ID(@p1)) AS view_definition", fmt.Sprintf("%s.%s", view.Schema, view.Name))).
+		Column(sq.Expr("OBJECT_DEFINITION(OBJECT_ID(?)) AS view_definition", fmt.Sprintf("%s.%s", view.Schema, view.Name))).
 		ToSql()
 
 	if err != nil {
