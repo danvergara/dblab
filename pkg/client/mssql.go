@@ -41,7 +41,7 @@ func (m *mssql) TableStructure(table TableRef) (string, []any, error) {
 	).
 		From("sys.columns c").
 		InnerJoin("sys.types t ON c.user_type_id = t.user_type_id").
-		Where(sq.Eq{"c.object_id": fmt.Sprintf("OBJECT_ID('%s')", table.Name)}).
+		Where(fmt.Sprintf("c.object_id = OBJECT_ID('%s')", table.Name)).
 		ToSql()
 	if err != nil {
 		return "", nil, err
@@ -175,7 +175,7 @@ func (m *mssql) Catalog(ctx context.Context) (*DBNode, error) {
 
 // GetViewDefinition method returns the SQL definition of a given view.
 func (m *mssql) GetViewDefinition(view ViewRef) (string, []any, error) {
-	psql := sq.StatementBuilder.PlaceholderFormat(sq.Question)
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)
 	query, args, err := psql.
 		Select().
 		Column(sq.Expr("OBJECT_DEFINITION(OBJECT_ID(?)) AS view_definition", fmt.Sprintf("%s.%s", view.Schema, view.Name))).
