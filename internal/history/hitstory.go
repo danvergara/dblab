@@ -6,6 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"charm.land/lipgloss/v2"
+)
+
+var (
+	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("2")) // Muted Green
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("9")) // Muted Red
+	mutedStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("8")) // Gray
 )
 
 // QueryHistory struct used to serialized the queriesa as the gob (encoding/gob) format.
@@ -14,6 +22,8 @@ type QueryHistory struct {
 	QueryText string
 	Timestamp time.Time
 	Success   bool
+	RowCount  int
+	Duration  time.Duration
 }
 
 // Title returns the query text.
@@ -21,7 +31,18 @@ func (q QueryHistory) Title() string { return q.QueryText }
 
 // Description shows if the query succeeded or not ant the time when the query was executed.
 func (q QueryHistory) Description() string {
-	return fmt.Sprintf("Sucess: %t - %s", q.Success, q.Timestamp.Format(time.RFC1123))
+	var statusIndicator string
+	if q.Success {
+		statusIndicator = successStyle.Render(fmt.Sprintf("✔ %d rows", q.RowCount))
+	} else {
+		statusIndicator = errorStyle.Render("✘ error")
+	}
+	return fmt.Sprintf(
+		"%s  %s  %s",
+		mutedStyle.Render(q.Timestamp.Format(time.RFC1123)),
+		mutedStyle.Render(q.Duration.String()),
+		statusIndicator,
+	)
 }
 func (q QueryHistory) FilterValue() string { return q.QueryText }
 

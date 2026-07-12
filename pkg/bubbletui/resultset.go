@@ -494,10 +494,17 @@ func saveQueriesCmd(queriesResult []client.QueryResult) tea.Cmd {
 
 		queryHistory := make([]history.QueryHistory, 0, len(queriesResult))
 		for _, qr := range queriesResult {
-			qh := history.QueryHistory{QueryText: qr.Query, Timestamp: qr.Timestamp}
+			qh := history.QueryHistory{
+				QueryText: qr.Query,
+				Timestamp: qr.Timestamp,
+				Duration:  qr.Duration,
+			}
+
 			if qr.Error == nil {
 				qh.Success = true
+				qh.RowCount = qr.RowCount
 			}
+
 			queryHistory = append(queryHistory, qh)
 		}
 
