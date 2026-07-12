@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -36,6 +37,8 @@ type QueryResult struct {
 	ResultSet  [][]string
 	Headers    []string
 	Timestamp  time.Time
+	Duration   time.Duration
+	RowCount   int
 	Error      error
 }
 
@@ -166,11 +169,18 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 		go func(index int, query string) {
 			defer wg.Done()
 
+			result := QueryResult{
+				QueryIndex: index,
+				Query:      query,
+				Timestamp:  time.Now(),
+			}
+
 			// Acquire token (blocks if semaphore is full).
 			select {
 			case semaphore <- struct{}{}:
 			case <-ctx.Done():
-				resultChan <- QueryResult{QueryIndex: index, Query: query, Error: ctx.Err()}
+				result.Error = ctx.Err()
+				resultChan <- result
 				return
 			}
 			// Ensure token is released when this query completes.
@@ -178,77 +188,105 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 
 			// Execute the query using the passed context.
 			// If the user cancels or it times out, the driver halts execution.
-			rows, err := c.db.QueryxContext(ctx, q, args...)
-			if err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
-				return
-			}
-
-			defer rows.Close()
-
-			columnNames, err := rows.Columns()
-			if err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
-				return
-			}
-
-			colTypes, err := rows.ColumnTypes()
-			if err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
-				return
-			}
-
-			resultSet := make([][]string, 0)
-
-			for rows.Next() {
-				// cols is an []any of all of the column results.
-				cols, err := rows.SliceScan()
+			if isReadQuery(query) {
+				start := time.Now()
+				rows, err := c.db.QueryxContext(ctx, q, args...)
+				result.Duration = time.Since(start)
 				if err != nil {
-					resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
+					result.Error = err
+					resultChan <- result
 					return
 				}
 
-				// Convert []any into []string.
-				s := make([]string, len(cols))
-				for i, v := range cols {
-					switch val := v.(type) {
-					case []byte:
-						// Isolate []byte and check the database type
-						dbType := colTypes[i].DatabaseTypeName()
+				defer rows.Close()
 
-						// Check for both MySQL BLOBs and Postgres BYTEA
-						switch dbType {
-						case "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "BYTEA":
-							// Safely represent the BLOB without printing raw binary
-							s[i] = fmt.Sprintf("[BLOB - %d bytes]", len(val))
-						default:
-							// It's a normal string/text type returned as []byte, safe to convert
-							s[i] = string(val)
-						}
-					case string, rune:
-						s[i] = fmt.Sprintf("%s", val)
-					case nil:
-						s[i] = fmt.Sprint(val)
-					default:
-						s[i] = fmt.Sprintf("%v", val)
-					}
+				columnNames, err := rows.Columns()
+				if err != nil {
+					result.Error = err
+					resultChan <- result
+					return
 				}
 
-				resultSet = append(resultSet, s)
-			}
-			if err := rows.Err(); err != nil {
-				resultChan <- QueryResult{QueryIndex: index, Query: query, Timestamp: time.Now(), Error: err}
-				return
-			}
+				colTypes, err := rows.ColumnTypes()
+				if err != nil {
+					result.Error = err
+					resultChan <- result
+					return
+				}
 
-			// Send the result back over the thread-safe channel.
-			resultChan <- QueryResult{
-				QueryIndex: index,
-				Query:      query,
-				ResultSet:  resultSet,
-				Headers:    columnNames,
-				Timestamp:  time.Now(),
-				Error:      nil,
+				resultSet := make([][]string, 0)
+
+				rowsCount := 0
+				for rows.Next() {
+					rowsCount++
+					// cols is an []any of all of the column results.
+					cols, err := rows.SliceScan()
+					if err != nil {
+						result.Error = err
+						resultChan <- result
+						return
+					}
+
+					// Convert []any into []string.
+					s := make([]string, len(cols))
+					for i, v := range cols {
+						switch val := v.(type) {
+						case []byte:
+							// Isolate []byte and check the database type
+							dbType := colTypes[i].DatabaseTypeName()
+
+							// Check for both MySQL BLOBs and Postgres BYTEA
+							switch dbType {
+							case "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "BYTEA":
+								// Safely represent the BLOB without printing raw binary
+								s[i] = fmt.Sprintf("[BLOB - %d bytes]", len(val))
+							default:
+								// It's a normal string/text type returned as []byte, safe to convert
+								s[i] = string(val)
+							}
+						case string, rune:
+							s[i] = fmt.Sprintf("%s", val)
+						case nil:
+							s[i] = fmt.Sprint(val)
+						default:
+							s[i] = fmt.Sprintf("%v", val)
+						}
+					}
+
+					resultSet = append(resultSet, s)
+				}
+				if err := rows.Err(); err != nil {
+					result.Error = err
+					resultChan <- result
+					return
+				}
+
+				// Send the result back over the thread-safe channel.
+				result.ResultSet = resultSet
+				result.Headers = columnNames
+				result.RowCount = rowsCount
+				resultChan <- result
+			} else {
+				start := time.Now()
+				execResult, err := c.db.ExecContext(ctx, q, args...)
+				result.Duration = time.Since(start)
+				if err != nil {
+					result.Error = err
+					resultChan <- result
+					return
+				}
+
+				affected, err := execResult.RowsAffected()
+				if err != nil {
+					result.Error = err
+					resultChan <- result
+					return
+				}
+
+				result.ResultSet = make([][]string, 0)
+				result.Headers = make([]string, 0)
+				result.RowCount = int(affected)
+				resultChan <- result
 			}
 		}(i, q)
 	}
@@ -265,9 +303,7 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 
 // Query returns performs the query and returns the result set and the column names.
 func (c *Client) Query(q string, args ...any) ([][]string, []string, error) {
-	var (
-		resultSet = [][]string{}
-	)
+	resultSet := [][]string{}
 
 	// Runs the query extracting the content of the view calling the Buffer method.
 	rows, err := c.db.Queryx(q, args...)
@@ -547,4 +583,35 @@ func (c *Client) viewDefintion(view ViewRef) ([][]string, []string, error) {
 	}
 
 	return c.Query(query, args...)
+}
+
+// commentRegex matches both single-line (--) and multi-line (/* */) SQL comments.
+var commentRegex = regexp.MustCompile(`(?s)/\*.*?\*/|--.*?\n`)
+
+func isReadQuery(query string) bool {
+	// Strip all comments from the query
+	cleanQuery := commentRegex.ReplaceAllString(query, " ")
+
+	// Trim leading/trailing whitespace
+	cleanQuery = strings.TrimSpace(cleanQuery)
+
+	// Split by whitespace to grab the very first word
+	words := strings.Fields(cleanQuery)
+	if len(words) == 0 {
+		return false
+	}
+
+	// Convert the first word to uppercase for safe matching
+	firstWord := strings.ToUpper(words[0])
+
+	// Route based on the first keyword
+	switch firstWord {
+	case "SELECT", "SHOW", "DESCRIBE", "EXPLAIN", "WITH", "PRAGMA":
+		// 'WITH' handles Common Table Expressions (CTEs)
+		// 'PRAGMA' is specific to SQLite metadata queries
+		return true
+	default:
+		// INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, etc.
+		return false
+	}
 }
