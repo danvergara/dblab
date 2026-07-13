@@ -90,6 +90,9 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			editorContent := e.editor.Value()
 
 			queriesToRun := prepareQueriesForExecution(editorContent)
+			if len(queriesToRun) == 0 {
+				return e, nil
+			}
 
 			fireQueryCmd := func() tea.Msg {
 				return executeQueryMsg{queriesToRun: queriesToRun}
