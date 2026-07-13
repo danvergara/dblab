@@ -11,6 +11,7 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/danvergara/dblab/internal/history"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/davecgh/go-spew/spew"
@@ -224,6 +225,12 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		r.viewport.SetContent(styledError)
 		r.viewport.GotoTop()
 		return r, nil
+	case queryHistoryErrMsg:
+		errorText := fmt.Sprintf("❌ FAILED TO LOAD THE QUERY HISOTORY\n\n%s", msg.err.Error())
+		styledError := errorStyle.Render(errorText)
+		r.viewport.SetContent(styledError)
+		r.viewport.GotoTop()
+		return r, nil
 	case querySuccessMsg:
 		r.clearTables()
 
@@ -251,7 +258,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 		r.viewport.GotoTop()
 
-		return r, nil
+		return r, saveQueriesCmd(msg.queriesResult)
 	case metadataSuccessMsg:
 		r.updateMetadataOnChange(msg.metadata, msg.isTable)
 		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
@@ -476,4 +483,35 @@ func populateTable(headers []string, data [][]string) ([]table.Column, []table.R
 	}
 
 	return columns, rows
+}
+
+func saveQueriesCmd(queriesResult []client.QueryResult) tea.Cmd {
+	return func() tea.Msg {
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			return errMsg{err: err}
+		}
+
+		queryHistory := make([]history.QueryHistory, 0, len(queriesResult))
+		for _, qr := range queriesResult {
+			qh := history.QueryHistory{
+				QueryText: qr.Query,
+				Timestamp: qr.Timestamp,
+				Duration:  qr.Duration,
+			}
+
+			if qr.Error == nil {
+				qh.Success = true
+				qh.RowCount = qr.RowCount
+			}
+
+			queryHistory = append(queryHistory, qh)
+		}
+
+		if err := history.SaveHistory(configDir, queryHistory...); err != nil {
+			return errMsg{err: err}
+		}
+
+		return nil
+	}
 }

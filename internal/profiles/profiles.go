@@ -26,7 +26,7 @@ type Config struct {
 func ReadProfiles(baseDir string) (map[string]command.Options, error) {
 	filePath := filepath.Join(baseDir, "dblab", "dblab.json")
 
-	// Reads the file and always returns the error.
+	// Reads the file.
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err

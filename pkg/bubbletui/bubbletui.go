@@ -43,6 +43,7 @@ const (
 	focusEditor focusState = iota
 	focusList
 	focusTable
+	focusHistory
 )
 
 var (
@@ -107,6 +108,7 @@ type Model struct {
 	editor          Editor
 	sidebarViewport SidebarViewport
 	resulstset      ResultSet
+	queryHistory    *HistoryModel
 
 	// Manages the focus on the app.
 	focus focusState
@@ -169,6 +171,7 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
+		queryHistory:    NewHistoryModel(),
 	}
 
 	return m, nil
@@ -211,6 +214,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
 		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
+		m.queryHistory.SetSize(msg.Width, msg.Height)
+
 		return m, tea.Batch(cmds...)
 
 	case tea.KeyPressMsg:
@@ -222,6 +227,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if msg.String() == "ctrl+c" {
 				return m, tea.Quit
 			}
+		case "f8":
+			m.focus = focusHistory
+			m.queryHistory.state = stateLoading
+			cmd = m.queryHistory.Init()
+			cmds = append(cmds, cmd)
 		}
 		switch {
 		case key.Matches(msg, m.bindings.Navigation.Right):
@@ -289,6 +299,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
+	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
+		m.focus = focusEditor
+		m.editor.Focus()
+		m.editor, cmd = m.editor.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	switch m.focus {
@@ -301,6 +316,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case focusTable:
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
+	case focusHistory:
+		m.queryHistory, cmd = m.queryHistory.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -310,44 +328,47 @@ func (m Model) View() tea.View {
 	var v tea.View
 	v.AltScreen = true
 
-	textAreaBorder := darkPurple
+	if m.focus == focusHistory {
+		v.SetContent(m.queryHistory.View().Content)
+	} else {
+		textAreaBorder := darkPurple
 
-	switch m.focus {
-	case focusEditor:
-		textAreaBorder = neonPurple
-	case focusTable:
+		if m.focus == focusEditor {
+			textAreaBorder = neonPurple
+		}
+
+		fullFooter := m.footer
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			fullFooter,
+		)
+
+		tightBlock := lipgloss.NewStyle().
+			Align(lipgloss.Left).
+			Render(m.renderedTitle)
+
+		centeredLogo := titleStyle.
+			Width(m.titleWidth).
+			MaxHeight(m.titleHeight + 2).
+			Height(m.titleHeight).
+			Align(lipgloss.Center).
+			Render(tightBlock)
+
+		leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, m.sidebarViewport.View())
+		leftColumn = lipgloss.NewStyle().
+			Width(m.leftWidth).
+			MaxWidth(m.leftWidth).
+			Height(m.height - lipgloss.Height(m.footer)).
+			MaxHeight(m.height - lipgloss.Height(m.footer)).
+			Render(leftColumn)
+
+		styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
+		rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View().Content)
+
+		contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
+		v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter))
 	}
 
-	fullFooter := m.footer
-	lipgloss.JoinVertical(
-		lipgloss.Left,
-		fullFooter,
-	)
-
-	tightBlock := lipgloss.NewStyle().
-		Align(lipgloss.Left).
-		Render(m.renderedTitle)
-
-	centeredLogo := titleStyle.
-		Width(m.titleWidth).
-		MaxHeight(m.titleHeight + 2).
-		Height(m.titleHeight).
-		Align(lipgloss.Center).
-		Render(tightBlock)
-
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, centeredLogo, m.sidebarViewport.View())
-	leftColumn = lipgloss.NewStyle().
-		Width(m.leftWidth).
-		MaxWidth(m.leftWidth).
-		Height(m.height - lipgloss.Height(m.footer)).
-		MaxHeight(m.height - lipgloss.Height(m.footer)).
-		Render(leftColumn)
-
-	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View().Content)
-
-	contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
-	v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter))
 	return v
 }
 

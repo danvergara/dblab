@@ -33,6 +33,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
     - [Connection Profiles](#connection-profiles)
 - [Navigation](#navigation)
     - [Query editor](#query-editor)
+    - [Query History](#query-history)
     - [Key Bindings](#key-bindings)
 - [Contribute](#contribute)
 - [License](#license)
@@ -53,6 +54,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Vim-style query editor (normal and insert modes, line-oriented editing commands).
 - Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results displayed in separate tabs.
 - Connection profiles with secure credential storage in the OS keyring.
+- Query history: executed queries are persisted across sessions and can be browsed/re-used via a filterable list.
 
 ## Installation
 
@@ -436,13 +438,19 @@ Key bindings are now configurable; see [Key bindings configuration](#key-binding
 
 ### Query editor
 
-The query editor uses **normal** and **insert** modes (similar to Vim). When you focus the query editor, it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim). In insert mode, use the arrow keys to move the cursor; in normal mode, use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>l</kbd> instead (configurable in `.dblab.yaml` with `--keybindings` or `-k`; see [Key bindings configuration](#key-bindings-configuration)). In normal mode, <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks the current line into an internal register, <kbd>p</kbd> pastes that line after the current line, and <kbd>x</kbd> deletes the character under the cursor. <kbd>0</kbd> and <kbd>$</kbd> move to the beginning or end of the current line in the query buffer. Press <kbd>ctrl+e</kbd> to execute the query (this uses the `keybindings.editor.execute-query` binding); whitespace-only queries are ignored.
+The query editor uses **normal** and **insert** modes (similar to Vim). When you focus the query editor, it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim). In insert mode, use the arrow keys to move the cursor; in normal mode, use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>l</kbd> instead (configurable in `.dblab.yaml` with `--keybindings` or `-k`; see [Key bindings configuration](#key-bindings-configuration)). In normal mode, <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks the current line into an internal register, <kbd>p</kbd> pastes that line after the current line, and <kbd>x</kbd> deletes the character under the cursor. <kbd>0</kbd> and <kbd>$</kbd> move to the beginning or end of the current line in the query buffer. <kbd>g</kbd> jumps to the first line and <kbd>G</kbd> jumps to the last line of the editor buffer. Press <kbd>Ctrl+D</kbd> to clear the entire editor content. Press <kbd>ctrl+e</kbd> to execute the query (this uses the `keybindings.editor.execute-query` binding); whitespace-only queries are ignored.
 
 #### Multi-query execution
 
 <img src="screenshots/dblab-multi-query.png" />
 
 You can write multiple SQL statements in the editor separated by semicolons (`;`) and execute them all at once with <kbd>ctrl+e</kbd>. The queries are run concurrently and each result is displayed in its own tab (e.g., "query #1", "query #2", etc.). If a query fails, its tab will display the error message while other successful queries still show their results. A maximum of 5 queries can be executed per batch. Pressing <kbd>Ctrl+c</kbd> quits the application. If queries are currently running, they are cancelled before exiting.
+
+#### Query History
+
+<img src="screenshots/query-history.png" />
+
+dblab automatically saves every executed query to a local history file (`$XDG_CONFIG_HOME/dblab/dblab.gob`). Press <kbd>F8</kbd> to open the query history view, which displays past queries sorted newest-first in a filterable list. Use the built-in search to narrow results, press <kbd>Enter</kbd> to load the selected query back into the editor, or press <kbd>Esc</kbd> to return without selecting anything.
 
 Otherwise, you might be located at the tables panel, where you can navigate using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the schema of a table, locate yourself on the `tables` panel and press <kbd>tab</kbd> to switch to the `columns` panel, then use <kbd>shift+tab</kbd> to switch back.
 
@@ -484,10 +492,12 @@ When navigating query result sets, the cell will be highlighted so the user can 
 |<kbd>l</kbd>                            | If the query editor is focused in normal mode, move the cursor right. If the results panel is focused, navigate the table to the right (all tabs on the results panel). |
 |<kbd>Arrow Left</kbd>                   | If the query editor is focused in insert mode, move the cursor left. If the results panel is focused, navigate the table to the left (all tabs on the results panel). |
 |<kbd>h</kbd>                            | If the query editor is focused in normal mode, move the cursor left. If the results panel is focused, navigate the table to the left (all tabs on the results panel). |
-|<kbd>g</kbd>                            | If the results panel is focused, move to the top of the dataset (all tabs on the results panel). |
-|<kbd>G</kbd>                            | If the results panel is focused, move to the bottom of the dataset (all tabs on the results panel). |
+|<kbd>g</kbd>                            | If the query editor is focused in normal mode, jump to the first line of the buffer. If the results panel is focused, move to the top of the dataset (all tabs on the results panel). |
+|<kbd>G</kbd>                            | If the query editor is focused in normal mode, jump to the last line of the buffer. If the results panel is focused, move to the bottom of the dataset (all tabs on the results panel). |
 |<kbd>0</kbd>                            | If the query editor is focused in normal mode, move to the start of the current line. If the results panel is focused, move to the left edge of the row (all tabs on the results panel). |
 |<kbd>$</kbd>                            | If the query editor is focused in normal mode, move to the end of the current line. If the results panel is focused, move to the right edge of the row (all tabs on the results panel). |
+|<kbd>Ctrl+D</kbd>                       | If the query editor is focused in normal mode, clear the entire editor content |
+|<kbd>F8</kbd>                           | Open the query history view |
 |<kbd>Ctrl+c</kbd>                       | Quit the application (cancels in-flight queries if any) |
 
 ## Contribute
