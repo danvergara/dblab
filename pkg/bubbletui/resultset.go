@@ -173,11 +173,19 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, r.bindings.NextTab):
-			r.activeTab = min(r.activeTab+1, len(r.tabs)-1)
+			if r.activeTab == len(r.tabs)-1 {
+				r.activeTab = 0
+			} else {
+				r.activeTab = min(r.activeTab+1, len(r.tabs)-1)
+			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			return r, nil
 		case key.Matches(msg, r.bindings.PrevTab):
-			r.activeTab = max(r.activeTab-1, 0)
+			if r.activeTab == 0 {
+				r.activeTab = len(r.tabs) - 1
+			} else {
+				r.activeTab = max(r.activeTab-1, 0)
+			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			return r, nil
 		case key.Matches(msg, r.bindings.BeginningOfLine):
