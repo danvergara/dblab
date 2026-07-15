@@ -56,6 +56,8 @@ var (
 	keybindings bool
 	// save-as.
 	saveAs string
+	// read-only mode.
+	readOnly bool
 )
 
 // NewRootCmd returns the root command.
@@ -105,6 +107,7 @@ func NewRootCmd() *cobra.Command {
 					SSHPass:                sshPass,
 					SSHKeyFile:             sshKey,
 					SSHKeyPassphrase:       sshKeyPassphrase,
+					ReadOnly:               readOnly,
 				}
 
 				if form.IsEmpty(opts) {
@@ -244,6 +247,7 @@ func init() {
 	rootCmd.Flags().
 		StringVarP(&sshKeyPassphrase, "ssh-key-pass", "", "", "Supports connections with protected private keys with passphrase")
 
-	// rootCmd.Flags().
-	// 	StringVarP(&sshKeyAlgo, "ssh-key-algo", "", "", "Publick Key Algorithm")
+	// read only mode flag.
+	rootCmd.PersistentFlags().
+		BoolVarP(&readOnly, "readonly", "", false, "forces a read only connection with the target database")
 }
