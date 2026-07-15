@@ -76,6 +76,7 @@ type Client struct {
 	host              string
 	paginationManager *pagination.Manager
 	limit             uint
+	readOnly          bool
 }
 
 // New return an instance of the client.
@@ -91,11 +92,12 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	c := &Client{
-		db:     db,
-		dbName: opts.DBName,
-		host:   opts.Host,
-		driver: opts.Driver,
-		limit:  opts.Limit,
+		db:       db,
+		dbName:   opts.DBName,
+		host:     opts.Host,
+		driver:   opts.Driver,
+		limit:    opts.Limit,
+		readOnly: opts.ReadOnly,
 	}
 
 	if opts.Schema != "" {
@@ -126,6 +128,28 @@ func New(opts command.Options) (*Client, error) {
 	case drivers.Oracle:
 		if c.schema != "" {
 			if _, err = db.Exec(fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s", c.schema)); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if c.readOnly {
+		switch c.driver {
+		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
+			if _, err = db.Exec("SET SESSION default_transaction_read_only = 'on';"); err != nil {
+				return nil, err
+			}
+		case drivers.MySQL:
+			if _, err = db.Exec("SET SESSION transaction_read_only = 1;"); err != nil {
+				return nil, err
+			}
+		case drivers.Oracle:
+			if _, err = db.Exec("ALTER SESSION SET READ_ONLY = TRUE;"); err != nil {
+				return nil, err
+			}
+		case drivers.SQLite:
+			_, err := db.Exec("PRAGMA query_only = true")
+			if err != nil {
 				return nil, err
 			}
 		}
