@@ -256,6 +256,10 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 			query.Add("connection+timeout", opts.ConnectionTimeout)
 		}
 
+		if opts.ReadOnly {
+			query.Add("ApplicationIntent", "ReadOnly")
+		}
+
 		connDB := url.URL{
 			Scheme:   opts.Driver,
 			Host:     fmt.Sprintf("%v:%v", opts.Host, opts.Port),
@@ -400,6 +404,10 @@ func formatSQLServerURL(opts command.Options) (string, error) {
 	result := map[string]string{}
 	for k, v := range uri.Query() {
 		result[strings.ToLower(k)] = v[0]
+	}
+
+	if opts.ReadOnly {
+		result["ApplicationIntent"] = "ReadOnly"
 	}
 
 	query := url.Values{}
