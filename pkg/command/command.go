@@ -39,6 +39,8 @@ type Options struct {
 	Encrypt                string `json:"encrypt"`
 	TrustServerCertificate string `json:"trust_server_certificate"`
 	ConnectionTimeout      string `json:"connection_timeout"`
+	// Read Only mode.
+	ReadOnly bool `json:"read_only"`
 }
 
 type TUIKeyMap struct {
