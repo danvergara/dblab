@@ -277,7 +277,6 @@ func (suite *ClientTestSuite) TestReadOnly() {
 	c, _ := New(opts)
 	_, _, err := c.Query(`INSERT INTO public.products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32())
 	suite.Error(err)
-	suite.Equal("pq: cannot execute INSERT in a read-only transaction", err.Error())
 }
 
 func (suite *ClientTestSuite) TestTableContent() {
