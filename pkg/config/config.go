@@ -70,6 +70,9 @@ type Profile struct {
 	Encrypt                string `fig:"encrypt"`
 	TrustServerCertificate string `fig:"trust-server-certificate"`
 	ConnectionTimeout      string `fig:"connection-timeout"`
+
+	// Read Only mode.
+	ReadOnly bool `fig:"readonly"`
 }
 
 type KeyBindings struct {
@@ -180,6 +183,7 @@ func Init(configName string) (command.Options, error) {
 		SSHPass:                db.SSHPass,
 		SSHKeyFile:             db.SSHKeyFile,
 		SSHKeyPassphrase:       db.SSHKeyPassphrase,
+		ReadOnly:               db.ReadOnly,
 	}
 
 	return opts, nil

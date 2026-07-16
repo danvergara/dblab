@@ -7,6 +7,7 @@ database:
     user: "postgres"
     schema: "public"
     driver: "postgres"
+    readonly: true
   - name: "prod"
     # example endpoint
     host: "mydb.123456789012.us-east-1.rds.amazonaws.com"

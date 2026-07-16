@@ -32,6 +32,7 @@ func TestInit(t *testing.T) {
 		sshPass     string
 		sshKeyFile  string
 		sshKeyPass  string
+		readOnly    bool
 	}
 	var tests = []struct {
 		name  string
@@ -42,30 +43,32 @@ func TestInit(t *testing.T) {
 			name:  "empty config name",
 			input: "",
 			want: want{
-				host:   "localhost",
-				port:   "5432",
-				dbname: "users",
-				user:   "postgres",
-				pass:   "password",
-				driver: "postgres",
-				schema: "public",
-				ssl:    "disable",
-				limit:  50,
+				host:     "localhost",
+				port:     "5432",
+				dbname:   "users",
+				user:     "postgres",
+				pass:     "password",
+				driver:   "postgres",
+				schema:   "public",
+				ssl:      "disable",
+				limit:    50,
+				readOnly: true,
 			},
 		},
 		{
 			name:  "test config",
 			input: "test",
 			want: want{
-				host:   "localhost",
-				port:   "5432",
-				dbname: "users",
-				user:   "postgres",
-				pass:   "password",
-				driver: "postgres",
-				schema: "public",
-				ssl:    "disable",
-				limit:  50,
+				host:     "localhost",
+				port:     "5432",
+				dbname:   "users",
+				user:     "postgres",
+				pass:     "password",
+				driver:   "postgres",
+				schema:   "public",
+				ssl:      "disable",
+				limit:    50,
+				readOnly: true,
 			},
 		},
 		{
@@ -168,6 +171,8 @@ func TestInit(t *testing.T) {
 			assert.Equal(t, tt.want.sshPass, opts.SSHPass)
 			assert.Equal(t, tt.want.sshPass, opts.SSHPass)
 			assert.Equal(t, tt.want.sshKeyFile, opts.SSHKeyFile)
+			// Read Only mode.
+			assert.Equal(t, tt.want.readOnly, opts.ReadOnly)
 		})
 	}
 }
