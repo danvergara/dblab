@@ -8,6 +8,15 @@ database:
     schema: "public"
     driver: "postgres"
     readonly: true
+  - name: "pagila"
+    host: "localhost"
+    port: 5432
+    db: "postgres"
+    password: "123456"
+    user: "postgres"
+    schema: "public"
+    driver: "postgres"
+    readonly: true
   - name: "prod"
     # example endpoint
     host: "mydb.123456789012.us-east-1.rds.amazonaws.com"

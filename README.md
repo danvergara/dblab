@@ -55,6 +55,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results displayed in separate tabs.
 - Connection profiles with secure credential storage in the OS keyring.
 - Query history: executed queries are persisted across sessions and can be browsed/re-used via a filterable list.
+- Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (supported for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
 
 ## Installation
 
@@ -134,6 +135,7 @@ Flags:
   -u, --url string                        Database connection string
       --user string                       Database user
   -v, --version                           version for dblab
+      --readonly                            Forces a read-only connection with the target database
       --wallet string                     Path for auto-login oracle wallet
 
 Use "dblab [command] --help" for more information about a command.
@@ -173,6 +175,27 @@ $ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schem
 $ dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50 --schema user1
 $ dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
+
+You can use the `--readonly` flag to open a connection in read-only mode. This prevents any write operations (INSERT, UPDATE, DELETE, etc.) from being executed, which is useful when you want to safely browse a production database. The same can be achieved via the configuration file by setting `readonly: true` on a database profile (see [Configuration](#configuration)).
+
+```sh
+# Postgres
+$ dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50 --readonly
+
+# MySQL
+$ dblab --host localhost --user myuser --db mydb --pass password --ssl disable --port 3306 --driver mysql --limit 50 --readonly
+
+# SQLite
+$ dblab --db path/to/file.sqlite3 --driver sqlite --readonly
+
+# Oracle
+$ dblab --host localhost --user system --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50 --readonly
+
+# SQL Server
+$ dblab --host localhost --user SA --db msdb --pass '5@klkbN#ABC' --port 1433 --driver sqlserver --limit 50 --readonly
+```
+
+<img src="screenshots/dblab-read-only.png" />
 
 As requested in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
 
@@ -290,6 +313,8 @@ database:
     # optional for postgres and oracle
     # if omitted, all accessible schemas are shown
     schema: "myschema"
+    # optional: set to true to force a read-only session
+    readonly: true
   - name: "prod"
     # example endpoint
     host: "mydb.123456789012.us-east-1.rds.amazonaws.com"
