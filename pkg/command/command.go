@@ -66,7 +66,8 @@ type EditorKeyMap struct {
 	Normal key.Binding
 
 	// Actions.
-	ExecuteQuery key.Binding
+	ExecuteQuery       key.Binding
+	ExecuteSingleQuery key.Binding
 }
 
 type TUINavigationKeyMap struct {
@@ -152,6 +153,11 @@ func DefaultKeyMap() *TUIKeyMap {
 			ExecuteQuery: key.NewBinding(
 				key.WithKeys("ctrl+e"),
 				key.WithHelp("ctrl+e", "execute query"),
+			),
+
+			ExecuteSingleQuery: key.NewBinding(
+				key.WithKeys("ctrl+r"),
+				key.WithHelp("ctrl+r", "execute single query"),
 			),
 		},
 	}

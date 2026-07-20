@@ -101,6 +101,21 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			return e, fireQueryCmd
 		}
 
+		if key.Matches(msg, e.bindings.Editor.ExecuteSingleQuery) {
+			value := e.editor.Value()
+
+			if len(value) == 0 {
+				return e, nil
+			}
+
+			query := queryAtCursor(value, e.editor.Line(), e.editor.Column())
+			queriesToRun := prepareQueriesForExecution(query)
+			fireQueryCmd := func() tea.Msg {
+				return executeQueryMsg{queriesToRun: queriesToRun}
+			}
+			return e, fireQueryCmd
+		}
+
 		switch e.mode {
 		case NormalMode:
 			char := msg.String()
@@ -201,6 +216,47 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 
 func (e Editor) View() tea.View {
 	return tea.NewView(e.editor.View())
+}
+
+func queryAtCursor(content string, row, col int) string {
+	lines := strings.Split(content, "\n")
+	if row < 0 || row >= len(lines) {
+		return strings.TrimSpace(content)
+	}
+
+	if col < 0 {
+		col = 0
+	} else if col > len(lines[row]) {
+		col = len(lines[row])
+	}
+
+	cursorOffset := 0
+	for i := 0; i < row; i++ {
+		cursorOffset += len(lines[i]) + 1
+	}
+	cursorOffset += col
+
+	start := 0
+	end := len(content)
+	for i := 0; i < cursorOffset && i < len(content); i++ {
+		if content[i] == ';' {
+			start = i + 1
+		}
+	}
+
+	for i := cursorOffset; i < len(content); i++ {
+		if content[i] == ';' {
+			end = i
+			break
+		}
+	}
+
+	query := strings.TrimSpace(content[start:end])
+	if query == "" {
+		return strings.TrimSpace(content)
+	}
+
+	return query
 }
 
 func (e *Editor) yankCurrentLine() {

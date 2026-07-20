@@ -193,6 +193,7 @@ func TestSetupKeybindings(t *testing.T) {
 	assert.Contains(t, kb.BeginningOfLine.Keys(), "0")
 
 	assert.Contains(t, kb.Editor.ExecuteQuery.Keys(), "ctrl+e")
+	assert.Contains(t, kb.Editor.ExecuteSingleQuery.Keys(), "ctrl+r")
 	assert.Contains(t, kb.Editor.Up.Keys(), "k")
 	assert.Contains(t, kb.Editor.Down.Keys(), "j")
 	assert.Contains(t, kb.Editor.Right.Keys(), "l")
