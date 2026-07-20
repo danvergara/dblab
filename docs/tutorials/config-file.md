@@ -22,9 +22,13 @@ database:
     # optional for postgres and oracle
     # if omitted, all accessible schemas are shown
     # schema: "public"
+    # optional: set to true to force a read-only session
+    readonly: true
 limit: 50
 
 ```
+
+The `readonly` field is optional. When set to `true`, dblab forces the database session into read-only mode, preventing any write operations (INSERT, UPDATE, DELETE, etc.). This is useful when you want to safely browse a production database. The same can be achieved via the `--readonly` CLI flag.
 
 Once created, we can launch `dblab` with the command:
 

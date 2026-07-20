@@ -41,6 +41,12 @@ dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 --
 dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
 
+You can use the `--readonly` flag to open a connection in read-only mode, preventing any write operations:
+
+```{ .sh .copy }
+dblab --host localhost --user myuser --db users --pass password --ssl disable --port 5432 --driver postgres --limit 50 --readonly
+```
+
 As requested in [#125](https://github.com/danvergara/dblab/issues/125), support for MySQL/MariaDB sockets was integrated.
 
 ```{ .sh .copy }
@@ -76,6 +82,8 @@ database:
     # optional for postgres and oracle
     # if omitted, all accessible schemas are shown
     schema: "myschema"
+    # optional: set to true to force a read-only session
+    readonly: true
   - name: "prod"
     # example endpoint
     host: "mydb.123456789012.us-east-1.rds.amazonaws.com"

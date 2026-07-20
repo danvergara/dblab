@@ -3,11 +3,13 @@ package client
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/bxcodec/faker/v3"
 	"github.com/docker/go-connections/nat"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
@@ -257,6 +259,24 @@ func (suite *ClientTestSuite) TestQuery() {
 	suite.Len(r, 100)
 	suite.Len(co, 3)
 	suite.NoError(err)
+}
+
+func (suite *ClientTestSuite) TestReadOnly() {
+	opts := command.Options{
+		Driver:   suite.driver,
+		User:     suite.user,
+		Pass:     suite.password,
+		Host:     suite.host,
+		Port:     suite.port.Port(),
+		DBName:   suite.dbName,
+		Schema:   suite.dbSchema,
+		SSL:      "disable",
+		Limit:    100,
+		ReadOnly: true,
+	}
+	c, _ := New(opts)
+	_, _, err := c.Query(`INSERT INTO public.products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32())
+	suite.Error(err)
 }
 
 func (suite *ClientTestSuite) TestTableContent() {
