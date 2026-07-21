@@ -98,7 +98,8 @@ type EditorKeyMap struct {
 	Normal string `fig:"normal" default:"esc"`
 
 	// Actions.
-	ExecuteQuery string `fig:"execute-query" default:"ctrl+e"`
+	ExecuteQuery       string `fig:"execute-query" default:"ctrl+e"`
+	ExecuteSingleQuery string `fig:"execute-single-query" default:"ctrl+r"`
 }
 
 type NavigationBindgins struct {
@@ -221,13 +222,14 @@ func SetupKeyMap() (*command.TUIKeyMap, error) {
 			Right: key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Right), key.WithHelp(kbc.KeyBindings.Navigation.Right, "Toggle to the panel on the right")),
 		},
 		Editor: command.EditorKeyMap{
-			Up:           key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Up), key.WithHelp(kbc.KeyBindings.Editor.Up, "move up")),
-			Down:         key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Down), key.WithHelp(kbc.KeyBindings.Editor.Down, "move down")),
-			Left:         key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Left), key.WithHelp(kbc.KeyBindings.Editor.Left, "move left")),
-			Right:        key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Right), key.WithHelp(kbc.KeyBindings.Editor.Right, "move right")),
-			Insert:       key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Insert), key.WithHelp(kbc.KeyBindings.Editor.Insert, "insert mode")),
-			Normal:       key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Normal), key.WithHelp(kbc.KeyBindings.Editor.Normal, "normal mode")),
-			ExecuteQuery: key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.ExecuteQuery), key.WithHelp(kbc.KeyBindings.Editor.ExecuteQuery, "execute query")),
+			Up:                 key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Up), key.WithHelp(kbc.KeyBindings.Editor.Up, "move up")),
+			Down:               key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Down), key.WithHelp(kbc.KeyBindings.Editor.Down, "move down")),
+			Left:               key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Left), key.WithHelp(kbc.KeyBindings.Editor.Left, "move left")),
+			Right:              key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Right), key.WithHelp(kbc.KeyBindings.Editor.Right, "move right")),
+			Insert:             key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Insert), key.WithHelp(kbc.KeyBindings.Editor.Insert, "insert mode")),
+			Normal:             key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Normal), key.WithHelp(kbc.KeyBindings.Editor.Normal, "normal mode")),
+			ExecuteQuery:       key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.ExecuteQuery), key.WithHelp(kbc.KeyBindings.Editor.ExecuteQuery, "execute query")),
+			ExecuteSingleQuery: key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.ExecuteSingleQuery), key.WithHelp(kbc.KeyBindings.Editor.ExecuteSingleQuery, "execute single query")),
 		},
 	}
 

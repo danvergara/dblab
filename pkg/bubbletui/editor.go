@@ -101,6 +101,24 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			return e, fireQueryCmd
 		}
 
+		if key.Matches(msg, e.bindings.Editor.ExecuteSingleQuery) {
+			value := e.editor.Value()
+
+			if len(value) == 0 {
+				return e, nil
+			}
+
+			query := queryAtCursor(value, e.editor.Line())
+			if len(query) == 0 {
+				return e, nil
+			}
+			queriesToRun := prepareQueriesForExecution(query)
+			fireQueryCmd := func() tea.Msg {
+				return executeQueryMsg{queriesToRun: queriesToRun}
+			}
+			return e, fireQueryCmd
+		}
+
 		switch e.mode {
 		case NormalMode:
 			char := msg.String()
@@ -201,6 +219,16 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 
 func (e Editor) View() tea.View {
 	return tea.NewView(e.editor.View())
+}
+
+// queryAtCursor returns the text of the line the cursor is currently on.
+func queryAtCursor(content string, currentIndex int) string {
+	lines := strings.Split(content, "\n")
+	if currentIndex >= 0 && currentIndex < len(lines) {
+		return lines[currentIndex]
+	}
+
+	return ""
 }
 
 func (e *Editor) yankCurrentLine() {
