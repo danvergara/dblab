@@ -109,6 +109,9 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			}
 
 			query := queryAtCursor(value, e.editor.Line())
+			if len(query) == 0 {
+				return e, nil
+			}
 			queriesToRun := prepareQueriesForExecution(query)
 			fireQueryCmd := func() tea.Msg {
 				return executeQueryMsg{queriesToRun: queriesToRun}
