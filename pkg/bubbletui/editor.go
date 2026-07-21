@@ -108,7 +108,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 				return e, nil
 			}
 
-			query := queryAtCursor(value, e.editor.Line(), e.editor.Column())
+			query := queryAtCursor(value, e.editor.Line())
 			queriesToRun := prepareQueriesForExecution(query)
 			fireQueryCmd := func() tea.Msg {
 				return executeQueryMsg{queriesToRun: queriesToRun}
@@ -218,45 +218,14 @@ func (e Editor) View() tea.View {
 	return tea.NewView(e.editor.View())
 }
 
-func queryAtCursor(content string, row, col int) string {
+// queryAtCursor returns the text of the line the cursor is currently on.
+func queryAtCursor(content string, currentIndex int) string {
 	lines := strings.Split(content, "\n")
-	if row < 0 || row >= len(lines) {
-		return strings.TrimSpace(content)
+	if currentIndex >= 0 && currentIndex < len(lines) {
+		return lines[currentIndex]
 	}
 
-	if col < 0 {
-		col = 0
-	} else if col > len(lines[row]) {
-		col = len(lines[row])
-	}
-
-	cursorOffset := 0
-	for i := 0; i < row; i++ {
-		cursorOffset += len(lines[i]) + 1
-	}
-	cursorOffset += col
-
-	start := 0
-	end := len(content)
-	for i := 0; i < cursorOffset && i < len(content); i++ {
-		if content[i] == ';' {
-			start = i + 1
-		}
-	}
-
-	for i := cursorOffset; i < len(content); i++ {
-		if content[i] == ';' {
-			end = i
-			break
-		}
-	}
-
-	query := strings.TrimSpace(content[start:end])
-	if query == "" {
-		return strings.TrimSpace(content)
-	}
-
-	return query
+	return ""
 }
 
 func (e *Editor) yankCurrentLine() {
