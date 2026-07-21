@@ -84,3 +84,50 @@ And in order to launch a specific environment/configuration we have to use the `
 dblab --config --cfg-name "prod"
 
 ```
+
+### Key bindings
+
+Key bindings can also be configured through the `.dblab.yaml` file. There is a field called `keybindings` where you can customize the default shortcuts. Under `keybindings`, an `editor` section configures the Vim-style query editor (movement between normal and insert mode, cursor motion in normal mode, and query execution shortcuts). By default, the keybindings are not loaded from the config file, so you need to use the `--keybindings` or `-k` flag to load them.
+
+```{ .yaml .copy }
+
+database:
+  - name: "local"
+    host: "0.0.0.0"
+    port: 5432
+    db: "postgres"
+    password: "postgres"
+    user: "postgres"
+    driver: "postgres"
+limit: 50
+keybindings:
+  next-tab: 'tab'
+  prev-tab: 'shift+tab'
+  page-top: 'g'
+  page-bottom: 'G'
+  end-of-line: '$'
+  beginning-of-line: '0'
+  navigation:
+    up: 'ctrl+k'
+    down: 'ctrl+j'
+    left: 'ctrl+h'
+    right: 'ctrl+l'
+  editor:
+    up: 'k'
+    down: 'j'
+    left: 'h'
+    right: 'l'
+    insert: 'i'
+    normal: 'esc'
+    execute-query: 'ctrl+e'
+    execute-single-query: 'ctrl+r'
+
+```
+
+To load the keybindings from the config file, run:
+
+```{ .sh .copy }
+
+dblab --config --keybindings
+
+```

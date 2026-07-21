@@ -53,6 +53,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Zero dependencies.
 - Vim-style query editor (normal and insert modes, line-oriented editing commands).
 - Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results displayed in separate tabs.
+- Single-query execution: press <kbd>ctrl+r</kbd> to execute only the query on the current cursor line, without running other statements in the editor.
 - Connection profiles with secure credential storage in the OS keyring.
 - Query history: executed queries are persisted across sessions and can be browsed/re-used via a filterable list.
 - Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (supported for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
@@ -392,6 +393,7 @@ keybindings:
     insert: 'i'
     normal: 'esc'
     execute-query: 'ctrl+e'
+    execute-single-query: 'ctrl+r'
 ```
 
 Or for SQLite:
@@ -463,7 +465,7 @@ Key bindings are now configurable; see [Key bindings configuration](#key-binding
 
 ### Query editor
 
-The query editor uses **normal** and **insert** modes (similar to Vim). When you focus the query editor, it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim). In insert mode, use the arrow keys to move the cursor; in normal mode, use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>l</kbd> instead (configurable in `.dblab.yaml` with `--keybindings` or `-k`; see [Key bindings configuration](#key-bindings-configuration)). In normal mode, <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks the current line into an internal register, <kbd>p</kbd> pastes that line after the current line, and <kbd>x</kbd> deletes the character under the cursor. <kbd>0</kbd> and <kbd>$</kbd> move to the beginning or end of the current line in the query buffer. <kbd>g</kbd> jumps to the first line and <kbd>G</kbd> jumps to the last line of the editor buffer. Press <kbd>Ctrl+D</kbd> to clear the entire editor content. Press <kbd>ctrl+e</kbd> to execute the query (this uses the `keybindings.editor.execute-query` binding); whitespace-only queries are ignored.
+The query editor uses **normal** and **insert** modes (similar to Vim). When you focus the query editor, it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim). In insert mode, use the arrow keys to move the cursor; in normal mode, use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>l</kbd> instead (configurable in `.dblab.yaml` with `--keybindings` or `-k`; see [Key bindings configuration](#key-bindings-configuration)). In normal mode, <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks the current line into an internal register, <kbd>p</kbd> pastes that line after the current line, and <kbd>x</kbd> deletes the character under the cursor. <kbd>0</kbd> and <kbd>$</kbd> move to the beginning or end of the current line in the query buffer. <kbd>g</kbd> jumps to the first line and <kbd>G</kbd> jumps to the last line of the editor buffer. Press <kbd>Ctrl+D</kbd> to clear the entire editor content. Press <kbd>ctrl+e</kbd> to execute the query (this uses the `keybindings.editor.execute-query` binding); whitespace-only queries are ignored. Press <kbd>ctrl+r</kbd> to execute only the single query on the current cursor line (this uses the `keybindings.editor.execute-single-query` binding).
 
 #### Multi-query execution
 
@@ -496,6 +498,7 @@ When navigating query result sets, the cell will be highlighted so the user can 
 | Key                                    | Description                           |
 |----------------------------------------|----------------------------------------|
 |<kbd>ctrl+e</kbd>                       | If the query editor is focused, execute the query (also works in insert and normal mode) |
+|<kbd>ctrl+r</kbd>                       | If the query editor is focused, execute only the query on the current cursor line (also works in insert and normal mode) |
 |<kbd>i</kbd>                            | If the query editor is focused in normal mode, enter insert mode |
 |<kbd>Escape</kbd>                       | If the query editor is focused in insert mode, return to normal mode |
 |<kbd>dd</kbd>                           | If the query editor is focused in normal mode, delete the current line |
