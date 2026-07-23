@@ -149,18 +149,7 @@ func (h *HistoryModel) View() tea.View {
 		spinnerView := fmt.Sprintf("\n %s %s\n", h.spinner.View(), h.loadingAction)
 		content = lipgloss.Place(h.width, h.height, lipgloss.Center, lipgloss.Center, spinnerView)
 	case stateForm:
-		formStyle := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(neonPurple).
-			Padding(1, 2)
-		boxedForm := formStyle.Render(h.list.View())
-		content = lipgloss.Place(
-			h.width,
-			h.height,
-			lipgloss.Center,
-			lipgloss.Center,
-			boxedForm,
-		)
+		content = setModalContent(h.list.View(), h.width, h.height)
 	}
 
 	v.SetContent(content)

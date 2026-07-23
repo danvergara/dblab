@@ -323,18 +323,7 @@ func (m *ConnectModel) View() tea.View {
 		spinnerView := fmt.Sprintf("\n %s %s\n", m.spinner.View(), m.loadingAction)
 		content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, spinnerView)
 	case stateForm:
-		formStyle := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(neonPurple).
-			Padding(1, 2)
-		boxedForm := formStyle.Render(m.list.View())
-		content = lipgloss.Place(
-			m.width,
-			m.height,
-			lipgloss.Center,
-			lipgloss.Center,
-			boxedForm,
-		)
+		content = setModalContent(m.list.View(), m.width, m.height)
 	}
 
 	v.SetContent(content)
