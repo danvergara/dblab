@@ -50,8 +50,22 @@ type TUIKeyMap struct {
 	PageBottom      key.Binding
 	EndOfLine       key.Binding
 	BeginningOfLine key.Binding
+	Help            key.Binding
+	Quit            key.Binding
 	Navigation      TUINavigationKeyMap
 	Editor          EditorKeyMap
+}
+
+func (k TUIKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+func (k TUIKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.NextTab, k.PrevTab, k.PageTop, k.PageBottom, k.EndOfLine, k.BeginningOfLine},
+		{k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.Help, k.Quit},
+		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.Insert, k.Editor.Normal, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
+	}
 }
 
 type EditorKeyMap struct {
@@ -81,19 +95,19 @@ func DefaultKeyMap() *TUIKeyMap {
 	return &TUIKeyMap{
 		NextTab: key.NewBinding(
 			key.WithKeys("tab"),
-			key.WithHelp("tab", "next tab"),
+			key.WithHelp("tab", "next tab (result set view)"),
 		),
 		PrevTab: key.NewBinding(
 			key.WithKeys("shift+tab"),
-			key.WithHelp("shift+tab", "previous tab"),
+			key.WithHelp("shift+tab", "previous tab (result set view)"),
 		),
 		PageTop: key.NewBinding(
 			key.WithKeys("g"),
-			key.WithHelp("g", "go to top"),
+			key.WithHelp("g", "go to top (sidebar database graph)"),
 		),
 		PageBottom: key.NewBinding(
 			key.WithKeys("G"), // Capital 'G' for shift+g
-			key.WithHelp("G", "go to bottom"),
+			key.WithHelp("G", "go to bottom (sidebar database graph)"),
 		),
 		BeginningOfLine: key.NewBinding(
 			key.WithKeys("0"),
@@ -103,10 +117,18 @@ func DefaultKeyMap() *TUIKeyMap {
 			key.WithKeys("$"),
 			key.WithHelp("$", "navigate all the way to the right of the table"),
 		),
+		Help: key.NewBinding(
+			key.WithKeys("?"),
+			key.WithHelp("?", "toggle help"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("ctrl+c"),
+			key.WithHelp("ctrl+c", "quit"),
+		),
 		Navigation: TUINavigationKeyMap{
 			Up: key.NewBinding(
 				key.WithKeys("ctrl+k"),
-				key.WithKeys("ctrl+k", "Toggle to the panel above"),
+				key.WithHelp("ctrl+k", "Toggle to the panel above"),
 			),
 			Down: key.NewBinding(
 				key.WithKeys("ctrl+j"),
@@ -124,19 +146,19 @@ func DefaultKeyMap() *TUIKeyMap {
 		Editor: EditorKeyMap{
 			Up: key.NewBinding(
 				key.WithKeys("k"),
-				key.WithHelp("k", "up"),
+				key.WithHelp("k", "move up"),
 			),
 			Down: key.NewBinding(
 				key.WithKeys("j"),
-				key.WithHelp("j", "down"),
+				key.WithHelp("j", "move down"),
 			),
 			Left: key.NewBinding(
 				key.WithKeys("h"),
-				key.WithHelp("h", "left"),
+				key.WithHelp("h", "move left"),
 			),
 			Right: key.NewBinding(
 				key.WithKeys("l"),
-				key.WithHelp("l", "right"),
+				key.WithHelp("l", "move right"),
 			),
 
 			// --- Mode Switching ---
@@ -154,7 +176,6 @@ func DefaultKeyMap() *TUIKeyMap {
 				key.WithKeys("ctrl+e"),
 				key.WithHelp("ctrl+e", "execute query"),
 			),
-
 			ExecuteSingleQuery: key.NewBinding(
 				key.WithKeys("ctrl+r"),
 				key.WithHelp("ctrl+r", "execute single query"),
