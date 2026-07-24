@@ -67,6 +67,10 @@ limit: 50
 keybindings:
   next-tab: 'tab'
   prev-tab: 'shift+tab'
+  end-of-line: '$'
+  beginning-of-line: '0'
+  help: '?'
+  quit: 'ctrl+c'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'

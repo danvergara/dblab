@@ -174,7 +174,7 @@ func DefaultKeyMap() *TUIKeyMap {
 			// --- Actions ---
 			ExecuteQuery: key.NewBinding(
 				key.WithKeys("ctrl+e"),
-				key.WithHelp("ctrl+e", "execute query"),
+				key.WithHelp("ctrl+e", "execute queries in the editor"),
 			),
 			ExecuteSingleQuery: key.NewBinding(
 				key.WithKeys("ctrl+r"),

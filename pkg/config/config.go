@@ -82,6 +82,8 @@ type KeyBindings struct {
 	PageBottom      string `fig:"page-bottom"   default:"G"`
 	EndOfLine       string `fig:"end-of-line"   default:"$"`
 	BeginningOfLine string `fig:"beginning-of-line"   default:"0"`
+	Help            string `fig:"help"   default:"?"`
+	Quit            string `fig:"quit"   default:"ctrl+c"`
 	Navigation      NavigationBindgins
 	Editor          EditorKeyMap
 }
@@ -209,12 +211,14 @@ func SetupKeyMap() (*command.TUIKeyMap, error) {
 	}
 
 	tkb = command.TUIKeyMap{
-		NextTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab")),
-		PrevTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab")),
-		PageTop:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PageTop), key.WithHelp(kbc.KeyBindings.PageTop, "go to top")),
-		PageBottom:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PageBottom), key.WithHelp(kbc.KeyBindings.PageBottom, "go to bottom")),
-		EndOfLine:       key.NewBinding(key.WithKeys(kbc.KeyBindings.EndOfLine), key.WithHelp(kbc.KeyBindings.EndOfLine, "end of current line")),
-		BeginningOfLine: key.NewBinding(key.WithKeys(kbc.KeyBindings.BeginningOfLine), key.WithHelp(kbc.KeyBindings.BeginningOfLine, "beginning of current line")),
+		NextTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.NextTab), key.WithHelp(kbc.KeyBindings.NextTab, "next tab (result set view)")),
+		PrevTab:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PrevTab), key.WithHelp(kbc.KeyBindings.PrevTab, "previous tab (result set view)")),
+		PageTop:         key.NewBinding(key.WithKeys(kbc.KeyBindings.PageTop), key.WithHelp(kbc.KeyBindings.PageTop, "go to top (sidebar database graph)")),
+		PageBottom:      key.NewBinding(key.WithKeys(kbc.KeyBindings.PageBottom), key.WithHelp(kbc.KeyBindings.PageBottom, "go to bottom (sidebar database graph)")),
+		EndOfLine:       key.NewBinding(key.WithKeys(kbc.KeyBindings.EndOfLine), key.WithHelp(kbc.KeyBindings.EndOfLine, "navigate all the way to the right of the table")),
+		BeginningOfLine: key.NewBinding(key.WithKeys(kbc.KeyBindings.BeginningOfLine), key.WithHelp(kbc.KeyBindings.BeginningOfLine, "navigate all the way to the left of the table")),
+		Help:            key.NewBinding(key.WithKeys(kbc.KeyBindings.Help), key.WithHelp(kbc.KeyBindings.Help, "toggle help")),
+		Quit:            key.NewBinding(key.WithKeys(kbc.KeyBindings.Quit), key.WithHelp(kbc.KeyBindings.Quit, "quit")),
 		Navigation: command.TUINavigationKeyMap{
 			Up:    key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Up), key.WithHelp(kbc.KeyBindings.Navigation.Up, "Toggle to the panel above")),
 			Down:  key.NewBinding(key.WithKeys(kbc.KeyBindings.Navigation.Down), key.WithHelp(kbc.KeyBindings.Navigation.Down, "Toggle to the panel below")),
@@ -228,7 +232,7 @@ func SetupKeyMap() (*command.TUIKeyMap, error) {
 			Right:              key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Right), key.WithHelp(kbc.KeyBindings.Editor.Right, "move right")),
 			Insert:             key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Insert), key.WithHelp(kbc.KeyBindings.Editor.Insert, "insert mode")),
 			Normal:             key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.Normal), key.WithHelp(kbc.KeyBindings.Editor.Normal, "normal mode")),
-			ExecuteQuery:       key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.ExecuteQuery), key.WithHelp(kbc.KeyBindings.Editor.ExecuteQuery, "execute query")),
+			ExecuteQuery:       key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.ExecuteQuery), key.WithHelp(kbc.KeyBindings.Editor.ExecuteQuery, "execute queries in the editor")),
 			ExecuteSingleQuery: key.NewBinding(key.WithKeys(kbc.KeyBindings.Editor.ExecuteSingleQuery), key.WithHelp(kbc.KeyBindings.Editor.ExecuteSingleQuery, "execute single query")),
 		},
 	}
