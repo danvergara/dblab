@@ -189,7 +189,7 @@ func (m *mssql) GetViewDefinition(view ViewRef) (string, []any, error) {
 }
 
 // fetchSchemas method lists all the schemas of the current database.
-func (m *mssql) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
+func (m *mssql) fetchSchemas(_ context.Context, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("s.name").
 		From("sys.schemas AS s").
 		Join("sys.database_principals p ON s.principal_id = p.principal_id").
@@ -230,7 +230,7 @@ func (m *mssql) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, e
 }
 
 // fetchTables method returns a list of tables filtered by schema.
-func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (m *mssql) fetchTables(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("TABLE_NAME").
 		From("INFORMATION_SCHEMA.TABLES").
 		Where(sq.Eq{
@@ -271,7 +271,7 @@ func (m *mssql) fetchTables(ctx context.Context, parentName, parentID string) ([
 }
 
 // fetchViews method returns a list of views filtered by schema.
-func (m *mssql) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (m *mssql) fetchViews(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("TABLE_NAME").
 		From("INFORMATION_SCHEMA.VIEWS").
 		Where(sq.Eq{

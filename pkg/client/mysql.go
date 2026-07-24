@@ -77,7 +77,7 @@ func (m *mysql) Catalog(ctx context.Context) (*DBNode, error) {
 		queue = queue[1:]
 
 		var children []*DBNode
-		var err error
+
 		switch current.Type {
 		case "database":
 			tables, err := m.fetchTables(ctx, current.Name, current.ID)
@@ -91,9 +91,6 @@ func (m *mysql) Catalog(ctx context.Context) (*DBNode, error) {
 				return nil, err
 			}
 			children = append(children, views...)
-		}
-		if err != nil {
-			return nil, err
 		}
 
 		for _, child := range children {
@@ -126,7 +123,7 @@ func (m *mysql) GetViewDefinition(view ViewRef) (string, []any, error) {
 }
 
 // fetchTables method lists all the tables of the current database.
-func (m *mysql) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (m *mysql) fetchTables(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query := "SHOW TABLES;"
 
 	rows, err := m.db.Query(query)
@@ -159,7 +156,7 @@ func (m *mysql) fetchTables(ctx context.Context, parentName, parentID string) ([
 }
 
 // fetchViews method lists all the views of the current database.
-func (m *mysql) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (m *mysql) fetchViews(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.
 		Select("TABLE_NAME AS view_name").
 		From("information_schema.VIEWS").
