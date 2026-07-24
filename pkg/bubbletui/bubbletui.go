@@ -48,6 +48,19 @@ const (
 	focusHelp
 )
 
+func (f focusState) String() string {
+	switch f {
+	case focusEditor:
+		return "Editor"
+	case focusList:
+		return "Sidebar"
+	case focusTable:
+		return "Results"
+	default:
+		return "-"
+	}
+}
+
 var (
 	baseStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -64,9 +77,6 @@ var (
 			Foreground(purple).
 			AlignVertical(lipgloss.Center).
 			Align(lipgloss.Center)
-
-	footerStyle = lipgloss.NewStyle().
-			Foreground(green)
 
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000")).
@@ -112,6 +122,7 @@ type Model struct {
 	resulstset      ResultSet
 	queryHistory    *HistoryModel
 	help            help.Model
+	statusBar       StatusBar
 
 	// Manages the focus on the app.
 	focus focusState
@@ -134,7 +145,6 @@ type Model struct {
 	keys *command.TUIKeyMap
 
 	// constant text on the client.
-	footer        string
 	renderedTitle string
 
 	dump io.Writer
@@ -169,15 +179,17 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteText)
 	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreen)
 
+	editor := NewEditor(kb)
+
 	m := &Model{
 		focus:           focusEditor,
 		c:               c,
 		keys:            kb,
-		editor:          NewEditor(kb),
+		editor:          editor,
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(kb),
 		help:            h,
-		footer:          footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
+		statusBar:       NewStatusBar(editor.mode, kb, c),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
@@ -203,7 +215,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.width = msg.Width
 
-		availableHeight := m.height - lipgloss.Height(m.footer)
+		availableHeight := m.height - lipgloss.Height(m.statusBar.view())
 
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
@@ -227,6 +239,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
 		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
 		m.queryHistory.SetSize(msg.Width, msg.Height)
+		m.statusBar.SetWidth(msg.Width)
 
 		return m, tea.Batch(cmds...)
 
@@ -260,6 +273,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebarViewport.selected = false
 				cmd = m.editor.Focus()
 				cmds = append(cmds, cmd)
+				m.statusBar.ShowFocus(m.focus)
 			}
 			return m, tea.Batch(cmds...)
 		case key.Matches(msg, m.keys.Navigation.Down):
@@ -267,28 +281,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusTable
 				m.editor.Blur()
 				m.resulstset.Focus()
+				m.statusBar.ShowFocus(m.focus)
 			}
 		case key.Matches(msg, m.keys.Navigation.Left):
 			if m.focus == focusTable {
 				m.focus = focusList
 				m.sidebarViewport.selected = true
 				m.resulstset.Blur()
+				m.statusBar.ShowFocus(m.focus)
 			}
 
 			if m.focus == focusEditor {
 				m.editor.Blur()
 				m.focus = focusList
 				m.sidebarViewport.selected = true
+				m.statusBar.ShowFocus(m.focus)
 			}
 		case key.Matches(msg, m.keys.Navigation.Up):
 			if m.focus == focusTable {
 				m.focus = focusEditor
 				cmd = m.editor.Focus()
 				m.resulstset.Blur()
+				m.statusBar.ShowFocus(m.focus)
 				cmds = append(cmds, cmd)
 			}
 			return m, tea.Batch(cmds...)
 		}
+	case modeChangeMsg:
+		m.statusBar, cmd = m.statusBar.Update(msg)
+		cmds = append(cmds, cmd)
 	case selectTableMsg:
 		tableRef := client.TableRef{Name: msg.Table}
 		switch m.c.Driver() {
@@ -360,10 +381,10 @@ func (m Model) View() tea.View {
 			textAreaBorder = neonPurple
 		}
 
-		fullFooter := m.footer
+		fullStatusBar := m.statusBar.View().Content
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			fullFooter,
+			fullStatusBar,
 		)
 
 		tightBlock := lipgloss.NewStyle().
@@ -381,15 +402,15 @@ func (m Model) View() tea.View {
 		leftColumn = lipgloss.NewStyle().
 			Width(m.leftWidth).
 			MaxWidth(m.leftWidth).
-			Height(m.height - lipgloss.Height(m.footer)).
-			MaxHeight(m.height - lipgloss.Height(m.footer)).
+			Height(m.height - lipgloss.Height(m.statusBar.View().Content)).
+			MaxHeight(m.height - lipgloss.Height(m.statusBar.View().Content)).
 			Render(leftColumn)
 
 		styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
 		rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View().Content)
 
 		contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
-		v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullFooter))
+		v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullStatusBar))
 	}
 
 	return v

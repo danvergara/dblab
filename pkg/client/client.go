@@ -72,6 +72,8 @@ type Client struct {
 	db                *sqlx.DB
 	dbName            string
 	databaseQuerier   databaseQuerier
+	user              string
+	port              string
 	driver, schema    string
 	host              string
 	paginationManager *pagination.Manager
@@ -94,6 +96,8 @@ func New(opts command.Options) (*Client, error) {
 	c := &Client{
 		db:       db,
 		dbName:   opts.DBName,
+		user:     opts.User,
+		port:     opts.Port,
 		host:     opts.Host,
 		driver:   opts.Driver,
 		limit:    opts.Limit,
@@ -177,6 +181,17 @@ func (c *Client) Driver() string {
 
 func (c *Client) Host() string {
 	return c.host
+}
+
+func (c *Client) Conn() string {
+	ro := ""
+	if c.readOnly {
+		ro = "🔒️"
+	}
+	if c.driver == drivers.SQLite {
+		return fmt.Sprintf("%s %s", c.host, ro)
+	}
+	return fmt.Sprintf("%s@%s:%s %s", c.user, c.host, c.port, ro)
 }
 
 // AsyncQuery runs multiple queries concurrently and it returns the results through a channel.
