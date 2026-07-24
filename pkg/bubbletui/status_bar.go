@@ -1,6 +1,8 @@
 package bubbletui
 
 import (
+	"fmt"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/danvergara/dblab/pkg/client"
@@ -27,7 +29,7 @@ func NewStatusBar(mode Mode, kb *command.TUIKeyMap, client *client.Client) Statu
 	var statusKb = lipgloss.NewStyle().
 		Background(KbOddBg).
 		Foreground(KbOddText).
-		Render(" ctrl+c Exit ") +
+		Render(fmt.Sprintf(" %s %s ", kb.Quit.Help().Key, kb.Quit.Help().Desc)) +
 		lipgloss.NewStyle().
 			Background(KbEvenBg).
 			Foreground(KbOddBg).
@@ -35,7 +37,7 @@ func NewStatusBar(mode Mode, kb *command.TUIKeyMap, client *client.Client) Statu
 		lipgloss.NewStyle().
 			Background(KbEvenBg).
 			Foreground(KbEvenText).
-			Render(" ? Bindings ") +
+			Render(fmt.Sprintf(" %s %s ", kb.Help.Help().Key, kb.Help.Help().Desc)) +
 		lipgloss.NewStyle().
 			Foreground(KbEvenBg).
 			Render(endArrow) +
