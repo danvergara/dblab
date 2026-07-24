@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -44,6 +45,7 @@ const (
 	focusList
 	focusTable
 	focusHistory
+	focusHelp
 )
 
 var (
@@ -109,6 +111,7 @@ type Model struct {
 	sidebarViewport SidebarViewport
 	resulstset      ResultSet
 	queryHistory    *HistoryModel
+	help            help.Model
 
 	// Manages the focus on the app.
 	focus focusState
@@ -128,7 +131,7 @@ type Model struct {
 	editorWidth           int
 
 	// Key Bindings.
-	bindings *command.TUIKeyMap
+	keys *command.TUIKeyMap
 
 	// constant text on the client.
 	footer        string
@@ -160,13 +163,20 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 
 	dblabTitle := figure.NewFigure("dblab", "", true).String()
 
+	h := help.New()
+	h.ShowAll = true
+	h.Styles.FullKey = lipgloss.NewStyle().Foreground(cyberGreen).Bold(true)
+	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteText)
+	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreen)
+
 	m := &Model{
 		focus:           focusEditor,
 		c:               c,
-		bindings:        kb,
+		keys:            kb,
 		editor:          NewEditor(kb),
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(kb),
+		help:            h,
 		footer:          footerStyle.Render("\n  (Press Ctrl-C to exit. Keybindings are configurable, please see the documentation for more information.)"),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
@@ -209,6 +219,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resultSetHeight = availableHeight - m.editorHeight - 4
 		m.resultSetWidth = m.rightWidth - 4
 
+		m.help.SetWidth(msg.Width)
+
 		m.editor.SetHeight(m.editorHeight)
 		m.editor.SetWidth(m.editorWidth)
 
@@ -220,12 +232,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "ctrl+c":
-			if m.cancelQuery != nil {
-				m.cancelQuery()
-				m.cancelQuery = nil
-			} else if msg.String() == "ctrl+c" {
-				return m, tea.Quit
+		case "esc":
+			return m, func() tea.Msg {
+				return backToNormalMsg{}
 			}
 		case "f8":
 			m.focus = focusHistory
@@ -234,7 +243,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 		switch {
-		case key.Matches(msg, m.bindings.Navigation.Right):
+		case key.Matches(msg, m.keys.Help):
+			m.focus = focusHelp
+		case key.Matches(msg, m.keys.Quit):
+			if m.cancelQuery != nil {
+				m.cancelQuery()
+				m.cancelQuery = nil
+			} else if key.Matches(msg, m.keys.Quit) {
+				return m, tea.Quit
+			}
+		case key.Matches(msg, m.keys.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor
 				m.sidebarViewport.selected = false
@@ -242,13 +260,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 			}
 			return m, tea.Batch(cmds...)
-		case key.Matches(msg, m.bindings.Navigation.Down):
+		case key.Matches(msg, m.keys.Navigation.Down):
 			if m.focus == focusEditor {
 				m.focus = focusTable
 				m.editor.Blur()
 				m.resulstset.Focus()
 			}
-		case key.Matches(msg, m.bindings.Navigation.Left):
+		case key.Matches(msg, m.keys.Navigation.Left):
 			if m.focus == focusTable {
 				m.focus = focusList
 				m.sidebarViewport.selected = true
@@ -260,7 +278,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusList
 				m.sidebarViewport.selected = true
 			}
-		case key.Matches(msg, m.bindings.Navigation.Up):
+		case key.Matches(msg, m.keys.Navigation.Up):
 			if m.focus == focusTable {
 				m.focus = focusEditor
 				cmd = m.editor.Focus()
@@ -328,9 +346,12 @@ func (m Model) View() tea.View {
 	var v tea.View
 	v.AltScreen = true
 
-	if m.focus == focusHistory {
+	switch m.focus {
+	case focusHistory:
 		v.SetContent(m.queryHistory.View().Content)
-	} else {
+	case focusHelp:
+		v.SetContent(setModalContent(m.help.View(m.keys), m.width, m.height))
+	default:
 		textAreaBorder := darkPurple
 
 		if m.focus == focusEditor {
@@ -475,4 +496,19 @@ func prepareQueriesForExecution(rawText string) []string {
 	}
 
 	return validQueries
+}
+
+func setModalContent(content string, width, height int) string {
+	formStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(neonPurple).
+		Padding(1, 2)
+	boxedForm := formStyle.Render(content)
+	return lipgloss.Place(
+		width,
+		height,
+		lipgloss.Center,
+		lipgloss.Center,
+		boxedForm,
+	)
 }

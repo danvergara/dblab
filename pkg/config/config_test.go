@@ -183,6 +183,10 @@ func TestSetupKeybindings(t *testing.T) {
 
 	assert.Contains(t, kb.NextTab.Keys(), "tab")
 	assert.Contains(t, kb.PrevTab.Keys(), "shift+tab")
+	assert.Contains(t, kb.EndOfLine.Keys(), "$")
+	assert.Contains(t, kb.BeginningOfLine.Keys(), "0")
+	assert.Contains(t, kb.Help.Keys(), "?")
+	assert.Contains(t, kb.Quit.Keys(), "ctrl+c")
 	assert.Contains(t, kb.Navigation.Up.Keys(), "ctrl+k")
 	assert.Contains(t, kb.Navigation.Down.Keys(), "ctrl+j")
 	assert.Contains(t, kb.Navigation.Right.Keys(), "ctrl+l")
