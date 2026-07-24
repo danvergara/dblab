@@ -233,8 +233,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
-			return m, func() tea.Msg {
-				return backToNormalMsg{}
+			if m.focus == focusHelp {
+				m.focus = focusEditor
+				cmd = m.editor.Focus()
+				return m, cmd
 			}
 		case "f8":
 			m.focus = focusHistory
