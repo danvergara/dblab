@@ -23,6 +23,12 @@ multiple platforms. dblab was created as an attempt to build a very simple and p
 application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Server databases.
   
 
+<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;max-width:100%;margin:1.5rem 0;border-radius:10px;border:1px solid rgba(128,128,128,0.2);box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+  <iframe src="https://bisque.cloud/p/github/danvergara-dblab" title="dblab — narrated walkthrough" loading="lazy"
+    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+    allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>
+</div>
+
 ## Features
 
   * Cross-platform support for macOS/Linux/Windows (32/64-bit)  
