@@ -21,8 +21,23 @@ const (
 	InsertMode
 )
 
+func (m Mode) String() string {
+	switch m {
+	case NormalMode:
+		return "NORMAL"
+	case InsertMode:
+		return "INSERT"
+	default:
+		return ""
+	}
+}
+
 type executeQueryMsg struct {
 	queriesToRun []string
+}
+
+type modeChangeMsg struct {
+	mode Mode
 }
 
 type Editor struct {
@@ -180,7 +195,10 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 				styles := e.editor.Styles()
 				styles.Cursor.Blink = true
 				e.editor.SetStyles(styles)
-				return e, nil
+				fireModeChangeCmd := func() tea.Msg {
+					return modeChangeMsg{mode: e.mode}
+				}
+				return e, fireModeChangeCmd
 
 			case key.Matches(msg, e.bindings.Editor.Left):
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
@@ -208,7 +226,10 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 				styles.Cursor.Blink = false
 				e.editor.SetStyles(styles)
 				e.editor, _ = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
-				return e, nil
+				fireModeChangeCmd := func() tea.Msg {
+					return modeChangeMsg{mode: e.mode}
+				}
+				return e, fireModeChangeCmd
 			}
 		}
 	}
