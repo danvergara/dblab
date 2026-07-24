@@ -11,7 +11,7 @@ func TestModelStatusBarTracksEditorModeChanges(t *testing.T) {
 	c, _ := client.New(command.Options{Driver: "sqlite", Host: "/tmp/file.bd"})
 	kb := &command.TUIKeyMap{}
 	editor := NewEditor(kb)
-	m := &Model{editor: editor, statusBar: NewStatusBar(editor.mode, kb, c)}
+	m := &Model{editor: editor, statusBar: NewStatusBar(editor.mode, kb, c.Driver(), c.Conn())}
 
 	updated, _ := m.Update(modeChangeMsg{mode: InsertMode})
 	model, ok := updated.(Model)

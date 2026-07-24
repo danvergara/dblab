@@ -5,15 +5,12 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 )
 
 const (
-	primaryColor   = "#8A2BE2" // Morado
-	secondaryColor = "#008080" // Teal
-	endArrow       = ""
-	startArrow     = ""
+	endArrow   = ""
+	startArrow = ""
 )
 
 type StatusBar struct {
@@ -21,11 +18,10 @@ type StatusBar struct {
 	width    int
 	bindings *command.TUIKeyMap
 	fixed    string
-	client   *client.Client
 	focus    focusState
 }
 
-func NewStatusBar(mode Mode, kb *command.TUIKeyMap, client *client.Client) StatusBar {
+func NewStatusBar(mode Mode, kb *command.TUIKeyMap, driver, conn string) StatusBar {
 	var statusKb = lipgloss.NewStyle().
 		Background(KbOddBg).
 		Foreground(KbOddText).
@@ -43,8 +39,8 @@ func NewStatusBar(mode Mode, kb *command.TUIKeyMap, client *client.Client) Statu
 			Render(endArrow) +
 		lipgloss.NewStyle().
 			Foreground(KbEvenText).
-			Render("  "+client.Driver()+": "+client.Conn())
-	return StatusBar{mode: mode, bindings: kb, fixed: statusKb, client: client, focus: focusEditor}
+			Render("  "+driver+": "+conn)
+	return StatusBar{mode: mode, bindings: kb, fixed: statusKb, focus: focusEditor}
 }
 
 func (f StatusBar) Init() tea.Cmd {
@@ -68,11 +64,6 @@ func (f *StatusBar) SetWidth(width int) {
 }
 
 func (f StatusBar) View() tea.View {
-	return tea.NewView(f.view())
-}
-
-func (f *StatusBar) view() string {
-
 	modeColorBg := NormalModeBg
 	modeColorText := NormalModeText
 
@@ -107,5 +98,5 @@ func (f *StatusBar) view() string {
 		Width(spacerSize).
 		Render("")
 
-	return lipgloss.JoinHorizontal(lipgloss.Left, leftBlock, spacer, rightBlock) + "\n"
+	return tea.NewView(lipgloss.JoinHorizontal(lipgloss.Left, leftBlock, spacer, rightBlock) + "\n")
 }

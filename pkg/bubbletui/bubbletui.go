@@ -189,7 +189,7 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(kb),
 		help:            h,
-		statusBar:       NewStatusBar(editor.mode, kb, c),
+		statusBar:       NewStatusBar(editor.mode, kb, c.Driver(), c.Conn()),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
@@ -215,7 +215,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.width = msg.Width
 
-		availableHeight := m.height - lipgloss.Height(m.statusBar.view())
+		availableHeight := m.height - 1
 
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
