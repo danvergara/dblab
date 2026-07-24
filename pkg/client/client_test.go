@@ -582,7 +582,7 @@ func (suite *ClientTestSuite) TestAsyncQueryConcurrencyLimit() {
 	}
 
 	suite.Len(resultsByIndex, 5)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		r, ok := resultsByIndex[i]
 		suite.True(ok, "missing result for query index %d", i)
 		suite.NoError(r.Error)

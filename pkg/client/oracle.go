@@ -189,7 +189,7 @@ func (o *oracle) GetViewDefinition(view ViewRef) (string, []any, error) {
 }
 
 // fetchSchemas method lists all the schemas of the current database.
-func (o *oracle) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
+func (o *oracle) fetchSchemas(_ context.Context, parentID string) ([]*DBNode, error) {
 	query := `
 		SELECT DISTINCT owner AS schema_name
 		FROM all_tables
@@ -224,7 +224,7 @@ func (o *oracle) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, 
 }
 
 // fetchTables method returns a list of tables filtered by schema.
-func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (o *oracle) fetchTables(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("TABLE_NAME").
 		From("ALL_TABLES").
 		Where(sq.Eq{"OWNER": strings.ToUpper(parentName)}).
@@ -265,7 +265,7 @@ func (o *oracle) fetchTables(ctx context.Context, parentName, parentID string) (
 }
 
 // fetchViews method returns a list of views filtered by schema.
-func (o *oracle) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (o *oracle) fetchViews(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("VIEW_NAME").
 		From("ALL_VIEWS").
 		Where(sq.Eq{"OWNER": strings.ToUpper(parentName)}).

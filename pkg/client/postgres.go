@@ -188,7 +188,7 @@ func (p *postgres) GetViewDefinition(view ViewRef) (string, []any, error) {
 }
 
 // fetchSchemas method lists all the schemas of the current database.
-func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode, error) {
+func (p *postgres) fetchSchemas(_ context.Context, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("schema_name").
 		From("information_schema.schemata").
 		Where(sq.NotEq{
@@ -230,7 +230,7 @@ func (p *postgres) fetchSchemas(ctx context.Context, parentID string) ([]*DBNode
 }
 
 // fetchTables method returns a list of tables filtered by schema.
-func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (p *postgres) fetchTables(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	query, args, err := sq.Select("table_name").
 		From("information_schema.tables").
 		Where(sq.Eq{"table_schema": parentName}).
@@ -271,7 +271,7 @@ func (p *postgres) fetchTables(ctx context.Context, parentName, parentID string)
 }
 
 // fetchViews method returns a list of views filtered by schema.
-func (p *postgres) fetchViews(ctx context.Context, parentName, parentID string) ([]*DBNode, error) {
+func (p *postgres) fetchViews(_ context.Context, parentName, parentID string) ([]*DBNode, error) {
 	// 'v' is View, 'm' is Materialized View.
 	query, args, err := sq.Select("c.relname AS view_name").
 		From("pg_class c").
