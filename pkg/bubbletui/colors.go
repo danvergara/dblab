@@ -2,7 +2,7 @@ package bubbletui
 
 import "charm.land/lipgloss/v2"
 
-// status bar
+// StatusBar Colors.
 var NormalModeText = lipgloss.Color("#116800")
 var NormalModeBg = lipgloss.Color("#a2cb27")
 
