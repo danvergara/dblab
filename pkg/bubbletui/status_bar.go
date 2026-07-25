@@ -98,5 +98,5 @@ func (f StatusBar) View() tea.View {
 		Width(spacerSize).
 		Render("")
 
-	return tea.NewView(lipgloss.JoinHorizontal(lipgloss.Left, leftBlock, spacer, rightBlock) + "\n")
+	return tea.NewView(lipgloss.JoinHorizontal(lipgloss.Left, leftBlock, spacer, rightBlock))
 }
