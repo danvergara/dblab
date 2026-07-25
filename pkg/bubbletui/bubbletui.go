@@ -215,7 +215,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.width = msg.Width
 
-		availableHeight := m.height - 1
+		availableHeight := m.height - lipgloss.Height(m.statusBar.View().Content)
 
 		m.leftWidth = m.width / 5
 		m.rightWidth = m.width - m.leftWidth
