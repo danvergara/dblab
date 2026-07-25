@@ -154,6 +154,10 @@ func New(opts command.Options) (*Client, error) {
 			if _, err = db.Exec("ALTER SESSION SET READ_ONLY = TRUE;"); err != nil {
 				return nil, err
 			}
+		case drivers.ClickHouse:
+			if _, err = db.Exec("SET readonly = 1;"); err != nil {
+				return nil, err
+			}
 		case drivers.SQLite:
 			_, err := db.Exec("PRAGMA query_only = true")
 			if err != nil {
