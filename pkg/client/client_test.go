@@ -77,8 +77,9 @@ func (suite *ClientTestSuite) SetupSuite() {
 
 		suite.host, err = pgContainer.Host(suite.ctx)
 		require.NoError(suite.T(), err)
-		suite.port, err = pgContainer.MappedPort(suite.ctx, "5432")
+		portNum, err := pgContainer.MappedPort(suite.ctx, "5432")
 		require.NoError(suite.T(), err)
+		suite.port = nat.Port(portNum.Port())
 
 		sqlxDSN := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 			suite.user, suite.password, suite.host, suite.port.Port(), suite.dbName)
@@ -102,8 +103,9 @@ func (suite *ClientTestSuite) SetupSuite() {
 
 		suite.host, err = mysqlContainer.Host(suite.ctx)
 		require.NoError(suite.T(), err)
-		suite.port, err = mysqlContainer.MappedPort(suite.ctx, "3306")
+		portNum, err := mysqlContainer.MappedPort(suite.ctx, "3306")
 		require.NoError(suite.T(), err)
+		suite.port = nat.Port(portNum.Port())
 
 		sqlxDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 			suite.user, suite.password, suite.host, suite.port.Port(), suite.dbName)

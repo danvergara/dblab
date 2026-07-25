@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -120,6 +121,8 @@ func New(opts command.Options) (*Client, error) {
 		c.databaseQuerier = newOracle(c.dbName, c.schema, c.db)
 	case drivers.SQLServer:
 		c.databaseQuerier = newMSSQL(c.dbName, c.schema, c.db)
+	case drivers.ClickHouse:
+		c.databaseQuerier = newClickHouse(c.dbName, c.db)
 	default:
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}

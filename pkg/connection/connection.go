@@ -34,6 +34,11 @@ var (
 	ErrInvalidOracleURLFormat = errors.New(
 		"invalid url - valid format: oracle://user:pass@server/service_name",
 	)
+	// ErrInvalidClickHouseURLFormat is the error used to notify that the clickhouse given url is not valid.
+	ErrInvalidClickHouseURLFormat = errors.New(
+		"invalid url - valid format: clickhouse://user:password@host:port/db",
+	)
+
 	// ErrInvalidURLFormat is used to notify the url is invalid.
 	ErrInvalidURLFormat = errors.New("invalid url")
 	// ErrInvalidDriver is used to notify that the provided driver is not supported.
@@ -95,6 +100,12 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		if strings.HasPrefix(opts.URL, drivers.SQLServer) {
 			opts.Driver = drivers.SQLServer
 			conn, err := formatSQLServerURL(opts)
+			return conn, opts, err
+		}
+
+		if strings.HasPrefix(opts.URL, drivers.ClickHouse) {
+			opts.Driver = drivers.ClickHouse
+			conn, err := formatClickHouseURL(opts)
 			return conn, opts, err
 		}
 
@@ -268,6 +279,15 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 		}
 
 		return connDB.String(), opts, nil
+	case drivers.ClickHouse:
+		return fmt.Sprintf(
+			"tcp://%s:%s@%s:%s/%s",
+			opts.User,
+			opts.Pass,
+			opts.Host,
+			opts.Port,
+			opts.DBName,
+		), opts, nil
 	default:
 		return "", opts, fmt.Errorf("%s: %w", opts.URL, ErrInvalidDriver)
 	}
@@ -419,6 +439,20 @@ func formatSQLServerURL(opts command.Options) (string, error) {
 	return uri.String(), nil
 }
 
+// formatClickHouseURL returns valid uri for clickhouse connection.
+func formatClickHouseURL(opts command.Options) (string, error) {
+	if !hasValidClickHousePrefix(opts.URL) {
+		return "", fmt.Errorf("invalid prefix %s : %w", opts.URL, ErrInvalidClickHouseURLFormat)
+	}
+
+	uri, err := url.Parse(opts.URL)
+	if err != nil {
+		return "", fmt.Errorf("%v : %w", err, ErrInvalidClickHouseURLFormat)
+	}
+
+	return uri.String(), nil
+}
+
 // validates if dsn pattern match with the parameter.
 func parseDSN(dsn string) (string, error) {
 	matches := dsnPattern.FindStringSubmatch(dsn)
@@ -452,6 +486,11 @@ func hasValidOraclePrefix(rawurl string) bool {
 // hasValidSQLServerPrefix checks if a given url has the driver name in it.
 func hasValidSQLServerPrefix(rawurl string) bool {
 	return strings.HasPrefix(rawurl, "sqlserver://")
+}
+
+// hasValidSQLServerPrefix checks if a given url has the driver name in it.
+func hasValidClickHousePrefix(rawurl string) bool {
+	return strings.HasPrefix(rawurl, "clickhouse://")
 }
 
 func socketFileExists(socketFile string) bool {
