@@ -1,3 +1,5 @@
+# Features
+
 The key features are:
 
   * Cross-platform support for macOS/Linux/Windows (32/64-bit)  
@@ -9,3 +11,4 @@ The key features are:
   * Connection profiles with secure credential storage in the OS keyring.  
   * Query history: executed queries are automatically saved and can be browsed or re-used from a searchable list.  
   * Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
+  * Built-in help modal: press `?` to display a help overlay showing all available key bindings; press `Esc` to dismiss it.

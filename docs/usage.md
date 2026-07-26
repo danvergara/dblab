@@ -12,14 +12,14 @@ $ dblab [command]
 
 ```
 
-### Available Commands                               
+## Available Commands
 
 |         `connect`      |  Re-use saved connection profiles  | 
 |:----------------------:|:----------------------------:|
 |         `help`         |    Help about any command    | 
 |       `version`        |  The version of the project  |
 
-### Flags
+## Flags
 
 ```
 dblab is a terminal UI-based interactive database client for Postgres, MySQL, and SQLite3.
@@ -71,86 +71,6 @@ Flags:
 
 Use "dblab [command] --help" for more information about a command.
 ```
-
-## Navigation
-
-Key bindings are now configurable; see [Key bindings configuration](#key-bindings-configuration) to learn how to replace existing key bindings. It's worth noting that key bindings are only configurable through the configuration file; there are no flags to do so. If you don't replace them through the configuration file, the information below remains the same; otherwise, just replace the new key binding with the existing information for the default one.
-
-### Query editor
-
-The query editor uses **normal** and **insert** modes (similar to Vim). When you focus the query editor, it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim). In insert mode, use the arrow keys to move the cursor; in normal mode, use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>l</kbd> instead (configurable in `.dblab.yaml` with `--keybindings` or `-k`; see [Key bindings configuration](#key-bindings-configuration)). In normal mode, <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks the current line into an internal register, <kbd>p</kbd> pastes that line after the current line, and <kbd>x</kbd> deletes the character under the cursor. <kbd>0</kbd> and <kbd>$</kbd> move to the beginning or end of the current line in the query buffer. <kbd>g</kbd> jumps to the first line and <kbd>G</kbd> jumps to the last line of the editor buffer. Press <kbd>Ctrl+D</kbd> to clear the entire editor content. Press <kbd>ctrl+e</kbd> to execute the query (this uses the `keybindings.editor.execute-query` binding); whitespace-only queries are ignored. Press <kbd>ctrl+r</kbd> to execute only the single query on the current cursor line (this uses the `keybindings.editor.execute-single-query` binding).
-
-#### Multi-query execution
-
-![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/dblab-multi-query.png){ width="700" : .center }
-
-You can write multiple SQL statements in the editor separated by semicolons (`;`) and execute them all at once with <kbd>ctrl+e</kbd>. The queries are run concurrently and each result is displayed in its own tab (e.g., "query #1", "query #2", etc.). If a query fails, its tab will display the error message while other successful queries still show their results. A maximum of 5 queries can be executed per batch.
-
-Pressing <kbd>Ctrl+c</kbd> quits the application. If queries are currently running, they are cancelled before exiting.
-
-#### Query History
-
-![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/query-history.png){ width="400" : .center }
-
-dblab automatically saves every executed query to a local history file (`$XDG_CONFIG_HOME/dblab/dblab.gob`). Press <kbd>F8</kbd> to open the query history view, which displays past queries sorted newest-first in a filterable list. Use the built-in search to narrow results, press <kbd>Enter</kbd> to load the selected query back into the editor, or press <kbd>Esc</kbd> to return without selecting anything.
-
-**Example:**
-
-```sql
-SELECT * FROM users; SELECT * FROM orders; SELECT count(*) FROM products;
-```
-
-This will produce three result tabs, one for each query.
-
-Otherwise, you might be located at the tables panel, where you can navigate using the arrows <kbd>Up</kbd> and <kbd>Down</kbd> (or the keys <kbd>k</kbd> and <kbd>j</kbd> respectively). If you want to see the rows of a table, press <kbd>Enter</kbd>. To see the schema of a table, locate yourself on the `tables` panel and press <kbd>tab</kbd> to switch to the `columns` panel, then use <kbd>shift+tab</kbd> to switch back.
-
-![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/rows-view.png){ width="700" : .center }
-![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/structure-view.png){ width="700" : .center }
-![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/indexes-view.png){ width="700" : .center }
-![Alt Text](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/constraints-view.png){ width="700" : .center }
-
-The navigation buttons were removed since they are too slow to navigate the content of a table effectively. The user is better off typing a `SELECT` statement with proper `OFFSET` and `LIMIT`.
-
-The `--db` flag is mandatory. dblab connects to a single database and displays its catalog as a tree in the sidebar. For PostgreSQL and Oracle, the tree shows the database, its schemas, and the tables under each schema. For MySQL, SQLite, and SQL Server, the tree shows the database and its tables directly. If the `--schema` flag is provided for PostgreSQL or Oracle, only that schema is shown; otherwise, all accessible schemas are listed.
-
-<img src="https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/tree-view.png" />
-
-When navigating query result sets, the cell will be highlighted so the user can see which table cell is selected. This is important because you can press the `Enter` key on a cell of interest to copy its content.
-
-### Key Bindings
-| Key                                    | Description                           |
-|----------------------------------------|----------------------------------------|
-|<kbd>ctrl+e</kbd>                       | If the query editor is focused, execute the query (also works in insert and normal mode) |
-|<kbd>ctrl+r</kbd>                       | If the query editor is focused, execute only the query on the current cursor line (also works in insert and normal mode) |
-|<kbd>i</kbd>                            | If the query editor is focused in normal mode, enter insert mode |
-|<kbd>Escape</kbd>                       | If the query editor is focused in insert mode, return to normal mode |
-|<kbd>dd</kbd>                           | If the query editor is focused in normal mode, delete the current line |
-|<kbd>yy</kbd>                           | If the query editor is focused in normal mode, yank the current line |
-|<kbd>p</kbd>                            | If the query editor is focused in normal mode, paste the yanked or deleted line after the current line |
-|<kbd>x</kbd>                            | If the query editor is focused in normal mode, delete the character under the cursor |
-|<kbd>Enter</kbd>                        | If the tables panel is focused, list all rows as a result set on the rows panel and display the structure of the table on the structure panel |
-|<kbd>tab</kbd>                          | If the result set panel is focused, press tab to navigate to the next metadata tab |
-|<kbd>shift+tab</kbd>                    | If the result set panel is focused, press shift+tab to navigate to the previous metadata tab |
-|<kbd>Ctrl+H</kbd>                       | Toggle to the panel on the left |
-|<kbd>Ctrl+J</kbd>                       | Toggle to the panel below |
-|<kbd>Ctrl+K</kbd>                       | Toggle to the panel above |
-|<kbd>Ctrl+L</kbd>                       | Toggle to the panel on the right |
-|<kbd>Arrow Up</kbd>                     | If the query editor is focused in insert mode, move the cursor up. If the results panel is focused, navigate the table upward (all tabs on the results panel). |
-|<kbd>k</kbd>                            | If the query editor is focused in normal mode, move the cursor up. If the results panel is focused, navigate the table upward (all tabs on the results panel). |
-|<kbd>Arrow Down</kbd>                   | If the query editor is focused in insert mode, move the cursor down. If the results panel is focused, navigate the table downward (all tabs on the results panel). |
-|<kbd>j</kbd>                            | If the query editor is focused in normal mode, move the cursor down. If the results panel is focused, navigate the table downward (all tabs on the results panel). |
-|<kbd>Arrow Right</kbd>                  | If the query editor is focused in insert mode, move the cursor right. If the results panel is focused, navigate the table to the right (all tabs on the results panel). |
-|<kbd>l</kbd>                            | If the query editor is focused in normal mode, move the cursor right. If the results panel is focused, navigate the table to the right (all tabs on the results panel). |
-|<kbd>Arrow Left</kbd>                   | If the query editor is focused in insert mode, move the cursor left. If the results panel is focused, navigate the table to the left (all tabs on the results panel). |
-|<kbd>h</kbd>                            | If the query editor is focused in normal mode, move the cursor left. If the results panel is focused, navigate the table to the left (all tabs on the results panel). |
-|<kbd>g</kbd>                            | If the query editor is focused in normal mode, jump to the first line of the buffer. If the results panel is focused, move to the top of the dataset (all tabs on the results panel). |
-|<kbd>G</kbd>                            | If the query editor is focused in normal mode, jump to the last line of the buffer. If the results panel is focused, move to the bottom of the dataset (all tabs on the results panel). |
-|<kbd>0</kbd>                            | If the query editor is focused in normal mode, move to the start of the current line. If the results panel is focused, move to the left edge of the row (all tabs on the results panel). |
-|<kbd>$</kbd>                            | If the query editor is focused in normal mode, move to the end of the current line. If the results panel is focused, move to the right edge of the row (all tabs on the results panel). |
-|<kbd>Ctrl+D</kbd>                       | If the query editor is focused in normal mode, clear the entire editor content |
-|<kbd>F8</kbd>                           | Open the query history view |
-|<kbd>Ctrl+c</kbd>                       | Quit the application (cancels in-flight queries if any) |
-
 
 ## Connection Examples
 
@@ -416,6 +336,8 @@ keybindings:
   page-bottom: 'G'
   end-of-line: '$'
   beginning-of-line: '0'
+  help: '?'
+  quit: 'ctrl+c'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'
@@ -496,3 +418,162 @@ Profiles are stored in `$XDG_CONFIG_HOME/dblab/dblab.json`:
 ```
 
 Sensitive fields (database password, SSH password, and SSL password) are never written to the configuration file. They are stored exclusively in the OS keyring and retrieved automatically when you connect using a saved profile.
+
+## Navigation
+
+The UI is split into three panels: the **sidebar tree** on the left, the **query editor** on the top right, and the **result set** panel below it. Move focus between them with <kbd>Ctrl+H</kbd>, <kbd>Ctrl+J</kbd>, <kbd>Ctrl+K</kbd> and <kbd>Ctrl+L</kbd>.
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/full-ui.png){ width="700" : .center }
+
+Every key binding on this page is the default. All of them can be replaced through the `.dblab.yaml` configuration file — there are no flags for it — so if you've customized a binding, substitute yours for the default shown here. See [Key bindings configuration](#key-bindings-configuration).
+
+### Panels and the sidebar tree
+
+dblab connects to a single database (the `--db` flag is mandatory) and displays its catalog as a tree in the sidebar. For PostgreSQL and Oracle, the tree shows the database, its schemas, and the tables under each schema. For MySQL, SQLite, and SQL Server, the tree shows the database and its tables directly. If the `--schema` flag is provided for PostgreSQL or Oracle, only that schema is shown; otherwise, all accessible schemas are listed.
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/tree-view.png){ width="700" : .center }
+
+Navigate the tree with <kbd>Up</kbd> and <kbd>Down</kbd> (or <kbd>k</kbd> and <kbd>j</kbd>), and press <kbd>Enter</kbd> on a table to load its rows into the result set panel.
+
+### Result sets
+
+Selecting a table populates the result set panel, which has one tab per view of the table. Press <kbd>tab</kbd> and <kbd>shift+tab</kbd> to move between them:
+
+- **Data** — the rows of the table, or the result of the query you executed
+- **Columns** — the schema of the table
+- **Indexes** — the indexes on the table
+- **Constraints** — the constraints on the table
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/rows-view.png){ width="700" : .center }
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/structure-view.png){ width="700" : .center }
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/indexes-view.png){ width="700" : .center }
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/constraints-view.png){ width="700" : .center }
+
+Move around a result set with the arrow keys or <kbd>h</kbd>/<kbd>j</kbd>/<kbd>k</kbd>/<kbd>l</kbd>. The selected cell is highlighted so you can see where you are; press <kbd>Enter</kbd> on a cell to copy its content.
+
+!!! note
+
+    There are no pagination controls — they proved too slow to page through a table effectively. To work through a large table, write a `SELECT` with explicit `OFFSET` and `LIMIT` instead.
+
+## Query editor
+
+### Modes
+
+The query editor uses **normal** and **insert** modes, similar to Vim. When you focus the editor it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim).
+
+Cursor movement depends on the mode: in insert mode use the arrow keys, in normal mode use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd> and <kbd>l</kbd>.
+
+### Editing and motions
+
+In normal mode:
+
+- <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks it into an internal register, and <kbd>p</kbd> pastes the yanked or deleted line after the current line
+- <kbd>x</kbd> deletes the character under the cursor
+- <kbd>0</kbd> and <kbd>$</kbd> move to the beginning and end of the current line
+- <kbd>g</kbd> and <kbd>G</kbd> jump to the first and last line of the buffer
+- <kbd>Ctrl+D</kbd> clears the entire editor content
+
+### Executing queries
+
+Press <kbd>ctrl+e</kbd> to execute the contents of the editor (`keybindings.editor.execute-query`). Whitespace-only queries are ignored.
+
+Press <kbd>ctrl+r</kbd> to execute only the query on the current cursor line (`keybindings.editor.execute-single-query`), leaving the other statements in the editor untouched. Both bindings work from either mode.
+
+#### Multiple statements
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/dblab-multi-query.png){ width="700" : .center }
+
+You can write multiple SQL statements separated by semicolons (`;`) and execute them all at once with <kbd>ctrl+e</kbd>:
+
+```{ .sql .copy }
+SELECT * FROM users; SELECT * FROM orders; SELECT count(*) FROM products;
+```
+
+The statements run concurrently and each result is displayed in its own tab ("query #1", "query #2", and so on) — three tabs, for the example above. If a statement fails, its tab shows the error message while the successful ones still show their results. A maximum of 5 statements can be executed per batch.
+
+While a batch is running, press <kbd>Ctrl+c</kbd> to cancel it; press <kbd>Ctrl+c</kbd> again to quit dblab.
+
+### Query history
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/query-history.png){ width="400" : .center }
+
+dblab automatically saves every executed query to a local history file (`$XDG_CONFIG_HOME/dblab/dblab.gob`). Press <kbd>F8</kbd> to open the query history view, which displays past queries sorted newest-first in a filterable list. Use the built-in search to narrow results, press <kbd>Enter</kbd> to load the selected query back into the editor, or press <kbd>Esc</kbd> to return without selecting anything.
+
+## Help modal
+
+![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/dblab-help-modal.png){ width="700" : .center }
+
+Press <kbd>?</kbd> at any time to open the help modal, which displays all available key bindings in a centered overlay. Press <kbd>Esc</kbd> to dismiss it; focus returns to the query editor.
+
+## Key bindings
+
+These are the defaults; see [Key bindings configuration](#key-bindings-configuration) to change them.
+
+### Panel navigation
+
+| Key | Description |
+|-----|-------------|
+| <kbd>Ctrl+H</kbd> | Toggle to the panel on the left |
+| <kbd>Ctrl+J</kbd> | Toggle to the panel below |
+| <kbd>Ctrl+K</kbd> | Toggle to the panel above |
+| <kbd>Ctrl+L</kbd> | Toggle to the panel on the right |
+
+### Query editor (both modes)
+
+| Key | Description |
+|-----|-------------|
+| <kbd>ctrl+e</kbd> | Execute the contents of the editor |
+| <kbd>ctrl+r</kbd> | Execute only the query on the current cursor line |
+
+### Query editor (normal mode)
+
+| Key | Description |
+|-----|-------------|
+| <kbd>i</kbd> | Enter insert mode |
+| <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> | Move the cursor left, down, up, right |
+| <kbd>dd</kbd> | Delete the current line |
+| <kbd>yy</kbd> | Yank the current line |
+| <kbd>p</kbd> | Paste the yanked or deleted line after the current line |
+| <kbd>x</kbd> | Delete the character under the cursor |
+| <kbd>0</kbd> / <kbd>$</kbd> | Move to the start / end of the current line |
+| <kbd>g</kbd> / <kbd>G</kbd> | Jump to the first / last line of the buffer |
+| <kbd>Ctrl+D</kbd> | Clear the entire editor content |
+
+### Query editor (insert mode)
+
+| Key | Description |
+|-----|-------------|
+| <kbd>Escape</kbd> | Return to normal mode |
+| <kbd>Arrow keys</kbd> | Move the cursor |
+
+### Sidebar tree
+
+| Key | Description |
+|-----|-------------|
+| <kbd>Arrow Up</kbd> / <kbd>k</kbd> | Move up the tree |
+| <kbd>Arrow Down</kbd> / <kbd>j</kbd> | Move down the tree |
+| <kbd>Enter</kbd> | List all rows of the selected table and display its structure |
+
+### Result set panel
+
+Applies to all tabs of the result set panel.
+
+| Key | Description |
+|-----|-------------|
+| <kbd>tab</kbd> / <kbd>shift+tab</kbd> | Navigate to the next / previous metadata tab |
+| <kbd>Arrow Up</kbd> / <kbd>k</kbd> | Navigate the table upward |
+| <kbd>Arrow Down</kbd> / <kbd>j</kbd> | Navigate the table downward |
+| <kbd>Arrow Left</kbd> / <kbd>h</kbd> | Navigate the table to the left |
+| <kbd>Arrow Right</kbd> / <kbd>l</kbd> | Navigate the table to the right |
+| <kbd>g</kbd> / <kbd>G</kbd> | Move to the top / bottom of the dataset |
+| <kbd>0</kbd> / <kbd>$</kbd> | Move to the left / right edge of the row |
+| <kbd>Enter</kbd> | Copy the content of the selected cell |
+
+### Global
+
+| Key | Description |
+|-----|-------------|
+| <kbd>F8</kbd> | Open the query history view |
+| <kbd>?</kbd> | Open the help modal showing all key bindings |
+| <kbd>Esc</kbd> | Dismiss the help modal (or return to normal mode in the query editor) |
+| <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application |
