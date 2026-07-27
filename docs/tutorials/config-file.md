@@ -107,6 +107,8 @@ keybindings:
   page-bottom: 'G'
   end-of-line: '$'
   beginning-of-line: '0'
+  help: '?'
+  quit: 'ctrl+c'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'

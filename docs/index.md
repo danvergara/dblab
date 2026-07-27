@@ -30,20 +30,15 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
   * Zero dependencies.  
   * Vim-style query editor (normal and insert modes, line-oriented editing commands).  
   * Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results in separate tabs.  
+  * Single-query execution: execute only the query on the current cursor line with `ctrl+r`, without running other statements in the editor.  
   * Connection profiles with secure credential storage in the OS keyring.  
   * Query history: executed queries are automatically saved and can be browsed or re-used from a searchable list.  
   * Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).  
+  * Built-in help modal: press `?` to display a help overlay showing all available key bindings; press `Esc` to dismiss it.  
 
 ## Installation
 
-{--if you need to work with SQLite3, install the CGO enabled binary using the proper bash script listed below.--}
-
-{==
-
-The above comment is deprecated and CGO is not needed anymore.   
-There will be a single binary capable of dealing with all supported clients.
- 
-==}
+A single binary handles every supported client — CGO is not required, including for SQLite3.
 
 ### Homebrew installation
 
