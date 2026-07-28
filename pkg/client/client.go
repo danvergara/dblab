@@ -189,7 +189,7 @@ func (c *Client) Conn() string {
 		ro = "🔒️"
 	}
 	if c.driver == drivers.SQLite {
-		return fmt.Sprintf("%s %s", c.host, ro)
+		return fmt.Sprintf("%s %s", c.dbName, ro)
 	}
 	return fmt.Sprintf("%s@%s:%s %s", c.user, c.host, c.port, ro)
 }
