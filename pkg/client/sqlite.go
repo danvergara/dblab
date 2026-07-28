@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -71,8 +72,9 @@ func (s *sqlite) Indexes(table TableRef) (string, []any, error) {
 //			     v       v
 //	 			[Tables] 	[Views]
 func (s *sqlite) Catalog(ctx context.Context) (*DBNode, error) {
-	rootID := fmt.Sprintf("db:%s", s.dbName)
-	root := &DBNode{ID: rootID, Name: s.dbName, Type: "database"}
+	dbName := filepath.Base(s.dbName)
+	rootID := fmt.Sprintf("db:%s", dbName)
+	root := &DBNode{ID: rootID, Name: dbName, Type: "database"}
 
 	queue := []*DBNode{root}
 
