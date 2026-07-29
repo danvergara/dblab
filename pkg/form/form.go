@@ -56,6 +56,7 @@ type Model struct {
 	portInput     textinput.Model
 	userInput     textinput.Model
 	passwordInput textinput.Model
+	schemaInput   textinput.Model
 	databaseInput textinput.Model
 	filePathInput textinput.Model
 	limitInput    textinput.Model
@@ -139,6 +140,10 @@ func (m *Model) Password() string {
 // Database returns the database name value.
 func (m *Model) Database() string {
 	return m.databaseInput.Value()
+}
+
+func (m *Model) Schema() string {
+	return m.schemaInput.Value()
 }
 
 // SSLMode returns the ssl mode name value.
@@ -242,6 +247,11 @@ func initModel() Model {
 	password.CharLimit = 200
 	password.SetWidth(20)
 
+	schema := textinput.New()
+	schema.Placeholder = "Schema"
+	schema.CharLimit = 200
+	schema.SetWidth(20)
+
 	database := textinput.New()
 	database.Placeholder = "Database"
 	database.CharLimit = 200
@@ -317,6 +327,7 @@ func initModel() Model {
 		portInput:                   port,
 		userInput:                   user,
 		passwordInput:               password,
+		schemaInput:                 schema,
 		databaseInput:               database,
 		limitInput:                  limit,
 		filePathInput:               filePath,
@@ -351,6 +362,7 @@ func Run() (command.Options, error) {
 		Port:                   m.Port(),
 		User:                   m.User(),
 		Pass:                   m.Password(),
+		Schema:                 m.Schema(),
 		DBName:                 m.Database(),
 		SSL:                    m.SSLMode(),
 		SSLCert:                m.SSLCert(),
