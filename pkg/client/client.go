@@ -124,13 +124,13 @@ func New(opts command.Options) (*Client, error) {
 		return nil, fmt.Errorf("%s driver not supported", c.driver)
 	}
 
-	switch c.driver {
-	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
-		if _, err = db.Exec(fmt.Sprintf("set search_path = '%s'", c.schema)); err != nil {
-			return nil, err
-		}
-	case drivers.Oracle:
-		if c.schema != "" {
+	if c.schema != "" {
+		switch c.driver {
+		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
+			if _, err = db.Exec(fmt.Sprintf("set search_path = '%s'", c.schema)); err != nil {
+				return nil, err
+			}
+		case drivers.Oracle:
 			if _, err = db.Exec(fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s", c.schema)); err != nil {
 				return nil, err
 			}
