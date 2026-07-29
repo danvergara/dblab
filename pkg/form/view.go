@@ -39,12 +39,23 @@ func standardView(m *Model) string {
 func viewInputs(m *Model) []string {
 	var inputs []string
 
-	if m.driver == drivers.SQLite {
+	switch m.driver {
+	case drivers.SQLite:
 		inputs = []string{
 			m.filePathInput.View(),
 			m.limitInput.View(),
 		}
-	} else {
+	case drivers.PostgreSQL, drivers.Postgres, drivers.SQLServer, drivers.Oracle:
+		inputs = []string{
+			m.hostInput.View(),
+			m.portInput.View(),
+			m.userInput.View(),
+			m.passwordInput.View(),
+			m.schemaInput.View(),
+			m.databaseInput.View(),
+			m.limitInput.View(),
+		}
+	case drivers.MySQL:
 		inputs = []string{
 			m.hostInput.View(),
 			m.portInput.View(),

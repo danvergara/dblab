@@ -102,11 +102,21 @@ func updateStd(msg tea.Msg, m *Model) (tea.Model, tea.Cmd) {
 func stdInputs(m *Model) []textinput.Model {
 	var inputs []textinput.Model
 
-	if m.driver == drivers.SQLite {
+	switch m.driver {
+	case drivers.SQLite:
 		inputs = []textinput.Model{
 			m.filePathInput,
 		}
-	} else {
+	case drivers.PostgreSQL, drivers.Postgres, drivers.SQLServer, drivers.Oracle:
+		inputs = []textinput.Model{
+			m.hostInput,
+			m.portInput,
+			m.userInput,
+			m.passwordInput,
+			m.schemaInput,
+			m.databaseInput,
+		}
+	case drivers.MySQL:
 		inputs = []textinput.Model{
 			m.hostInput,
 			m.portInput,
@@ -122,11 +132,25 @@ func stdInputs(m *Model) []textinput.Model {
 }
 
 func assignStdInputValues(m *Model, inputs []textinput.Model) {
-	if m.driver == drivers.SQLite && len(inputs) == 2 {
-		m.filePathInput = inputs[0]
-		m.limitInput = inputs[1]
-	} else if len(inputs) == 6 {
-		{
+
+	switch m.driver {
+	case drivers.SQLite:
+		if len(inputs) == 2 {
+			m.filePathInput = inputs[0]
+			m.limitInput = inputs[1]
+		}
+	case drivers.PostgreSQL, drivers.Postgres, drivers.SQLServer, drivers.Oracle:
+		if len(inputs) == 7 {
+			m.hostInput = inputs[0]
+			m.portInput = inputs[1]
+			m.userInput = inputs[2]
+			m.passwordInput = inputs[3]
+			m.schemaInput = inputs[4]
+			m.databaseInput = inputs[5]
+			m.limitInput = inputs[6]
+		}
+	case drivers.MySQL:
+		if len(inputs) == 6 {
 			m.hostInput = inputs[0]
 			m.portInput = inputs[1]
 			m.userInput = inputs[2]
@@ -143,10 +167,29 @@ func updateInputs(msg tea.Msg, m *Model) (*Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	if m.driver == drivers.SQLite {
+	switch m.driver {
+	case drivers.SQLite:
 		m.filePathInput, cmd = m.filePathInput.Update(msg)
 		cmds = append(cmds, cmd)
-	} else {
+	case drivers.PostgreSQL, drivers.Postgres, drivers.SQLServer, drivers.Oracle:
+		m.hostInput, cmd = m.hostInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.portInput, cmd = m.portInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.userInput, cmd = m.userInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.passwordInput, cmd = m.passwordInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.schemaInput, cmd = m.schemaInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.databaseInput, cmd = m.databaseInput.Update(msg)
+		cmds = append(cmds, cmd)
+	case drivers.MySQL:
 		m.hostInput, cmd = m.hostInput.Update(msg)
 		cmds = append(cmds, cmd)
 
