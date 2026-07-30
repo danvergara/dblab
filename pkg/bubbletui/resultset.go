@@ -252,7 +252,9 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 
 			if qr.Error != nil {
 				errPanel := newTextPanel()
-				errPanel.SetContent(fmt.Sprintf("query #%d failed\n\n%s", i+1, qr.Error.Error()))
+				errorText := fmt.Sprintf("query #%d failed\n\n%s", i+1, qr.Error.Error())
+				styledError := errorStyle.Render(errorText)
+				errPanel.SetContent(styledError)
 				r.tablesMetadata[i] = errPanel
 				continue
 			}
