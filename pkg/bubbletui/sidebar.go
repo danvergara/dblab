@@ -111,10 +111,11 @@ func (s *SidebarViewport) SetSize(w, h int) {
 
 func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], width, height int) *treeview.TuiTreeModel[*client.DBNode] {
 	// Create custom key map to avoid key conflicts
+	
 	keyMap := treeview.DefaultKeyMap()
 	keyMap.SearchStart = []string{"/"}
-	keyMap.Up = []string{"up", "k", "w"}
-	keyMap.Down = []string{"down", "j", "s"}
+	keyMap.Up = append([]string{"up", "w"}, s.bindings.Editor.Up.Keys()...)
+	keyMap.Down = append([]string{"down", "s"}, s.bindings.Editor.Down.Keys()...)
 	keyMap.Toggle = []string{"enter"}
 
 	return treeview.NewTuiTreeModel(tree,
@@ -206,11 +207,11 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 
 		s.sidebarViewport.SetContent(s.dbTree.View().Content)
 
-		switch msg.String() {
-		case "left", "h":
+		switch {
+		case key.Matches(msg, s.bindings.Editor.Left) || msg.String() == "left":
 			s.sidebarViewport.ScrollLeft(4)
 			return s, nil
-		case "right", "l":
+		case key.Matches(msg, s.bindings.Editor.Right) || msg.String() == "right":
 			s.sidebarViewport.ScrollRight(4)
 			return s, nil
 		}

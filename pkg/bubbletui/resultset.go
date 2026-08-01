@@ -206,11 +206,11 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 			return r, nil
 		}
 
-		switch msg.String() {
-		case "left", "h":
+		switch {
+		case key.Matches(msg, r.bindings.Editor.Left) || msg.String() == "left":
 			r.viewport.ScrollLeft(4)
 			return r, nil
-		case "right", "l":
+		case key.Matches(msg, r.bindings.Editor.Right) || msg.String() == "right":
 			r.viewport.ScrollRight(4)
 			return r, nil
 		}
