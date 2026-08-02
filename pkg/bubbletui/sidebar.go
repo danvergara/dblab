@@ -17,6 +17,11 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+var (
+	startSearch  = "/"
+	cancelSearch = "esc"
+)
+
 func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool {
 	return func(n *treeview.Node[*client.DBNode]) bool {
 		return (*n.Data()).Type == nodeType
@@ -41,8 +46,9 @@ type SidebarViewport struct {
 	dbTree          *treeview.TuiTreeModel[*client.DBNode]
 	width, height   int
 
-	selected bool
-	dump     io.Writer
+	selected  bool
+	searching bool
+	dump      io.Writer
 }
 
 type DBGraphTreeBuilderProvider struct{}
@@ -112,7 +118,8 @@ func (s *SidebarViewport) SetSize(w, h int) {
 func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], width, height int) *treeview.TuiTreeModel[*client.DBNode] {
 	// Create custom key map to avoid key conflicts
 	keyMap := treeview.DefaultKeyMap()
-	keyMap.SearchStart = []string{"/"}
+	keyMap.SearchStart = []string{startSearch}
+	keyMap.SearchCancel = []string{cancelSearch}
 	keyMap.Up = []string{"up", "k", "w"}
 	keyMap.Down = []string{"down", "j", "s"}
 	keyMap.Toggle = []string{"enter"}
@@ -217,6 +224,12 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 		}
 
 		if s.dbTree != nil {
+			switch msg.String() {
+			case startSearch:
+				s.searching = true
+			case cancelSearch:
+				s.searching = false
+			}
 			updatedModel, treeCmd := s.dbTree.Update(msg)
 			if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[*client.DBNode]); ok {
 				s.dbTree = newTreeModel
@@ -279,6 +292,10 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 
 		return updateGraphMsg{tree: dbTree}
 	}
+}
+
+func (s SidebarViewport) shouldNotMatchABinding(msg tea.KeyPressMsg) bool {
+	return s.searching && len(msg.String()) == 1
 }
 
 func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
