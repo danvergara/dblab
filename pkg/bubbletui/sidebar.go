@@ -178,49 +178,51 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 			}
 		}
 
-		switch {
-		case key.Matches(msg, s.bindings.PageTop):
-			ctx := context.Background()
+		if !s.shouldNotMatchABinding(msg) {
+			switch {
+			case key.Matches(msg, s.bindings.PageTop):
+				ctx := context.Background()
 
-			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-				if err != nil {
+				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+					if err != nil {
+						break
+					}
+
+					_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
 					break
 				}
+				return s, nil
+			case key.Matches(msg, s.bindings.PageBottom):
+				ctx := context.Background()
 
-				_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
-				break
-			}
-			return s, nil
-		case key.Matches(msg, s.bindings.PageBottom):
-			ctx := context.Background()
+				var bottomNodeID string
+				var found bool
 
-			var bottomNodeID string
-			var found bool
+				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+					if err != nil {
+						break
+					}
 
-			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-				if err != nil {
-					break
+					bottomNodeID = nodeInfo.Node.ID()
+					found = true
 				}
 
-				bottomNodeID = nodeInfo.Node.ID()
-				found = true
+				if found {
+					_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
+				}
+				return s, nil
 			}
 
-			if found {
-				_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
+			s.sidebarViewport.SetContent(s.dbTree.View().Content)
+
+			switch msg.String() {
+			case "left", "h":
+				s.sidebarViewport.ScrollLeft(4)
+				return s, nil
+			case "right", "l":
+				s.sidebarViewport.ScrollRight(4)
+				return s, nil
 			}
-			return s, nil
-		}
-
-		s.sidebarViewport.SetContent(s.dbTree.View().Content)
-
-		switch msg.String() {
-		case "left", "h":
-			s.sidebarViewport.ScrollLeft(4)
-			return s, nil
-		case "right", "l":
-			s.sidebarViewport.ScrollRight(4)
-			return s, nil
 		}
 
 		if s.dbTree != nil {
