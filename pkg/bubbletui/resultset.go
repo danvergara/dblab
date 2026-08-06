@@ -20,9 +20,10 @@ import (
 // tabStyles is for tab styling.
 // The tabs are used to show table metadata.
 type tabStyles struct {
-	inactiveTab lipgloss.Style
-	activeTab   lipgloss.Style
-	border      lipgloss.Border
+	inactiveTab      lipgloss.Style
+	activeTab        lipgloss.Style
+	activeTabFocused lipgloss.Style
+	border           lipgloss.Border
 }
 
 // newTabStyles function retuns a pointer to the tabStyles.
@@ -32,8 +33,10 @@ func newTabStyles() *tabStyles {
 	s := new(tabStyles)
 	s.inactiveTab = lipgloss.NewStyle().
 		Padding(0, 1)
-	s.activeTab = s.inactiveTab.
+	s.activeTabFocused = s.inactiveTab.
 		Background(neonPurple)
+	s.activeTab = s.inactiveTab.
+		Background(darkPurple)
 	s.border = lipgloss.RoundedBorder()
 	return s
 }
@@ -295,15 +298,26 @@ func (r ResultSet) View() tea.View {
 	for i, t := range r.tabs {
 		style := s.inactiveTab
 		if i == r.activeTab && r.focused {
-			style = s.activeTab
+			style = s.activeTabFocused
 		}
-		if i > 0 {
-			renderedTabs = append(renderedTabs, lipgloss.NewStyle().Foreground(tableBorder).Render("─"))
+		if i == r.activeTab && !r.focused {
+			style = s.activeTab
 		}
 		renderedTabs = append(renderedTabs, style.Render(t))
 	}
 
-	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
+	tabsWidth := lipgloss.Width(strings.Join(renderedTabs, ""))
+
+	availableWidth := r.width - 2 - tabsWidth
+	if availableWidth < 0 {
+		availableWidth = 0
+	}
+	separatorWidth := ((availableWidth / (len(r.tabs) - 1)) / 2)
+
+	separator := strings.Repeat(lipgloss.NewStyle().Foreground(tableBorder).Render("─"), separatorWidth)
+	tabs := strings.Join(renderedTabs, separator)
+
+	row := lipgloss.JoinHorizontal(lipgloss.Top, tabs)
 	centered := lipgloss.PlaceHorizontal(r.width-2, lipgloss.Center, row,
 		lipgloss.WithWhitespaceChars(s.border.Top),
 		lipgloss.WithWhitespaceStyle(borderCharStyle))
