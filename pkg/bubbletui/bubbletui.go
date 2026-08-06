@@ -228,7 +228,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.editorWidth = m.rightWidth - 4
 		m.editorHeight = availableHeight/3 - 2
 
-		m.resultSetHeight = availableHeight - m.editorHeight - 4
+		m.resultSetHeight = availableHeight - m.editorHeight - 2
 		m.resultSetWidth = m.rightWidth - 4
 
 		m.help.SetWidth(msg.Width)
