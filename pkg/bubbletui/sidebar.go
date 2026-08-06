@@ -119,7 +119,6 @@ func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], w
 	// Create custom key map to avoid key conflicts
 	keyMap := treeview.DefaultKeyMap()
 	keyMap.SearchStart = []string{startSearch}
-	keyMap.SearchCancel = []string{cancelSearch}
 	keyMap.Up = []string{"up", "k", "w"}
 	keyMap.Down = []string{"down", "j", "s"}
 	keyMap.Toggle = []string{"enter"}
@@ -178,60 +177,58 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 			}
 		}
 
-		if !s.shouldNotMatchABinding(msg) {
-			switch {
-			case key.Matches(msg, s.bindings.PageTop):
-				ctx := context.Background()
+		switch {
+		case key.Matches(msg, s.bindings.PageTop):
+			ctx := context.Background()
 
-				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-					if err != nil {
-						break
-					}
-
-					_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+				if err != nil {
 					break
 				}
-				return s, nil
-			case key.Matches(msg, s.bindings.PageBottom):
-				ctx := context.Background()
 
-				var bottomNodeID string
-				var found bool
+				_, _ = s.dbTree.SetFocusedID(ctx, nodeInfo.Node.ID())
+				break
+			}
+			return s, nil
+		case key.Matches(msg, s.bindings.PageBottom):
+			ctx := context.Background()
 
-				for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
-					if err != nil {
-						break
-					}
+			var bottomNodeID string
+			var found bool
 
-					bottomNodeID = nodeInfo.Node.ID()
-					found = true
+			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
+				if err != nil {
+					break
 				}
 
-				if found {
-					_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
-				}
-				return s, nil
+				bottomNodeID = nodeInfo.Node.ID()
+				found = true
 			}
 
-			s.sidebarViewport.SetContent(s.dbTree.View().Content)
+			if found {
+				_, _ = s.dbTree.SetFocusedID(ctx, bottomNodeID)
+			}
+			return s, nil
+		}
 
-			switch msg.String() {
-			case "left", "h":
+		s.sidebarViewport.SetContent(s.dbTree.View().Content)
+
+		switch msg.String() {
+		case "left", "h":
+			if !s.searching {
 				s.sidebarViewport.ScrollLeft(4)
-				return s, nil
-			case "right", "l":
-				s.sidebarViewport.ScrollRight(4)
-				return s, nil
 			}
+		case "right", "l":
+			if !s.searching {
+				s.sidebarViewport.ScrollRight(4)
+			}
+		case startSearch:
+			s.searching = true
+		case cancelSearch:
+			s.searching = false
 		}
 
 		if s.dbTree != nil {
-			switch msg.String() {
-			case startSearch:
-				s.searching = true
-			case cancelSearch:
-				s.searching = false
-			}
 			updatedModel, treeCmd := s.dbTree.Update(msg)
 			if newTreeModel, ok := updatedModel.(*treeview.TuiTreeModel[*client.DBNode]); ok {
 				s.dbTree = newTreeModel
@@ -294,10 +291,6 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 
 		return updateGraphMsg{tree: dbTree}
 	}
-}
-
-func (s SidebarViewport) shouldNotMatchABinding(msg tea.KeyPressMsg) bool {
-	return s.searching && len(msg.String()) == 1
 }
 
 func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
