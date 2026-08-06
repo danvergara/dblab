@@ -64,6 +64,8 @@ func NewHistoryModel() *HistoryModel {
 		Bold(true)
 	queryList.SetShowStatusBar(false)
 	queryList.SetShowHelp(true)
+	queryList.KeyMap.Quit.Unbind()
+	queryList.KeyMap.ForceQuit.Unbind()
 
 	// Set up the spinner model.
 	s := spinner.New()
