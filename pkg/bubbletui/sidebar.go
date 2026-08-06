@@ -116,6 +116,7 @@ func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], w
 	keyMap.Up = []string{"up", "k", "w"}
 	keyMap.Down = []string{"down", "j", "s"}
 	keyMap.Toggle = []string{"enter"}
+	keyMap.Quit = []string{}
 
 	return treeview.NewTuiTreeModel(tree,
 		treeview.WithTuiWidth[*client.DBNode](width),
