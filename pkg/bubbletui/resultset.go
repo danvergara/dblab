@@ -298,7 +298,7 @@ func (r ResultSet) View() tea.View {
 			style = s.activeTab
 		}
 		if i > 0 {
-			renderedTabs = append(renderedTabs, "─")
+			renderedTabs = append(renderedTabs, lipgloss.NewStyle().Foreground(tableBorder).Render("─"))
 		}
 		renderedTabs = append(renderedTabs, style.Render(t))
 	}
