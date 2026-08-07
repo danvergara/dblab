@@ -1,13 +1,13 @@
 PLATFORM=linux/amd64
 DB_DRIVER?=postgres
-DB_USER?=postgres
+DB_USER?=sakila
 
 .PHONY: test
 ## test: Runs the tests
 test:
 	DB_USER=$(DB_USER) \
-	DB_PASSWORD=password \
-	DB_NAME=products \
+	DB_PASSWORD=sakila \
+	DB_NAME=sakila \
 	DB_DRIVER=$(DB_DRIVER) \
 	go test -v -race ./...
 
