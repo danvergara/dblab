@@ -244,11 +244,8 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 			// If the user cancels or it times out, the driver halts execution.
 			if isReadQuery(query) {
 				start := time.Now()
-				if strings.HasSuffix(query, JSONSuffix) || strings.HasSuffix(query, strings.ToUpper(JSONSuffix)) {
-					query = strings.TrimSuffix(query, JSONSuffix)
-					query = strings.TrimSuffix(query, strings.ToUpper(JSONSuffix))
-					isJSONQuery = true
-				}
+
+				query, isJSONQuery = trimJSONSuffix(query)
 
 				rows, err := c.db.QueryxContext(ctx, query, args...)
 				result.Duration = time.Since(start)
@@ -742,4 +739,17 @@ func isReadQuery(query string) bool {
 		// INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, etc.
 		return false
 	}
+}
+
+// trimJSONSuffix reports whether the query requests the JSON view,
+// returning the query with the suffix removed.
+func trimJSONSuffix(query string) (string, bool) {
+	trimmed := strings.TrimSpace(query)
+	if len(trimmed) < len(JSONSuffix) {
+		return query, false
+	}
+	if strings.EqualFold(trimmed[len(trimmed)-len(JSONSuffix):], JSONSuffix) {
+		return strings.TrimSpace(trimmed[:len(trimmed)-len(JSONSuffix)]), true
+	}
+	return query, false
 }
