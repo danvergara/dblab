@@ -20,22 +20,24 @@ import (
 // tabStyles is for tab styling.
 // The tabs are used to show table metadata.
 type tabStyles struct {
-	inactiveTab lipgloss.Style
-	activeTab   lipgloss.Style
+	inactiveTab      lipgloss.Style
+	activeTab        lipgloss.Style
+	activeTabFocused lipgloss.Style
+	border           lipgloss.Border
 }
 
 // newTabStyles function retuns a pointer to the tabStyles.
-// It basically defines the default borders for bot active and inactive tabs.
+// It defines the highlighted background used for the active tab and the
+// border character shared with the result set window below the tab row.
 func newTabStyles() *tabStyles {
-	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
-	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
 	s := new(tabStyles)
 	s.inactiveTab = lipgloss.NewStyle().
-		Border(inactiveTabBorder, true).
-		BorderForeground(darkPurple).
 		Padding(0, 1)
+	s.activeTabFocused = s.inactiveTab.
+		Background(neonPurple)
 	s.activeTab = s.inactiveTab.
-		Border(activeTabBorder, true)
+		Background(darkPurple)
+	s.border = lipgloss.RoundedBorder()
 	return s
 }
 
@@ -284,60 +286,41 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 }
 
 func (r ResultSet) View() tea.View {
-	var renderedTabs []string
-
 	tableBorder := darkPurple
 	if r.focused {
 		tableBorder = neonPurple
 	}
 
-	doc := strings.Builder{}
 	s := r.tabStyles
-	numTabs := len(r.tabs)
-	viewportWidth := r.width
+	borderCharStyle := lipgloss.NewStyle().Foreground(tableBorder)
 
-	baseWidth := viewportWidth / numTabs
-	remainder := viewportWidth % numTabs
-
+	var renderedTabs []string
 	for i, t := range r.tabs {
-		tabWidth := baseWidth
-
-		if i < remainder {
-			tabWidth++
+		style := s.inactiveTab
+		if i == r.activeTab && r.focused {
+			style = s.activeTabFocused
 		}
-
-		var style lipgloss.Style
-		isFirst, isLast, isActive := i == 0, i == len(r.tabs)-1, i == r.activeTab
-
-		if isActive {
-			style = s.activeTab.Width(tabWidth)
-			style = style.BorderForeground(neonPurple)
-		} else {
-			style = s.inactiveTab.Width(tabWidth)
+		if i == r.activeTab && !r.focused {
+			style = s.activeTab
 		}
-
-		border, _, _, _, _ := style.GetBorder()
-		if isFirst && isActive {
-			border.BottomLeft = "│"
-		} else if isFirst && !isActive {
-			border.BottomLeft = "│"
-		} else if isLast && isActive {
-			border.BottomRight = "│"
-		} else if isLast && !isActive {
-			border.BottomRight = "┤"
-		}
-
-		style = style.Border(border)
 		renderedTabs = append(renderedTabs, style.Render(t))
 	}
 
-	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
+	separatorWidth := (max(r.width, 0) / len(r.tabs)) / 2
 
-	lipgloss.JoinVertical(lipgloss.Left, row, r.viewport.View())
+	separator := strings.Repeat(lipgloss.NewStyle().Foreground(tableBorder).Render("─"), separatorWidth)
+	tabs := strings.Join(renderedTabs, separator)
+
+	row := lipgloss.JoinHorizontal(lipgloss.Top, tabs)
+	centered := lipgloss.PlaceHorizontal(r.width-2, lipgloss.Center, row,
+		lipgloss.WithWhitespaceChars(s.border.Top),
+		lipgloss.WithWhitespaceStyle(borderCharStyle))
+	top := borderCharStyle.Render("╭") + centered + borderCharStyle.Render("╮")
 
 	styledResultSet := resultSetStyle.BorderForeground(tableBorder).Width(r.width).Height(r.height).UnsetBorderTop()
 
-	doc.WriteString(row)
+	doc := strings.Builder{}
+	doc.WriteString(top)
 	doc.WriteString("\n")
 	doc.WriteString(styledResultSet.Render(r.viewport.View()))
 	return tea.NewView(doc.String())
@@ -406,17 +389,6 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			}
 		}
 	}
-}
-
-// tabBorderWithBottom function is used to define the tab borders.
-// Borders changes whether the tabs is inacative or inactive.
-// Active tab misses the bottom border.
-func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
-	border := lipgloss.RoundedBorder()
-	border.BottomLeft = left
-	border.Bottom = middle
-	border.BottomRight = right
-	return border
 }
 
 func newTablePanel(height, width int) *TablePanel {
