@@ -306,9 +306,7 @@ func (r ResultSet) View() tea.View {
 		renderedTabs = append(renderedTabs, style.Render(t))
 	}
 
-	tabsWidth := lipgloss.Width(strings.Join(renderedTabs, ""))
-
-	separatorWidth := (max(availableWidth, 0) / len(r.tabs)) / 2
+	separatorWidth := (max(r.width, 0) / len(r.tabs)) / 2
 
 	separator := strings.Repeat(lipgloss.NewStyle().Foreground(tableBorder).Render("─"), separatorWidth)
 	tabs := strings.Join(renderedTabs, separator)
