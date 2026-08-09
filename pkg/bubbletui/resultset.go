@@ -308,11 +308,7 @@ func (r ResultSet) View() tea.View {
 
 	tabsWidth := lipgloss.Width(strings.Join(renderedTabs, ""))
 
-	availableWidth := r.width - 2 - tabsWidth
-	if availableWidth < 0 {
-		availableWidth = 0
-	}
-	separatorWidth := ((availableWidth / (len(r.tabs))) / 2)
+	separatorWidth := (max(availableWidth, 0) / len(r.tabs)) / 2
 
 	separator := strings.Repeat(lipgloss.NewStyle().Foreground(tableBorder).Render("─"), separatorWidth)
 	tabs := strings.Join(renderedTabs, separator)
