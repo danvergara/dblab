@@ -54,6 +54,8 @@ type TUIKeyMap struct {
 	Quit            key.Binding
 	Navigation      TUINavigationKeyMap
 	Editor          EditorKeyMap
+	SiebarViewport  SiebarViewportKeyMap
+	ResultSet       ResultSetKeyMap
 }
 
 func (k TUIKeyMap) ShortHelp() []key.Binding {
@@ -89,6 +91,20 @@ type TUINavigationKeyMap struct {
 	Down  key.Binding
 	Left  key.Binding
 	Right key.Binding
+}
+
+type SiebarViewportKeyMap struct {
+	PageTop    key.Binding
+	PageBottom key.Binding
+}
+
+type ResultSetKeyMap struct {
+	NextTab         key.Binding
+	PrevTab         key.Binding
+	EndOfLine       key.Binding
+	BeginningOfLine key.Binding
+	PageTop         key.Binding
+	PageBottom      key.Binding
 }
 
 func DefaultKeyMap() *TUIKeyMap {

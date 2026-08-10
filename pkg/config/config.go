@@ -83,6 +83,15 @@ type KeyBindings struct {
 	Quit            string `fig:"quit"   default:"ctrl+c"`
 	Navigation      NavigationBindgins
 	Editor          EditorKeyMap
+	SiebarViewport  SiebarViewportKeyMap
+	ResultSet       ResultSetKeyMap
+}
+
+type NavigationBindgins struct {
+	Up    string `fig:"up"    default:"ctrl+k"`
+	Down  string `fig:"down"  default:"ctrl+j"`
+	Left  string `fig:"left"  default:"ctrl+h"`
+	Right string `fig:"right" default:"ctrl+l"`
 }
 
 type EditorKeyMap struct {
@@ -96,16 +105,29 @@ type EditorKeyMap struct {
 	Insert string `fig:"insert" default:"i"`
 	Normal string `fig:"normal" default:"esc"`
 
+	// Internal Navigation.
+	PageTop         string `fig:"page-top"      default:"g"`
+	PageBottom      string `fig:"page-bottom"   default:"G"`
+	EndOfLine       string `fig:"end-of-line"   default:"$"`
+	BeginningOfLine string `fig:"beginning-of-line"   default:"0"`
+
 	// Actions.
 	ExecuteQuery       string `fig:"execute-query" default:"ctrl+e"`
 	ExecuteSingleQuery string `fig:"execute-single-query" default:"ctrl+r"`
 }
 
-type NavigationBindgins struct {
-	Up    string `fig:"up"    default:"ctrl+k"`
-	Down  string `fig:"down"  default:"ctrl+j"`
-	Left  string `fig:"left"  default:"ctrl+h"`
-	Right string `fig:"right" default:"ctrl+l"`
+type SiebarViewportKeyMap struct {
+	PageTop    string `fig:"page-top"      default:"shift+j"`
+	PageBottom string `fig:"page-bottom"   default:"shift+k"`
+}
+
+type ResultSetKeyMap struct {
+	NextTab         string `fig:"next-tab"      default:"tab"`
+	PrevTab         string `fig:"prev-tab"      default:"shift+tab"`
+	EndOfLine       string `fig:"end-of-line"   default:"$"`
+	BeginningOfLine string `fig:"beginning-of-line"   default:"0"`
+	PageTop         string `fig:"page-top"      default:"g"`
+	PageBottom      string `fig:"page-bottom"   default:"G"`
 }
 
 // New returns a config instance the with db connection data inplace based on the flags of a cobra command.
