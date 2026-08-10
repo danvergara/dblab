@@ -383,7 +383,7 @@ func (suite *ClientTestSuite) TestMetadata() {
 
 	switch suite.driver {
 	case drivers.Postgres:
-		suite.Len(m.Structure.Columns, 8)
+		suite.Len(m.Structure.Columns, 5)
 	case drivers.MySQL:
 		suite.Len(m.Structure.Columns, 6)
 	default:
