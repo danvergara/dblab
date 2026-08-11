@@ -382,6 +382,16 @@ func (c *Config) getSQLXConnStr(dbhost, dbname string) string {
 			c.Port,
 			dbname,
 		)
+	case drivers.ClickHouse:
+		return fmt.Sprintf(
+			"%s://%s:%s@%s:%s/%s",
+			c.Driver,
+			c.User,
+			c.Pswd,
+			dbhost,
+			c.Port,
+			dbname,
+		)
 	default:
 		return ""
 	}
