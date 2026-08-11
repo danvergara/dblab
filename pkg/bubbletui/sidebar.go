@@ -11,8 +11,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/Digital-Shane/treeview/v2"
 
+	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
 	"github.com/danvergara/dblab/pkg/client"
-	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -34,8 +34,8 @@ type selectViewMsg struct {
 }
 
 type SidebarViewport struct {
-	c        *client.Client
-	bindings *command.TUIKeyMap
+	c      *client.Client
+	keyMap keys.SiebarViewportKeyMap
 
 	sidebarViewport viewport.Model
 	dbTree          *treeview.TuiTreeModel[*client.DBNode]
@@ -58,7 +58,7 @@ func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNod
 	return do.Children
 }
 
-func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKeyMap) (SidebarViewport, error) {
+func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SiebarViewportKeyMap) (SidebarViewport, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -69,9 +69,9 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 	}
 
 	svp := SidebarViewport{
-		c:        c,
-		bindings: kb,
-		dump:     dump,
+		c:      c,
+		keyMap: km,
+		dump:   dump,
 	}
 
 	svp.sidebarViewport = viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
@@ -172,7 +172,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 		}
 
 		switch {
-		case key.Matches(msg, s.bindings.PageTop):
+		case key.Matches(msg, s.keyMap.GoToTop):
 			ctx := context.Background()
 
 			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
@@ -184,7 +184,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 				break
 			}
 			return s, nil
-		case key.Matches(msg, s.bindings.PageBottom):
+		case key.Matches(msg, s.keyMap.GoToBottom):
 			ctx := context.Background()
 
 			var bottomNodeID string

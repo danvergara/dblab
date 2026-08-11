@@ -7,8 +7,8 @@ import (
 
 	"github.com/danvergara/dblab/pkg/app"
 	"github.com/danvergara/dblab/pkg/bubbletui"
-	"github.com/danvergara/dblab/pkg/command"
-	"github.com/danvergara/dblab/pkg/config"
+	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
+	// "github.com/danvergara/dblab/pkg/config"
 	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +26,7 @@ $XDG_CONFIG_HOME/dblab/dblab.json.`,
 	},
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var kb = command.DefaultKeyMap()
+		var km = keys.DefaultKeyMap()
 
 		opts, err := bubbletui.Run()
 		if err != nil {
@@ -37,17 +37,17 @@ $XDG_CONFIG_HOME/dblab/dblab.json.`,
 		}
 
 		if keybindings {
-			kb, err = config.SetupKeyMap()
-			if err != nil {
-				return err
-			}
+			// 	kb, err = config.SetupKeyMap()
+			// 	if err != nil {
+			// 		return err
+			// 	}
 		}
 
 		if err := connection.ValidateOpts(opts); err != nil {
 			return err
 		}
 
-		app, err := app.New(opts, kb)
+		app, err := app.New(opts, km)
 		if err != nil {
 			return err
 		}

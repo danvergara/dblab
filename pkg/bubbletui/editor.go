@@ -10,7 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
-	"github.com/danvergara/dblab/pkg/command"
+	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -41,15 +41,16 @@ type modeChangeMsg struct {
 }
 
 type Editor struct {
-	editor     textarea.Model
-	bindings   *command.TUIKeyMap
+	editor textarea.Model
+	keyMap keys.EditorKeyMap
+
 	mode       Mode
 	register   string
 	pendingCmd string
 	dump       io.Writer
 }
 
-func NewEditor(kb *command.TUIKeyMap) Editor {
+func NewEditor(km keys.EditorKeyMap) Editor {
 	var isDark = compat.HasDarkBackground
 	var dump *os.File
 
@@ -69,7 +70,7 @@ func NewEditor(kb *command.TUIKeyMap) Editor {
 	ta.SetStyles(s)
 	ta.Focus()
 
-	return Editor{editor: ta, bindings: kb, dump: dump}
+	return Editor{editor: ta, keyMap: km, dump: dump}
 }
 
 func (e *Editor) SetWidth(w int) {
@@ -101,7 +102,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	case querySelectedMsg:
 		e.editor.SetValue(msg.QueryText)
 	case tea.KeyPressMsg:
-		if key.Matches(msg, e.bindings.Editor.ExecuteQuery) {
+		if key.Matches(msg, e.keyMap.ExecuteQuery) {
 			editorContent := e.editor.Value()
 
 			queriesToRun := prepareQueriesForExecution(editorContent)
@@ -116,7 +117,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			return e, fireQueryCmd
 		}
 
-		if key.Matches(msg, e.bindings.Editor.ExecuteSingleQuery) {
+		if key.Matches(msg, e.keyMap.ExecuteSingleQuery) {
 			value := e.editor.Value()
 
 			if len(value) == 0 {
@@ -190,7 +191,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			}
 
 			switch {
-			case key.Matches(msg, e.bindings.Editor.Insert):
+			case key.Matches(msg, e.keyMap.Insert):
 				e.mode = InsertMode
 				styles := e.editor.Styles()
 				styles.Cursor.Blink = true
@@ -200,19 +201,19 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 				}
 				return e, fireModeChangeCmd
 
-			case key.Matches(msg, e.bindings.Editor.Left):
+			case key.Matches(msg, e.keyMap.Left):
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 				return e, cmd
 
-			case key.Matches(msg, e.bindings.Editor.Right):
+			case key.Matches(msg, e.keyMap.Right):
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 				return e, cmd
 
-			case key.Matches(msg, e.bindings.Editor.Down):
+			case key.Matches(msg, e.keyMap.Down):
 				e.editor.CursorDown()
 				return e, nil
 
-			case key.Matches(msg, e.bindings.Editor.Up):
+			case key.Matches(msg, e.keyMap.Up):
 				e.editor.CursorUp()
 				return e, nil
 			}
@@ -220,7 +221,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			return e, nil
 		case InsertMode:
 			switch {
-			case key.Matches(msg, e.bindings.Editor.Normal):
+			case key.Matches(msg, e.keyMap.Normal):
 				e.mode = NormalMode
 				styles := e.editor.Styles()
 				styles.Cursor.Blink = false
