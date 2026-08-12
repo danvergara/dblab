@@ -72,10 +72,6 @@ database:
     ssh-key-pass: "hiuwiewnc092"
 limit: 50
 keybindings:
-  next-tab: 'tab'
-  prev-tab: 'shift+tab'
-  end-of-line: '$'
-  beginning-of-line: '0'
   help: '?'
   quit: 'ctrl+c'
   navigation:
@@ -84,10 +80,25 @@ keybindings:
     left: 'ctrl+h'
     right: 'ctrl+l'
   editor:
-    execute-query: 'ctrl+e'
-    insert: 'i'
-    normal: 'esc'
     up: 'k'
     down: 'j'
     left: 'h'
     right: 'l'
+    line-end: '$'
+    line-start: '0'
+    go-top: 'g'
+    go-bottom: 'G'
+    insert: 'i'
+    normal: 'esc'
+    execute-query: 'ctrl+e'
+    execute-single-query: 'ctrl+r'
+  sidebar:
+    go-top: 'ctrl+k'
+    go-bottom: 'ctrl+j'
+  resultset:
+    next-tab: 'tab'
+    prev-tab: 'shift+tab'
+    line-end: '$'
+    line-start: '0'
+    go-top: 'g'
+    go-bottom: 'G'

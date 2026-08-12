@@ -178,30 +178,42 @@ func TestInit(t *testing.T) {
 }
 
 func TestSetupKeybindings(t *testing.T) {
-	kb, err := config.SetupKeyMap()
+	kb, err := config.GetKeyMap()
 	assert.NoError(t, err)
+	km := kb.KeyBindings
 
-	assert.Contains(t, kb.NextTab.Keys(), "tab")
-	assert.Contains(t, kb.PrevTab.Keys(), "shift+tab")
-	assert.Contains(t, kb.EndOfLine.Keys(), "$")
-	assert.Contains(t, kb.BeginningOfLine.Keys(), "0")
-	assert.Contains(t, kb.Help.Keys(), "?")
-	assert.Contains(t, kb.Quit.Keys(), "ctrl+c")
-	assert.Contains(t, kb.Navigation.Up.Keys(), "ctrl+k")
-	assert.Contains(t, kb.Navigation.Down.Keys(), "ctrl+j")
-	assert.Contains(t, kb.Navigation.Right.Keys(), "ctrl+l")
-	assert.Contains(t, kb.Navigation.Left.Keys(), "ctrl+h")
-	assert.Contains(t, kb.PageBottom.Keys(), "G")
-	assert.Contains(t, kb.PageTop.Keys(), "g")
-	assert.Contains(t, kb.EndOfLine.Keys(), "$")
-	assert.Contains(t, kb.BeginningOfLine.Keys(), "0")
+	assert.Contains(t, km.Help, "?")
+	assert.Contains(t, km.Quit, "ctrl+c")
 
-	assert.Contains(t, kb.Editor.ExecuteQuery.Keys(), "ctrl+e")
-	assert.Contains(t, kb.Editor.ExecuteSingleQuery.Keys(), "ctrl+r")
-	assert.Contains(t, kb.Editor.Up.Keys(), "k")
-	assert.Contains(t, kb.Editor.Down.Keys(), "j")
-	assert.Contains(t, kb.Editor.Right.Keys(), "l")
-	assert.Contains(t, kb.Editor.Left.Keys(), "h")
-	assert.Contains(t, kb.Editor.Insert.Keys(), "i")
-	assert.Contains(t, kb.Editor.Normal.Keys(), "esc")
+	// Navigation.
+	assert.Contains(t, km.Navigation.Up, "ctrl+k")
+	assert.Contains(t, km.Navigation.Down, "ctrl+j")
+	assert.Contains(t, km.Navigation.Right, "ctrl+l")
+	assert.Contains(t, km.Navigation.Left, "ctrl+h")
+
+	// Editor.
+	assert.Contains(t, km.Editor.Up, "k")
+	assert.Contains(t, km.Editor.Down, "j")
+	assert.Contains(t, km.Editor.Right, "l")
+	assert.Contains(t, km.Editor.Left, "h")
+	assert.Contains(t, km.Editor.LineStart, "0")
+	assert.Contains(t, km.Editor.LineEnd, "$")
+	assert.Contains(t, km.Editor.GoToTop, "g")
+	assert.Contains(t, km.Editor.GoToBottom, "G")
+	assert.Contains(t, km.Editor.Insert, "i")
+	assert.Contains(t, km.Editor.Normal, "esc")
+	assert.Contains(t, km.Editor.ExecuteQuery, "ctrl+e")
+	assert.Contains(t, km.Editor.ExecuteSingleQuery, "ctrl+r")
+
+	// Sidebar.
+	assert.Contains(t, km.Sidebar.GoToTop, "foo") // should be shift+k, but it tests the value comes from the config file
+	assert.Contains(t, km.Sidebar.GoToBottom, "shift+j")
+
+	// Result set.
+	assert.Contains(t, km.ResultSet.NextTab, "bar") // should be tab, but it tests the value comes from the config file
+	assert.Contains(t, km.ResultSet.PrevTab, "shift+tab")
+	assert.Contains(t, km.ResultSet.LineStart, "0")
+	assert.Contains(t, km.ResultSet.LineEnd, "$")
+	assert.Contains(t, km.ResultSet.GoToTop, "g")
+	assert.Contains(t, km.ResultSet.GoToBottom, "G")
 }
