@@ -70,12 +70,12 @@ run-sakila-sqlite: build
 .PHONY: run-ssh
 ## run-ssh: Runs the application through a ssh tunnel
 run-ssh: build
-	./dblab --host postgres --user sakila --pass sakila --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+	./dblab --host postgres --user sakila --pass sakila --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host 127.0.0.1 --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-ssh-key
 ## run-ssh-key: Runs the application through a ssh tunnel using a private key file
 run-ssh-key: build
-	./dblab --host postgres --user sakila --pass sakila --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-key my_ssh_key
+	./dblab --host postgres --user sakila --pass sakila --schema public --ssl disable --port 5432 --driver postgres --limit 50 --ssh-host 127.0.0.1 --ssh-port 2222 --ssh-user root --ssh-key my_ssh_key
 
 .PHONY: run-mysql
 ## run-mysql: Runs the application with a connection to mysql
@@ -85,7 +85,7 @@ run-mysql: build
 .PHONY: run-mysql-ssh
 ## run-mysql-ssh: Runs the application through a ssh tunnel
 run-mysql-ssh: build
-	./dblab --host mysql --user sakila --db sakila --pass sakila --ssl enable --port 3306 --driver mysql --limit 50 --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+	./dblab --host mysql --user sakila --db sakila --pass sakila --ssl enable --port 3306 --driver mysql --limit 50 --ssh-host 127.0.0.1 --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-mysql-socket
 ## run-mysql-socket: Runs the application with a connection to mysql through a socket file. In this example the socke file is located in /var/lib/mysql/mysql.sock.
@@ -130,7 +130,7 @@ run-url: build
 .PHONY: run-url-ssh
 ## run-url-ssh: Runs the application through a ssh tunnel providing the url as parameter
 run-url-ssh: build
-	./dblab --url postgres://sakila:sakila@postgres:5432/sakila?sslmode=disable --schema public --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+	./dblab --url postgres://sakila:sakila@postgres:5432/sakila?sslmode=disable --schema public --ssh-host 127.0.0.1 --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-mysql-url
 ## run-mysql-url: Runs the app passing the url as parameter
@@ -140,7 +140,7 @@ run-mysql-url: build
 .PHONY: run-mysql-url-ssh
 ## run-mysql-url-ssh: Runs the app passing the url as parameter through a ssh tunnel providing the url as parameter
 run-mysql-url-ssh: build
-	./dblab --url "mysql://sakila:sakila@mysql+tcp(mysql:3306)/sakila" --driver mysql --ssh-host localhost --ssh-port 2222 --ssh-user root --ssh-pass root
+	./dblab --url "mysql://sakila:sakila@mysql+tcp(mysql:3306)/sakila" --driver mysql --ssh-host 127.0.0.1 --ssh-port 2222 --ssh-user root --ssh-pass root
 
 .PHONY: run-config
 ## run-config: Runs the client using the config file.
