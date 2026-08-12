@@ -305,7 +305,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusBar.ShowFocus(m.focus)
 				cmds = append(cmds, cmd)
 			}
-			return m, tea.Batch(cmds...)
 		}
 	case modeChangeMsg:
 		m.statusBar, cmd = m.statusBar.Update(msg)
