@@ -32,11 +32,6 @@ unit-test:
 linter:
 	golangci-lint run ./...
 
-.PHONY: docker-build
-## docker-build: Builds de Docker image
-docker-build:
-	@docker build --target bin --output bin/ --platform ${PLATFORM} -t dblab .
-
 .PHONY: build
 ## build: Builds the Go program
 build:
