@@ -17,6 +17,11 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+var (
+	startSearch  = "/"
+	cancelSearch = "esc"
+)
+
 func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool {
 	return func(n *treeview.Node[*client.DBNode]) bool {
 		return (*n.Data()).Type == nodeType
@@ -41,8 +46,9 @@ type SidebarViewport struct {
 	dbTree          *treeview.TuiTreeModel[*client.DBNode]
 	width, height   int
 
-	selected bool
-	dump     io.Writer
+	selected  bool
+	searching bool
+	dump      io.Writer
 }
 
 type DBGraphTreeBuilderProvider struct{}
@@ -112,7 +118,7 @@ func (s *SidebarViewport) SetSize(w, h int) {
 func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], width, height int) *treeview.TuiTreeModel[*client.DBNode] {
 	// Create custom key map to avoid key conflicts
 	keyMap := treeview.DefaultKeyMap()
-	keyMap.SearchStart = []string{"/"}
+	keyMap.SearchStart = []string{startSearch}
 	keyMap.Up = []string{"up", "k", "w"}
 	keyMap.Down = []string{"down", "j", "s"}
 	keyMap.Toggle = []string{"enter"}
@@ -209,11 +215,17 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 
 		switch msg.String() {
 		case "left", "h":
-			s.sidebarViewport.ScrollLeft(4)
-			return s, nil
+			if !s.searching {
+				s.sidebarViewport.ScrollLeft(4)
+			}
 		case "right", "l":
-			s.sidebarViewport.ScrollRight(4)
-			return s, nil
+			if !s.searching {
+				s.sidebarViewport.ScrollRight(4)
+			}
+		case startSearch:
+			s.searching = true
+		case cancelSearch:
+			s.searching = false
 		}
 
 		if s.dbTree != nil {
