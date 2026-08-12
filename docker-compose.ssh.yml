@@ -18,7 +18,6 @@ services:
 
   mysql:
     image: danvergara/sakila:mysql-8.4
-    environment:
     networks:
       - private-network
 
