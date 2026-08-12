@@ -36,31 +36,24 @@ func (p *postgres) TableStructure(table TableRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	query, args, err := psql.Select(
-		"c.column_name",
-		"c.is_nullable",
-		"c.data_type",
-		"c.character_maximum_length",
-		"c.numeric_precision",
-		"c.numeric_scale",
-		"c.ordinal_position",
-		"tc.constraint_type AS pkey",
+		"a.attname AS column_name",
+		"NOT a.attnotnull AS is_nullable",
+		"pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type",
+		"a.attnum AS ordinal_position",
+		"COALESCE(i.indisprimary, false) AS pkey",
 	).
-		From("information_schema.columns AS c").
-		LeftJoin(
-			`information_schema.constraint_column_usage AS ccu
-					ON c.table_schema = ccu.table_schema
-						AND c.table_name = ccu.table_name
-						AND c.column_name = ccu.column_name`,
-		).
-		LeftJoin(
-			`information_schema.table_constraints AS tc
-					ON ccu.constraint_schema = tc.constraint_schema
-						AND ccu.constraint_name = tc.constraint_name`,
-		).
+		From("pg_catalog.pg_attribute a").
+		Join("pg_catalog.pg_class c ON a.attrelid = c.oid").
+		Join("pg_catalog.pg_namespace n ON c.relnamespace = n.oid").
+		LeftJoin(`pg_catalog.pg_index i ON c.oid = i.indrelid 
+                AND a.attnum = ANY(i.indkey) 
+                AND i.indisprimary`).
 		Where(
 			sq.And{
-				sq.Eq{"c.table_schema": table.Schema},
-				sq.Eq{"c.table_name": table.Name},
+				sq.Eq{"n.nspname": table.Schema},
+				sq.Eq{"c.relname": table.Name},
+				sq.Gt{"a.attnum": 0},
+				sq.Expr("NOT a.attisdropped"),
 			},
 		).
 		ToSql()
@@ -70,22 +63,23 @@ func (p *postgres) TableStructure(table TableRef) (string, []any, error) {
 
 // Constraints returns all the constraints of a given table, under a schema.
 func (p *postgres) Constraints(table TableRef) (string, []any, error) {
-	var (
-		query sq.SelectBuilder
-		sql   string
-	)
-
-	query = sq.Select(
-		`tc.constraint_name`,
-		`tc.table_name`,
-		`tc.constraint_type`,
+	sql, args, err := sq.Select(
+		"con.conname AS constraint_name",
+		"c.relname AS table_name",
+		"con.contype AS constraint_type",
+		"pg_catalog.pg_get_constraintdef(con.oid) AS constraint_definition",
 	).
-		From("information_schema.table_constraints AS tc").
-		Where(sq.Eq{"tc.table_name": table.Name}).
-		Where(sq.Eq{"tc.table_schema": table.Schema}).
-		PlaceholderFormat(sq.Dollar)
-
-	sql, args, err := query.ToSql()
+		From("pg_catalog.pg_constraint con").
+		Join("pg_catalog.pg_class c ON con.conrelid = c.oid").
+		Join("pg_catalog.pg_namespace n ON c.relnamespace = n.oid").
+		Where(
+			sq.And{
+				sq.Eq{"n.nspname": table.Schema},
+				sq.Eq{"c.relname": table.Name},
+			},
+		).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
 	if err != nil {
 		return "", nil, err
 	}
@@ -94,19 +88,27 @@ func (p *postgres) Constraints(table TableRef) (string, []any, error) {
 
 // Indexes returns the indexes of a table, under a schema.
 func (p *postgres) Indexes(table TableRef) (string, []any, error) {
-	query := sq.Select("*").
-		From("pg_indexes").
-		Where(sq.And{
-			sq.Eq{"schemaname": table.Schema},
-			sq.Eq{"tablename": table.Name},
-		}).
-		PlaceholderFormat(sq.Dollar)
-
-	sql, args, err := query.ToSql()
-	if err != nil {
-		return "", nil, err
-	}
-
+	sql, args, err := sq.Select(
+		"n.nspname as schema_name",
+		"ix.relname AS index_name",
+		"i.indisunique AS is_unique",
+		"i.indisprimary AS is_primary",
+		"a.attname AS column_name",
+		"pg_catalog.pg_get_indexdef(i.indexrelid) AS index_definition",
+	).
+		From("pg_catalog.pg_class t").
+		Join("pg_catalog.pg_index i ON t.oid = i.indrelid").
+		Join("pg_catalog.pg_class ix ON i.indexrelid = ix.oid").
+		Join("pg_catalog.pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(i.indkey)").
+		Join("pg_catalog.pg_namespace n ON t.relnamespace = n.oid").
+		Where(
+			sq.And{
+				sq.Eq{"n.nspname": table.Schema},
+				sq.Eq{"t.relname": table.Name},
+			},
+		).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
 	return sql, args, err
 }
 
@@ -213,7 +215,6 @@ func (p *postgres) fetchSchemas(_ context.Context, parentID string) ([]*DBNode, 
 			return nil, err
 		}
 		schemas = append(schemas, &DBNode{
-
 			ID:         fmt.Sprintf("%s.s:%s", parentID, name),
 			Name:       name,
 			EntityName: name,
