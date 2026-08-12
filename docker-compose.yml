@@ -1,22 +1,13 @@
 services:
   postgres:
-    image: postgres:12.1-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=users
+    image: danvergara/sakila:postgres-18.4
     ports:
       - '5432:5432'
     networks:
       - dblab
 
   mysql:
-    image: mysql:8.0
-    environment:
-      MYSQL_USER: myuser
-      MYSQL_PASSWORD: 5@klkbN#ABC
-      MYSQL_ROOT_PASSWORD: myuser
-      MYSQL_DATABASE: mydb
+    image: danvergara/sakila:mysql-8.4
     ports:
       - '3306:3306'
     networks:
@@ -32,64 +23,12 @@ services:
       - dblab
 
   mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: danvergara/sakila:mssql-2025
     environment:
       MSSQL_SA_PASSWORD: 5@klkbN#ABC
       ACCEPT_EULA: Y
     ports:
       - '1433:1433'
-    networks:
-      - dblab
-
-  dblab:
-    build:
-      context: .
-      target: builder
-    volumes:
-      - ./:/src/app:z
-    depends_on:
-      - postgres
-    environment:
-      - DB_HOST=postgres
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=users
-      - DB_PORT=5432
-      - DB_DRIVER=postgres
-      - DB_SCHEMA=public
-    entrypoint: ["/bin/bash", "./scripts/entrypoint.dev.sh"]
-    networks:
-      - dblab
-
-  dblab-mysql:
-    build:
-      context: .
-      target: builder
-    volumes:
-      - ./:/src/app:z
-    depends_on:
-      - mysql
-    environment:
-      - DB_HOST=mysql
-      - DB_USER=myuser
-      - DB_PASSWORD=5@klkbN#ABC
-      - DB_NAME=mydb
-      - DB_PORT=3306
-      - DB_DRIVER=mysql
-    entrypoint: ["/bin/bash", "./scripts/entrypoint-mysql.dev.sh"]
-    networks:
-      - dblab
-
-  dblab-sqlite3:
-    build:
-      context: .
-      target: builder
-    volumes:
-      - ./:/src/app:z
-    environment:
-      - DB_NAME=db/dblab.db
-      - DB_DRIVER=sqlite
-    entrypoint: ["/bin/bash", "./scripts/entrypoint-sqlite3.dev.sh"]
     networks:
       - dblab
 

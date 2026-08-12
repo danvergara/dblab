@@ -118,6 +118,5 @@ Usage:
   down                   Shut down all the containers listed in the docker-compose.yml file
   stop-ssh               Shut down all the containers listed in the docker-compose.ssh.yml file
   form                   Runs the application with no arguments
-  create-migration       Creates golang-migrate migration files
   help                   Prints this help message
 ```
