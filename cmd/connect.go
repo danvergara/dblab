@@ -7,8 +7,7 @@ import (
 
 	"github.com/danvergara/dblab/pkg/app"
 	"github.com/danvergara/dblab/pkg/bubbletui"
-	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
-	// "github.com/danvergara/dblab/pkg/config"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/connection"
 	"github.com/spf13/cobra"
 )
@@ -37,10 +36,10 @@ $XDG_CONFIG_HOME/dblab/dblab.json.`,
 		}
 
 		if keybindings {
-			// 	kb, err = config.SetupKeyMap()
-			// 	if err != nil {
-			// 		return err
-			// 	}
+			km, err = keys.ReadKeyMapFromConfig()
+			if err != nil {
+				return err
+			}
 		}
 
 		if err := connection.ValidateOpts(opts); err != nil {

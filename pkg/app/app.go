@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/danvergara/dblab/pkg/bubbletui"
-	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/sshdb"

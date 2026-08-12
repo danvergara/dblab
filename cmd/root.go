@@ -8,7 +8,7 @@ import (
 
 	"github.com/danvergara/dblab/internal/profiles"
 	"github.com/danvergara/dblab/pkg/app"
-	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/config"
 	"github.com/danvergara/dblab/pkg/connection"
@@ -122,10 +122,10 @@ func NewRootCmd() *cobra.Command {
 			// If the --keybindings flag is set, fill the keybindings with the ones fonud in the config file.
 			// This is safe to do even if they're missing in the config files, because the config package has default values for it.
 			if keybindings {
-				// kb, err = config.SetupKeyMap()
-				// if err != nil {
-				// 	return err
-				// }
+				km, err = keys.ReadKeyMapFromConfig()
+				if err != nil {
+					return err
+				}
 			}
 
 			if err := connection.ValidateOpts(opts); err != nil {

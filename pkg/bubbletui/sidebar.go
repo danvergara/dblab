@@ -11,7 +11,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/Digital-Shane/treeview/v2"
 
-	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
@@ -35,7 +35,7 @@ type selectViewMsg struct {
 
 type SidebarViewport struct {
 	c      *client.Client
-	keyMap keys.SiebarViewportKeyMap
+	keyMap keys.SidebarKeyMap
 
 	sidebarViewport viewport.Model
 	dbTree          *treeview.TuiTreeModel[*client.DBNode]
@@ -58,7 +58,7 @@ func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNod
 	return do.Children
 }
 
-func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SiebarViewportKeyMap) (SidebarViewport, error) {
+func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKeyMap) (SidebarViewport, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error

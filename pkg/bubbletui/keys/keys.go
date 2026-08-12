@@ -1,16 +1,17 @@
-package key
+package keys
 
 import (
 	"charm.land/bubbles/v2/key"
+	"github.com/danvergara/dblab/pkg/config"
 )
 
 type KeyMap struct {
-	Help           key.Binding
-	Quit           key.Binding
-	Navigation     NavigationKeyMap
-	Editor         EditorKeyMap
-	SiebarViewport SiebarViewportKeyMap
-	ResultSet      ResultSetKeyMap
+	Help       key.Binding
+	Quit       key.Binding
+	Navigation NavigationKeyMap
+	Editor     EditorKeyMap
+	Sidebar    SidebarKeyMap
+	ResultSet  ResultSetKeyMap
 }
 
 func DefaultKeyMap() KeyMap {
@@ -23,11 +24,53 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("ctrl+c"),
 			key.WithHelp("ctrl+c", "quit"),
 		),
-		Navigation:     DefaultNavitationKeyMap(),
-		Editor:         DefaultEditorKeyMap(),
-		SiebarViewport: DefaultSiebarViewportKeyMap(),
-		ResultSet:      DefaultResultSetKeyMap(),
+		Navigation: DefaultNavitationKeyMap(),
+		Editor:     DefaultEditorKeyMap(),
+		Sidebar:    DefaultSidebarKeyMap(),
+		ResultSet:  DefaultResultSetKeyMap(),
 	}
+}
+
+func ReadKeyMapFromConfig() (KeyMap, error) {
+	cfg, err := config.GetKeyMap()
+	if err != nil {
+		return KeyMap{}, err
+	}
+
+	km := KeyMap{
+		Help: key.NewBinding(key.WithKeys(cfg.KeyBindings.Help), key.WithHelp(cfg.KeyBindings.Help, "toggle help")),
+		Quit: key.NewBinding(key.WithKeys(cfg.KeyBindings.Quit), key.WithHelp(cfg.KeyBindings.Quit, "quit")),
+		Navigation: NavigationKeyMap{
+			Up:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Up), key.WithHelp(cfg.KeyBindings.Navigation.Up, "Toggle to the panel above")),
+			Down:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Down), key.WithHelp(cfg.KeyBindings.Navigation.Down, "Toggle to the panel below")),
+			Left:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Left), key.WithHelp(cfg.KeyBindings.Navigation.Left, "Toggle to the panel on the left")),
+			Right: key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Right), key.WithHelp(cfg.KeyBindings.Navigation.Right, "Toggle to the panel on the right")),
+		},
+		Editor: EditorKeyMap{
+			Up:                 key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Up), key.WithHelp(cfg.KeyBindings.Editor.Up, "move up (editor)")),
+			Down:               key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Down), key.WithHelp(cfg.KeyBindings.Editor.Down, "move down (editor)")),
+			Left:               key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Left), key.WithHelp(cfg.KeyBindings.Editor.Left, "move left (editor)")),
+			Right:              key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Right), key.WithHelp(cfg.KeyBindings.Editor.Right, "move right (editor)")),
+			Insert:             key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Insert), key.WithHelp(cfg.KeyBindings.Editor.Insert, "insert mode (editor)")),
+			Normal:             key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Normal), key.WithHelp(cfg.KeyBindings.Editor.Normal, "normal mode (editor)")),
+			ExecuteQuery:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.ExecuteQuery), key.WithHelp(cfg.KeyBindings.Editor.ExecuteQuery, "execute queries in the editor (editor)")),
+			ExecuteSingleQuery: key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.ExecuteSingleQuery), key.WithHelp(cfg.KeyBindings.Editor.ExecuteSingleQuery, "execute single query (editor)")),
+		},
+		Sidebar: SidebarKeyMap{
+			GoToTop:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Sidebar.GoToTop), key.WithHelp(cfg.KeyBindings.Sidebar.GoToTop, "go top in the (sidebar)")),
+			GoToBottom: key.NewBinding(key.WithKeys(cfg.KeyBindings.Sidebar.GoToBottom), key.WithHelp(cfg.KeyBindings.Sidebar.GoToBottom, "go bottom (sidebar)")),
+		},
+		ResultSet: ResultSetKeyMap{
+			PrevTab:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.PrevTab), key.WithHelp(cfg.KeyBindings.ResultSet.PrevTab, "prev tab")),
+			NextTab:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.NextTab), key.WithHelp(cfg.KeyBindings.ResultSet.NextTab, "next tab")),
+			LineStart:  key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.LineStart), key.WithHelp(cfg.KeyBindings.ResultSet.LineStart, "line start (result set)")),
+			LineEnd:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.LineEnd), key.WithHelp(cfg.KeyBindings.ResultSet.LineEnd, "line end (result set)")),
+			GoToTop:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Sidebar.GoToTop), key.WithHelp(cfg.KeyBindings.ResultSet.GoToTop, "go top (result set)")),
+			GoToBottom: key.NewBinding(key.WithKeys(cfg.KeyBindings.Sidebar.GoToBottom), key.WithHelp(cfg.KeyBindings.ResultSet.GoToBottom, "go bottom (result set)")),
+		},
+	}
+
+	return km, nil
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
@@ -36,7 +79,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.SiebarViewport.GoToBottom, k.SiebarViewport.GoToTop},
+		{k.Sidebar.GoToBottom, k.Sidebar.GoToTop},
 		{k.ResultSet.NextTab, k.ResultSet.PrevTab, k.ResultSet.LineStart, k.ResultSet.LineEnd, k.ResultSet.GoToTop, k.ResultSet.GoToBottom},
 		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.Insert, k.Editor.Normal, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
 		{k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.Help, k.Quit},
@@ -149,13 +192,13 @@ func DefaultNavitationKeyMap() NavigationKeyMap {
 	}
 }
 
-type SiebarViewportKeyMap struct {
+type SidebarKeyMap struct {
 	GoToTop    key.Binding
 	GoToBottom key.Binding
 }
 
-func DefaultSiebarViewportKeyMap() SiebarViewportKeyMap {
-	return SiebarViewportKeyMap{
+func DefaultSidebarKeyMap() SidebarKeyMap {
+	return SidebarKeyMap{
 		GoToTop: key.NewBinding(
 			key.WithKeys("shift+k"),
 			key.WithHelp("shift+k", "go to top (sidebar database graph)"),

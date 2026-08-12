@@ -12,7 +12,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/danvergara/dblab/internal/history"
-	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/davecgh/go-spew/spew"
 )

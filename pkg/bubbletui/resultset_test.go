@@ -5,7 +5,7 @@ import (
 
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
-	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -15,7 +15,7 @@ import (
 
 	"github.com/Digital-Shane/treeview/v2"
 	"github.com/common-nighthawk/go-figure"
-	keys "github.com/danvergara/dblab/pkg/bubbletui/key"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
@@ -166,7 +166,7 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		}
 	}
 	ctx := context.Background()
-	svp, err := NewSidebarViewport(ctx, c, km.SiebarViewport)
+	svp, err := NewSidebarViewport(ctx, c, km.Sidebar)
 	if err != nil {
 		return nil, err
 	}
