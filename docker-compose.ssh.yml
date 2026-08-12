@@ -11,22 +11,14 @@ services:
       - public-network
 
   postgres:
-    image: postgres:15
+    image: danvergara/sakila:postgres-18.4
     container_name: test-postgres
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=users
     networks:
       - private-network
 
   mysql:
-    image: mysql:8.0
+    image: danvergara/sakila:mysql-8.4
     environment:
-      MYSQL_USER: myuser
-      MYSQL_PASSWORD: 5@klkbN#ABC
-      MYSQL_ROOT_PASSWORD: myuser
-      MYSQL_DATABASE: mydb
     networks:
       - private-network
 
@@ -40,13 +32,12 @@ services:
       - postgres
     environment:
       - DB_HOST=postgres
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=users
+      - DB_USER=sakila
+      - DB_PASSWORD=sakila
+      - DB_NAME=sakila
       - DB_PORT=5432
       - DB_DRIVER=postgres
       - DB_SCHEMA=public
-    entrypoint: ["/bin/bash", "./scripts/entrypoint.dev.sh"]
     networks:
       - private-network
 
@@ -60,12 +51,11 @@ services:
       - mysql
     environment:
       - DB_HOST=mysql
-      - DB_USER=myuser
-      - DB_PASSWORD=5@klkbN#ABC
-      - DB_NAME=mydb
+      - DB_USER=sakila
+      - DB_PASSWORD=sakila
+      - DB_NAME=sakila
       - DB_PORT=3306
       - DB_DRIVER=mysql
-    entrypoint: ["/bin/bash", "./scripts/entrypoint-mysql.dev.sh"]
     networks:
       - private-network
 

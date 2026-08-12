@@ -11,9 +11,6 @@ import (
 	"github.com/bxcodec/faker/v3"
 	"github.com/docker/go-connections/nat"
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/golang-migrate/migrate/v4/database/mysql"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
@@ -58,7 +55,7 @@ func (suite *ClientTestSuite) SetupSuite() {
 	switch suite.driver {
 	case drivers.Postgres:
 		pgContainer, err := postgrestest.Run(suite.ctx,
-			"danvergara/sakila:postgres-17.10",
+			"danvergara/sakila:postgres-18.4",
 			postgrestest.WithDatabase(suite.dbName),
 			postgrestest.WithUsername(suite.user),
 			postgrestest.WithPassword(suite.password),

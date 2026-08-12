@@ -162,11 +162,6 @@ stop-ssh:
 form: build
 	./dblab
 
-.PHONY: create-migration
-## create: Creates golang-migrate migration files
-create-migration:
-	 migrate create -ext sql -dir ./db/migrations $(file_name)
-
 .PHONY: help
 ## help: Prints this help message
 help:

@@ -8,9 +8,6 @@ import (
 	"os"
 
 	"charm.land/bubbles/v2/key"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-	"github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/kkyr/fig"
 	"github.com/spf13/cobra"
 
@@ -249,46 +246,6 @@ func (c *Config) Open() (*sql.DB, error) {
 	}
 
 	return db, err
-}
-
-// MigrateInstance returns a migrate instance based on the given driver.
-func (c *Config) MigrateInstance() (*migrate.Migrate, error) {
-	db, err := c.Open()
-	if err != nil {
-		return nil, err
-	}
-
-	switch c.Driver {
-	case drivers.SQLite:
-		dbDriver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
-		if err != nil {
-			fmt.Printf("instance error: %v \n", err)
-			return nil, err
-		}
-
-		fileSource, err := (&file.File{}).Open("file://db/migrations")
-		if err != nil {
-			fmt.Printf("opening file error: %v \n", err)
-			return nil, err
-		}
-
-		m, err := migrate.NewWithInstance("file", fileSource, c.DBName, dbDriver)
-		if err != nil {
-			fmt.Printf("migrate error: %v \n", err)
-			return nil, err
-		}
-
-		return m, nil
-	case drivers.Postgres, drivers.MySQL, drivers.SQLServer:
-		m, err := migrate.New("file://db/migrations", c.GetDBConnStr())
-		if err != nil {
-			fmt.Printf("migrate error: %v \n", err)
-			return nil, err
-		}
-		return m, nil
-	default:
-		return nil, err
-	}
 }
 
 // Get returns a config object with the db connection data already in place.
