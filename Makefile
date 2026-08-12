@@ -1,14 +1,25 @@
 PLATFORM=linux/amd64
-DB_DRIVER?=postgres
-DB_USER?=sakila
 
 .PHONY: test
 ## test: Runs the tests
-test:
-	DB_USER=$(DB_USER) \
+test: test-postgres test-mysql
+
+.PHONY: test-postgres
+## test-postgres: Runs the tests with a connection to the postgres sakila database
+test-postgres:
+	DB_USER=sakila \
 	DB_PASSWORD=sakila \
 	DB_NAME=sakila \
-	DB_DRIVER=$(DB_DRIVER) \
+	DB_DRIVER=postgres \
+	go test -v -race ./...
+
+.PHONY: test-mysql
+## test-mysql: Runs the tests with a connection to the mysql sakila database
+test-mysql:
+	DB_USER=sakila \
+	DB_PASSWORD=sakila \
+	DB_NAME=sakila \
+	DB_DRIVER=mysql \
 	go test -v -race ./...
 
 .PHONY: unit-test
