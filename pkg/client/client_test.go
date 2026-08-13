@@ -160,12 +160,12 @@ func (suite *ClientTestSuite) jsonExpr(payload string) string {
 	}
 }
 
-// productsTable returns the products table reference for the active driver.
-func (suite *ClientTestSuite) productsTable() string {
+// actorTable returns the actor table reference for the active driver.
+func (suite *ClientTestSuite) actorTable() string {
 	if suite.driver == drivers.Postgres {
-		return "public.products"
+		return "public.actor"
 	}
-	return "products"
+	return "actor"
 }
 
 // connOptions returns the connection options used by the JSON view tests.
@@ -692,7 +692,7 @@ func (suite *ClientTestSuite) TestAsyncQueryJSONViewNoRows() {
 	query := fmt.Sprintf(
 		"SELECT %s AS doc FROM %s WHERE 1 = 0 | json",
 		suite.jsonExpr(jsonViewPayload),
-		suite.productsTable(),
+		suite.actorTable(),
 	)
 
 	results := suite.runAsyncQueries(c, query)
@@ -727,9 +727,9 @@ func (suite *ClientTestSuite) TestAsyncQueryJSONViewMixedBatch() {
 	suite.Require().NoError(err)
 
 	jsonQuery := fmt.Sprintf("SELECT %s AS doc | json", suite.jsonExpr(jsonViewPayload))
-	productsQuery := fmt.Sprintf("SELECT * FROM %s;", suite.productsTable())
+	actorQuery := fmt.Sprintf("SELECT * FROM %s;", suite.actorTable())
 
-	results := suite.runAsyncQueries(c, jsonQuery, productsQuery)
+	results := suite.runAsyncQueries(c, jsonQuery, actorQuery)
 	suite.Require().Len(results, 2)
 
 	jsonResult := results[0]
@@ -737,12 +737,12 @@ func (suite *ClientTestSuite) TestAsyncQueryJSONViewMixedBatch() {
 	suite.Equal(JSONQuery, jsonResult.QueryType)
 	suite.NotEmpty(jsonResult.JSONData)
 
-	productsResult := results[1]
-	suite.NoError(productsResult.Error)
-	suite.Equal(NormalQuery, productsResult.QueryType)
-	suite.Nil(productsResult.JSONData)
-	suite.Len(productsResult.Headers, 3)
-	suite.Len(productsResult.ResultSet, 100)
+	actorResult := results[1]
+	suite.NoError(actorResult.Error)
+	suite.Equal(NormalQuery, actorResult.QueryType)
+	suite.Nil(actorResult.JSONData)
+	suite.Len(actorResult.Headers, 4)
+	suite.Len(actorResult.ResultSet, 200)
 }
 
 func TestClietnTestSuite(t *testing.T) {
