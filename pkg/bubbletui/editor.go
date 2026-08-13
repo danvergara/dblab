@@ -51,7 +51,7 @@ type Editor struct {
 }
 
 func NewEditor(km keys.EditorKeyMap) Editor {
-	var isDark = compat.HasDarkBackground
+	isDark := compat.HasDarkBackground
 	var dump *os.File
 
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
@@ -166,16 +166,19 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			case "x":
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyDelete})
 				return e, cmd
-			case "0":
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyHome})
-				return e, cmd
-			case "$":
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
-				return e, cmd
 			case "ctrl+d":
 				e.editor.Reset() // Clears text, cursor, and history
 				return e, nil
-			case "G":
+			}
+
+			switch {
+			case key.Matches(msg, e.keyMap.LineStart):
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyHome})
+				return e, cmd
+			case key.Matches(msg, e.keyMap.LineEnd):
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
+				return e, cmd
+			case key.Matches(msg, e.keyMap.GoToBottom):
 				// LineCount() returns the total number of lines.
 				// Line() returns the current 0-indexed line position.
 				lastLine := e.editor.LineCount() - 1
@@ -183,14 +186,11 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 					e.editor.CursorDown()
 				}
 				return e, nil
-			case "g":
+			case key.Matches(msg, e.keyMap.GoToTop):
 				for e.editor.Line() > 0 {
 					e.editor.CursorUp()
 				}
 				return e, nil
-			}
-
-			switch {
 			case key.Matches(msg, e.keyMap.Insert):
 				e.mode = InsertMode
 				styles := e.editor.Styles()

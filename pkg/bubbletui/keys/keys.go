@@ -53,6 +53,10 @@ func ReadKeyMapFromConfig() (KeyMap, error) {
 			Right:              key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Right), key.WithHelp(cfg.KeyBindings.Editor.Right, "move right (editor)")),
 			Insert:             key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Insert), key.WithHelp(cfg.KeyBindings.Editor.Insert, "insert mode (editor)")),
 			Normal:             key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Normal), key.WithHelp(cfg.KeyBindings.Editor.Normal, "normal mode (editor)")),
+			LineStart:          key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.LineStart), key.WithHelp(cfg.KeyBindings.Editor.LineStart, "line start (editor)")),
+			LineEnd:            key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.LineEnd), key.WithHelp(cfg.KeyBindings.Editor.LineEnd, "line end (editor)")),
+			GoToTop:            key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.GoToTop), key.WithHelp(cfg.KeyBindings.Editor.GoToTop, "go top (editor)")),
+			GoToBottom:         key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.GoToBottom), key.WithHelp(cfg.KeyBindings.Editor.GoToBottom, "go bottom (editor)")),
 			ExecuteQuery:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.ExecuteQuery), key.WithHelp(cfg.KeyBindings.Editor.ExecuteQuery, "execute queries in the editor (editor)")),
 			ExecuteSingleQuery: key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.ExecuteSingleQuery), key.WithHelp(cfg.KeyBindings.Editor.ExecuteSingleQuery, "execute single query (editor)")),
 		},
@@ -61,12 +65,12 @@ func ReadKeyMapFromConfig() (KeyMap, error) {
 			GoToBottom: key.NewBinding(key.WithKeys(cfg.KeyBindings.Sidebar.GoToBottom), key.WithHelp(cfg.KeyBindings.Sidebar.GoToBottom, "go bottom (sidebar)")),
 		},
 		ResultSet: ResultSetKeyMap{
-			PrevTab:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.PrevTab), key.WithHelp(cfg.KeyBindings.ResultSet.PrevTab, "prev tab")),
-			NextTab:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.NextTab), key.WithHelp(cfg.KeyBindings.ResultSet.NextTab, "next tab")),
+			PrevTab:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.PrevTab), key.WithHelp(cfg.KeyBindings.ResultSet.PrevTab, "prev tab (result set) ")),
+			NextTab:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.NextTab), key.WithHelp(cfg.KeyBindings.ResultSet.NextTab, "next tab (result set)")),
 			LineStart:  key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.LineStart), key.WithHelp(cfg.KeyBindings.ResultSet.LineStart, "line start (result set)")),
 			LineEnd:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.LineEnd), key.WithHelp(cfg.KeyBindings.ResultSet.LineEnd, "line end (result set)")),
-			GoToTop:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Sidebar.GoToTop), key.WithHelp(cfg.KeyBindings.ResultSet.GoToTop, "go top (result set)")),
-			GoToBottom: key.NewBinding(key.WithKeys(cfg.KeyBindings.Sidebar.GoToBottom), key.WithHelp(cfg.KeyBindings.ResultSet.GoToBottom, "go bottom (result set)")),
+			GoToTop:    key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.GoToTop), key.WithHelp(cfg.KeyBindings.ResultSet.GoToTop, "go top (result set)")),
+			GoToBottom: key.NewBinding(key.WithKeys(cfg.KeyBindings.ResultSet.GoToBottom), key.WithHelp(cfg.KeyBindings.ResultSet.GoToBottom, "go bottom (result set)")),
 		},
 	}
 
@@ -80,9 +84,9 @@ func (k KeyMap) ShortHelp() []key.Binding {
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Sidebar.GoToBottom, k.Sidebar.GoToTop},
-		{k.ResultSet.NextTab, k.ResultSet.PrevTab, k.ResultSet.LineStart, k.ResultSet.LineEnd, k.ResultSet.GoToTop, k.ResultSet.GoToBottom},
-		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.Insert, k.Editor.Normal, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
-		{k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.Help, k.Quit},
+		{k.ResultSet.NextTab, k.ResultSet.PrevTab, k.ResultSet.LineStart, k.ResultSet.LineEnd, k.ResultSet.GoToTop, k.ResultSet.GoToBottom, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
+		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.Insert, k.Editor.Normal, k.Editor.GoToBottom, k.Editor.GoToTop},
+		{k.Editor.LineStart, k.Editor.LineEnd, k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.Help, k.Quit},
 	}
 }
 
