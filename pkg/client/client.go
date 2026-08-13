@@ -698,8 +698,7 @@ func (c *Client) isValidJSONColumn(dbTypeName string) bool {
 	case drivers.Oracle:
 		return dbTypeName == "JSON" || dbTypeName == "CLOB" || dbTypeName == "BLOB" || dbTypeName == "VARCHAR2"
 	case drivers.SQLServer:
-		// SQL Server lacks a native JSON type, so we must allow text.
-		return dbTypeName == "NVARCHAR" || dbTypeName == "VARCHAR" || dbTypeName == "TEXT"
+		return dbTypeName == "NVARCHAR" || dbTypeName == "VARCHAR" || dbTypeName == "TEXT" || dbTypeName == "JSON"
 	case drivers.SQLite:
 		// SQLite is dynamically typed. It's safer to allow everything
 		// and let json.Indent() act as the final validator.
