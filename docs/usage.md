@@ -252,9 +252,39 @@ dblab --config --cfg-name "prod"
 
 #### Key bindings configuration
 
-Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. Under `keybindings`, an `editor` section configures the Vim-style query editor (movement between normal and insert mode, cursor motion in normal mode, and the editor's execute-query shortcut). By default, the keybindings are not loaded, so you need to use the `--keybindings` or `-k` flag to load them. See the example to see the full list of the key bindings subject to change. The file shows the default values. The list of the available key bindings belongs to the [bubbletea](https://github.com/charmbracelet/bubbletea) library. Specifically, see the [KeyNames map](https://github.com/charmbracelet/bubbletea/blob/1ed724a2d1316ace504f87a2f0bbbcc189d280f6/key.go#L15) for an accurate reference.
+Key bindings can be configured through the `.dblab.yaml` file. There is a field called `keybindings` where key bindings can be modified. By default, the keybindings are not loaded, so you need to use the `--keybindings` or `-k` flag to load them.
 
-**Deprecated:** the top-level `execute-query` field under `keybindings`. Use `execute-query` under `keybindings.editor` instead.
+Bindings are grouped by the part of the UI they belong to, so every panel can be rebound independently of the others:
+
+| Section | What it controls |
+|---------|------------------|
+| `keybindings` (top level) | `help` and `quit`, which are global |
+| `keybindings.navigation` | moving focus between the three panels |
+| `keybindings.editor` | the Vim-style query editor: cursor motion in normal mode, mode switching, and query execution |
+| `keybindings.sidebar` | jumping to the top / bottom of the sidebar tree |
+| `keybindings.resultset` | tab switching and horizontal motion in the result set panel |
+
+Every field has a default value, so you only need to list the ones you want to change; anything you leave out falls back to the default shown in the [example below](#dblabyaml-example). The list of the available key bindings belongs to the [bubbletea](https://github.com/charmbracelet/bubbletea) library. Specifically, see the [KeyNames map](https://github.com/charmbracelet/bubbletea/blob/1ed724a2d1316ace504f87a2f0bbbcc189d280f6/key.go#L15) for an accurate reference.
+
+##### Migrating from the flat layout
+
+Key bindings used to be partly flat: `next-tab`, `prev-tab`, `page-top`, `page-bottom`, `end-of-line` and `beginning-of-line` sat at the top level of `keybindings` and were shared by more than one panel. They now live under the panel that uses them:
+
+| Old (top level) | New |
+|-----------------|-----|
+| `next-tab` | `resultset.next-tab` |
+| `prev-tab` | `resultset.prev-tab` |
+| `beginning-of-line` | `resultset.line-start` and `editor.line-start` |
+| `end-of-line` | `resultset.line-end` and `editor.line-end` |
+| `page-top` | `sidebar.go-top` (plus `editor.go-top` and `resultset.go-top`) |
+| `page-bottom` | `sidebar.go-bottom` (plus `editor.go-bottom` and `resultset.go-bottom`) |
+
+The old top-level fields are no longer read: if your config still sets them, those bindings silently fall back to their defaults. Two things to be aware of while migrating:
+
+- The sidebar's jump-to-top / jump-to-bottom defaults changed from <kbd>g</kbd> / <kbd>G</kbd> to <kbd>shift+k</kbd> / <kbd>shift+j</kbd>, which leaves <kbd>g</kbd> / <kbd>G</kbd> free for the editor and the result set.
+- The editor gained `line-start`, `line-end`, `go-top` and `go-bottom`. These motions already worked, but were hardcoded to <kbd>0</kbd>, <kbd>$</kbd>, <kbd>g</kbd> and <kbd>G</kbd>; they are now configurable.
+
+The previously deprecated top-level `execute-query` field is gone as well — use `execute-query` under `keybindings.editor`.
 
 #### .dblab.yaml example
 
@@ -330,28 +360,40 @@ database:
 # should be greater than 0, otherwise the app will error out
 limit: 50
 keybindings:
-  next-tab: 'tab'
-  prev-tab: 'shift+tab'
-  page-top: 'g'
-  page-bottom: 'G'
-  end-of-line: '$'
-  beginning-of-line: '0'
   help: '?'
   quit: 'ctrl+c'
+  # moving focus between the three panels
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'
     left: 'ctrl+h'
     right: 'ctrl+l'
+  # the query editor, in normal mode
   editor:
     up: 'k'
     down: 'j'
     left: 'h'
     right: 'l'
+    line-start: '0'
+    line-end: '$'
+    go-top: 'g'
+    go-bottom: 'G'
     insert: 'i'
     normal: 'esc'
     execute-query: 'ctrl+e'
     execute-single-query: 'ctrl+r'
+  # the database tree on the left
+  sidebar:
+    go-top: 'shift+k'
+    go-bottom: 'shift+j'
+  # the result set panel and its metadata tabs
+  resultset:
+    next-tab: 'tab'
+    prev-tab: 'shift+tab'
+    line-start: '0'
+    line-end: '$'
+    go-top: 'g'
+    go-bottom: 'G'
 ```
 
 Or for SQLite:
@@ -433,7 +475,9 @@ dblab connects to a single database (the `--db` flag is mandatory) and displays 
 
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/tree-view.png){ width="700" : .center }
 
-Navigate the tree with <kbd>Up</kbd> and <kbd>Down</kbd> (or <kbd>k</kbd> and <kbd>j</kbd>), and press <kbd>Enter</kbd> on a table to load its rows into the result set panel.
+Navigate the tree with <kbd>Up</kbd> and <kbd>Down</kbd> (or <kbd>k</kbd> and <kbd>j</kbd>), and press <kbd>Enter</kbd> on a table to load its rows into the result set panel. Jump straight to the first or last visible node with <kbd>shift+k</kbd> and <kbd>shift+j</kbd> (`keybindings.sidebar.go-top` and `keybindings.sidebar.go-bottom`), and scroll the tree sideways with <kbd>h</kbd> and <kbd>l</kbd> when a name is wider than the panel.
+
+Press <kbd>/</kbd> to search the tree by name and <kbd>Esc</kbd> to leave the search. While a search is active every character you type — including <kbd>h</kbd> and <kbd>l</kbd> — goes to the search box instead of scrolling the tree.
 
 ### Result sets
 
@@ -469,9 +513,11 @@ In normal mode:
 
 - <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks it into an internal register, and <kbd>p</kbd> pastes the yanked or deleted line after the current line
 - <kbd>x</kbd> deletes the character under the cursor
-- <kbd>0</kbd> and <kbd>$</kbd> move to the beginning and end of the current line
-- <kbd>g</kbd> and <kbd>G</kbd> jump to the first and last line of the buffer
+- <kbd>0</kbd> and <kbd>$</kbd> move to the beginning and end of the current line (`keybindings.editor.line-start` and `keybindings.editor.line-end`)
+- <kbd>g</kbd> and <kbd>G</kbd> jump to the first and last line of the buffer (`keybindings.editor.go-top` and `keybindings.editor.go-bottom`)
 - <kbd>Ctrl+D</kbd> clears the entire editor content
+
+The cursor motions, the mode switches and the execute shortcuts are all configurable under `keybindings.editor`; the line-oriented commands (<kbd>dd</kbd>, <kbd>yy</kbd>, <kbd>p</kbd>, <kbd>x</kbd>) and <kbd>Ctrl+D</kbd> are fixed.
 
 ### Executing queries
 
@@ -507,73 +553,79 @@ Press <kbd>?</kbd> at any time to open the help modal, which displays all availa
 
 ## Key bindings
 
-These are the defaults; see [Key bindings configuration](#key-bindings-configuration) to change them.
+These are the defaults; see [Key bindings configuration](#key-bindings-configuration) to change them. The **Config field** column gives the `.dblab.yaml` key for the bindings that can be customized — the rest are fixed.
 
 ### Panel navigation
 
-| Key | Description |
-|-----|-------------|
-| <kbd>Ctrl+H</kbd> | Toggle to the panel on the left |
-| <kbd>Ctrl+J</kbd> | Toggle to the panel below |
-| <kbd>Ctrl+K</kbd> | Toggle to the panel above |
-| <kbd>Ctrl+L</kbd> | Toggle to the panel on the right |
+| Key | Description | Config field |
+|-----|-------------|--------------|
+| <kbd>Ctrl+H</kbd> | Toggle to the panel on the left | `navigation.left` |
+| <kbd>Ctrl+J</kbd> | Toggle to the panel below | `navigation.down` |
+| <kbd>Ctrl+K</kbd> | Toggle to the panel above | `navigation.up` |
+| <kbd>Ctrl+L</kbd> | Toggle to the panel on the right | `navigation.right` |
 
 ### Query editor (both modes)
 
-| Key | Description |
-|-----|-------------|
-| <kbd>ctrl+e</kbd> | Execute the contents of the editor |
-| <kbd>ctrl+r</kbd> | Execute only the query on the current cursor line |
+| Key | Description | Config field |
+|-----|-------------|--------------|
+| <kbd>ctrl+e</kbd> | Execute the contents of the editor | `editor.execute-query` |
+| <kbd>ctrl+r</kbd> | Execute only the query on the current cursor line | `editor.execute-single-query` |
 
 ### Query editor (normal mode)
 
-| Key | Description |
-|-----|-------------|
-| <kbd>i</kbd> | Enter insert mode |
-| <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> | Move the cursor left, down, up, right |
-| <kbd>dd</kbd> | Delete the current line |
-| <kbd>yy</kbd> | Yank the current line |
-| <kbd>p</kbd> | Paste the yanked or deleted line after the current line |
-| <kbd>x</kbd> | Delete the character under the cursor |
-| <kbd>0</kbd> / <kbd>$</kbd> | Move to the start / end of the current line |
-| <kbd>g</kbd> / <kbd>G</kbd> | Jump to the first / last line of the buffer |
-| <kbd>Ctrl+D</kbd> | Clear the entire editor content |
+| Key | Description | Config field |
+|-----|-------------|--------------|
+| <kbd>i</kbd> | Enter insert mode | `editor.insert` |
+| <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> | Move the cursor left, down, up, right | `editor.left` / `editor.down` / `editor.up` / `editor.right` |
+| <kbd>dd</kbd> | Delete the current line | — |
+| <kbd>yy</kbd> | Yank the current line | — |
+| <kbd>p</kbd> | Paste the yanked or deleted line after the current line | — |
+| <kbd>x</kbd> | Delete the character under the cursor | — |
+| <kbd>0</kbd> / <kbd>$</kbd> | Move to the start / end of the current line | `editor.line-start` / `editor.line-end` |
+| <kbd>g</kbd> / <kbd>G</kbd> | Jump to the first / last line of the buffer | `editor.go-top` / `editor.go-bottom` |
+| <kbd>Ctrl+D</kbd> | Clear the entire editor content | — |
 
 ### Query editor (insert mode)
 
-| Key | Description |
-|-----|-------------|
-| <kbd>Escape</kbd> | Return to normal mode |
-| <kbd>Arrow keys</kbd> | Move the cursor |
+| Key | Description | Config field |
+|-----|-------------|--------------|
+| <kbd>Escape</kbd> | Return to normal mode | `editor.normal` |
+| <kbd>Arrow keys</kbd> | Move the cursor | — |
 
 ### Sidebar tree
 
-| Key | Description |
-|-----|-------------|
-| <kbd>Arrow Up</kbd> / <kbd>k</kbd> | Move up the tree |
-| <kbd>Arrow Down</kbd> / <kbd>j</kbd> | Move down the tree |
-| <kbd>Enter</kbd> | List all rows of the selected table and display its structure |
+| Key | Description | Config field |
+|-----|-------------|--------------|
+| <kbd>Arrow Up</kbd> / <kbd>k</kbd> | Move up the tree | — |
+| <kbd>Arrow Down</kbd> / <kbd>j</kbd> | Move down the tree | — |
+| <kbd>shift+k</kbd> | Jump to the first visible node | `sidebar.go-top` |
+| <kbd>shift+j</kbd> | Jump to the last visible node | `sidebar.go-bottom` |
+| <kbd>h</kbd> / <kbd>l</kbd> | Scroll the tree left / right | — |
+| <kbd>/</kbd> | Search the tree by name | — |
+| <kbd>Esc</kbd> | Leave the search | — |
+| <kbd>Enter</kbd> | List all rows of the selected table and display its structure | — |
 
 ### Result set panel
 
 Applies to all tabs of the result set panel.
 
-| Key | Description |
-|-----|-------------|
-| <kbd>tab</kbd> / <kbd>shift+tab</kbd> | Navigate to the next / previous metadata tab |
-| <kbd>Arrow Up</kbd> / <kbd>k</kbd> | Navigate the table upward |
-| <kbd>Arrow Down</kbd> / <kbd>j</kbd> | Navigate the table downward |
-| <kbd>Arrow Left</kbd> / <kbd>h</kbd> | Navigate the table to the left |
-| <kbd>Arrow Right</kbd> / <kbd>l</kbd> | Navigate the table to the right |
-| <kbd>g</kbd> / <kbd>G</kbd> | Move to the top / bottom of the dataset |
-| <kbd>0</kbd> / <kbd>$</kbd> | Move to the left / right edge of the row |
-| <kbd>Enter</kbd> | Copy the content of the selected cell |
+| Key | Description | Config field |
+|-----|-------------|--------------|
+| <kbd>tab</kbd> / <kbd>shift+tab</kbd> | Navigate to the next / previous metadata tab | `resultset.next-tab` / `resultset.prev-tab` |
+| <kbd>Arrow Up</kbd> / <kbd>k</kbd> | Navigate the table upward | — |
+| <kbd>Arrow Down</kbd> / <kbd>j</kbd> | Navigate the table downward | — |
+| <kbd>Arrow Left</kbd> / <kbd>h</kbd> | Navigate the table to the left | — |
+| <kbd>Arrow Right</kbd> / <kbd>l</kbd> | Navigate the table to the right | — |
+| <kbd>g</kbd> / <kbd>G</kbd> | Move to the top / bottom of the dataset | — |
+| <kbd>0</kbd> / <kbd>$</kbd> | Move to the left / right edge of the row | `resultset.line-start` / `resultset.line-end` |
+| <kbd>Enter</kbd> | Copy the content of the selected cell | — |
+
 
 ### Global
 
-| Key | Description |
-|-----|-------------|
-| <kbd>F8</kbd> | Open the query history view |
-| <kbd>?</kbd> | Open the help modal showing all key bindings |
-| <kbd>Esc</kbd> | Dismiss the help modal (or return to normal mode in the query editor) |
-| <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application |
+| Key | Description | Config field |
+|-----|-------------|--------------|
+| <kbd>F8</kbd> | Open the query history view | — |
+| <kbd>?</kbd> | Open the help modal showing all key bindings | `help` |
+| <kbd>Esc</kbd> | Dismiss the help modal (or return to normal mode in the query editor) | — |
+| <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application | `quit` |
