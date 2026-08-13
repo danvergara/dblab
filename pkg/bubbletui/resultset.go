@@ -61,6 +61,10 @@ func (t *TablePanel) View() tea.View {
 	return tea.NewView(t.table.View())
 }
 
+func (t *TablePanel) GotoTop() { t.table.GotoTop() }
+
+func (t *TablePanel) GotoBottom() { t.table.GotoBottom() }
+
 type TextPanel struct {
 	content string
 }
@@ -174,6 +178,20 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch {
+		case key.Matches(msg, r.keyMap.GoToTop):
+			if tablePanel, ok := r.tablesMetadata[r.activeTab].(*TablePanel); ok {
+				tablePanel.GotoTop()
+			}
+			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
+			r.viewport.GotoTop()
+			return r, nil
+		case key.Matches(msg, r.keyMap.GoToBottom):
+			if tablePanel, ok := r.tablesMetadata[r.activeTab].(*TablePanel); ok {
+				tablePanel.GotoBottom()
+			}
+			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
+			r.viewport.GotoBottom()
+			return r, nil
 		case key.Matches(msg, r.keyMap.NextTab):
 			if r.activeTab == len(r.tabs)-1 {
 				r.activeTab = 0
