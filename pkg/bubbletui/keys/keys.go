@@ -8,6 +8,7 @@ import (
 type KeyMap struct {
 	Help       key.Binding
 	Quit       key.Binding
+	History    key.Binding
 	Navigation NavigationKeyMap
 	Editor     EditorKeyMap
 	Sidebar    SidebarKeyMap
@@ -24,6 +25,10 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("ctrl+c"),
 			key.WithHelp("ctrl+c", "quit"),
 		),
+		History: key.NewBinding(
+			key.WithKeys("alt+h"),
+			key.WithHelp("alt+h", "query history"),
+		),
 		Navigation: DefaultNavitationKeyMap(),
 		Editor:     DefaultEditorKeyMap(),
 		Sidebar:    DefaultSidebarKeyMap(),
@@ -38,8 +43,9 @@ func ReadKeyMapFromConfig() (KeyMap, error) {
 	}
 
 	km := KeyMap{
-		Help: key.NewBinding(key.WithKeys(cfg.KeyBindings.Help), key.WithHelp(cfg.KeyBindings.Help, "toggle help")),
-		Quit: key.NewBinding(key.WithKeys(cfg.KeyBindings.Quit), key.WithHelp(cfg.KeyBindings.Quit, "quit")),
+		Help:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Help), key.WithHelp(cfg.KeyBindings.Help, "toggle help")),
+		Quit:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Quit), key.WithHelp(cfg.KeyBindings.Quit, "quit")),
+		History: key.NewBinding(key.WithKeys(cfg.KeyBindings.History), key.WithHelp(cfg.KeyBindings.History, "query history")),
 		Navigation: NavigationKeyMap{
 			Up:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Up), key.WithHelp(cfg.KeyBindings.Navigation.Up, "Toggle to the panel above")),
 			Down:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Down), key.WithHelp(cfg.KeyBindings.Navigation.Down, "Toggle to the panel below")),

@@ -74,6 +74,7 @@ type Profile struct {
 type KeyBindings struct {
 	Help       string `fig:"help" default:"?"`
 	Quit       string `fig:"quit" default:"ctrl+c"`
+	History    string `fig:"history" default:"alt+h"`
 	Navigation NavigationBindgins
 	Editor     EditorKeyMap
 	Sidebar    SidebarKeyMap

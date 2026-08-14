@@ -67,6 +67,7 @@ limit: 50
 keybindings:
   help: '?'
   quit: 'ctrl+c'
+  history: 'f8'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'

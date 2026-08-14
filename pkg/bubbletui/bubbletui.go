@@ -251,11 +251,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmd = m.editor.Focus()
 				return m, cmd
 			}
-		case "f8":
-			m.focus = focusHistory
-			m.queryHistory.state = stateLoading
-			cmd = m.queryHistory.Init()
-			cmds = append(cmds, cmd)
 		}
 		switch {
 		case key.Matches(msg, m.keyMap.Help):
@@ -267,6 +262,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if key.Matches(msg, m.keyMap.Quit) {
 				return m, tea.Quit
 			}
+		case key.Matches(msg, m.keyMap.History):
+			m.focus = focusHistory
+			m.queryHistory.state = stateLoading
+			cmd = m.queryHistory.Init()
+			cmds = append(cmds, cmd)
 		case key.Matches(msg, m.keyMap.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor

@@ -74,6 +74,7 @@ limit: 50
 keybindings:
   help: '?'
   quit: 'ctrl+c'
+  history: 'alt+h'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'
