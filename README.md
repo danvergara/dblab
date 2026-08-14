@@ -308,7 +308,7 @@ Bindings are grouped by the part of the UI they belong to, so every panel can be
 
 | Section | What it controls |
 |---------|------------------|
-| `keybindings` (top level) | `help` and `quit`, which are global |
+| `keybindings` (top level) | `help`, `quit` and `history`, which are global |
 | `keybindings.navigation` | moving focus between the three panels |
 | `keybindings.editor` | the Vim-style query editor: cursor motion in normal mode, mode switching, and query execution |
 | `keybindings.sidebar` | jumping to the top / bottom of the sidebar tree |
@@ -412,6 +412,7 @@ limit: 50
 keybindings:
   help: '?'
   quit: 'ctrl+c'
+  history: 'alt+h'
   # moving focus between the three panels
   navigation:
     up: 'ctrl+k'
@@ -587,7 +588,8 @@ While a batch is running, press <kbd>Ctrl+c</kbd> to cancel it; press <kbd>Ctrl+
 
 <img src="screenshots/query-history.png" />
 
-dblab automatically saves every executed query to a local history file (`$XDG_CONFIG_HOME/dblab/dblab.gob`). Press <kbd>F8</kbd> to open the query history view, which displays past queries sorted newest-first in a filterable list. Use the built-in search to narrow results, press <kbd>Enter</kbd> to load the selected query back into the editor, or press <kbd>Esc</kbd> to return without selecting anything.
+dblab automatically saves every executed query to a local history file (`$XDG_CONFIG_HOME/dblab/dblab.gob`). Press <kbd>alt+h</kbd> (see [Key bindings configuration](#key-bindings-configuration) to configure it) to open the query history view, which displays past queries sorted newest-first in a filterable list. Use the built-in search to narrow results, press <kbd>Enter</kbd> to load the selected query back into the editor, or press <kbd>Esc</kbd> to return without selecting anything.
+
 
 ## Help modal
 
@@ -669,7 +671,7 @@ Applies to all tabs of the result set panel.
 
 | Key | Description | Config field |
 |-----|-------------|--------------|
-| <kbd>F8</kbd> | Open the query history view | — |
+| <kbd>Alt+h</kbd>  | Open the query history view | `history` |
 | <kbd>?</kbd> | Open the help modal showing all key bindings | `help` |
 | <kbd>Esc</kbd> | Dismiss the help modal (or return to normal mode in the query editor) | — |
 | <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application | `quit` |
