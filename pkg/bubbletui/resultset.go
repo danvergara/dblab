@@ -17,8 +17,8 @@ import (
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/danvergara/dblab/internal/history"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
-	"github.com/danvergara/dblab/pkg/command"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -82,6 +82,10 @@ func (t *TablePanel) View() tea.View {
 	return tea.NewView(t.table.View())
 }
 
+func (t *TablePanel) GotoTop() { t.table.GotoTop() }
+
+func (t *TablePanel) GotoBottom() { t.table.GotoBottom() }
+
 type TextPanel struct {
 	content string
 }
@@ -109,14 +113,14 @@ type ResultSet struct {
 	width, height int
 	tabStyles     *tabStyles
 
-	bindings *command.TUIKeyMap
+	keyMap keys.ResultSetKeyMap
 
 	viewport       viewport.Model
 	tablesMetadata []MetadataPanel
 	dump           io.Writer
 }
 
-func NewResultSet(kb *command.TUIKeyMap) ResultSet {
+func NewResultSet(keyMap keys.ResultSetKeyMap) ResultSet {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -127,7 +131,7 @@ func NewResultSet(kb *command.TUIKeyMap) ResultSet {
 	}
 	rs := ResultSet{
 		tabs:     []string{"Data", "Columns", "Indexes", "Constraints"},
-		bindings: kb,
+		keyMap:   keyMap,
 		viewport: viewport.New(viewport.WithHeight(0), viewport.WithWidth(0)),
 		dump:     dump,
 	}
@@ -195,7 +199,21 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch {
-		case key.Matches(msg, r.bindings.NextTab):
+		case key.Matches(msg, r.keyMap.GoToTop):
+			if tablePanel, ok := r.tablesMetadata[r.activeTab].(*TablePanel); ok {
+				tablePanel.GotoTop()
+			}
+			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
+			r.viewport.GotoTop()
+			return r, nil
+		case key.Matches(msg, r.keyMap.GoToBottom):
+			if tablePanel, ok := r.tablesMetadata[r.activeTab].(*TablePanel); ok {
+				tablePanel.GotoBottom()
+			}
+			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
+			r.viewport.GotoBottom()
+			return r, nil
+		case key.Matches(msg, r.keyMap.NextTab):
 			if r.activeTab == len(r.tabs)-1 {
 				r.activeTab = 0
 			} else {
@@ -203,7 +221,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			return r, nil
-		case key.Matches(msg, r.bindings.PrevTab):
+		case key.Matches(msg, r.keyMap.PrevTab):
 			if r.activeTab == 0 {
 				r.activeTab = len(r.tabs) - 1
 			} else {
@@ -211,10 +229,10 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			return r, nil
-		case key.Matches(msg, r.bindings.BeginningOfLine):
+		case key.Matches(msg, r.keyMap.LineStart):
 			r.viewport.SetXOffset(0)
 			return r, nil
-		case key.Matches(msg, r.bindings.EndOfLine):
+		case key.Matches(msg, r.keyMap.LineEnd):
 			maxWidth := 0
 			for line := range strings.SplitSeq(r.tablesMetadata[r.activeTab].View().Content, "\n") {
 				w := lipgloss.Width(line)

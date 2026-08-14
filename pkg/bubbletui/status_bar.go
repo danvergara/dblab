@@ -5,7 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 )
 
 const (
@@ -14,18 +14,18 @@ const (
 )
 
 type StatusBar struct {
-	mode     Mode
-	width    int
-	bindings *command.TUIKeyMap
-	fixed    string
-	focus    focusState
+	mode   Mode
+	width  int
+	keyMap keys.KeyMap
+	fixed  string
+	focus  focusState
 }
 
-func NewStatusBar(mode Mode, kb *command.TUIKeyMap, driver, conn string) StatusBar {
+func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn string) StatusBar {
 	var statusKb = lipgloss.NewStyle().
 		Background(KbOddBg).
 		Foreground(KbOddText).
-		Render(fmt.Sprintf(" %s %s ", kb.Quit.Help().Key, kb.Quit.Help().Desc)) +
+		Render(fmt.Sprintf(" %s %s ", km.Quit.Help().Key, km.Quit.Help().Desc)) +
 		lipgloss.NewStyle().
 			Background(KbEvenBg).
 			Foreground(KbOddBg).
@@ -33,14 +33,14 @@ func NewStatusBar(mode Mode, kb *command.TUIKeyMap, driver, conn string) StatusB
 		lipgloss.NewStyle().
 			Background(KbEvenBg).
 			Foreground(KbEvenText).
-			Render(fmt.Sprintf(" %s %s ", kb.Help.Help().Key, kb.Help.Help().Desc)) +
+			Render(fmt.Sprintf(" %s %s ", km.Help.Help().Key, km.Help.Help().Desc)) +
 		lipgloss.NewStyle().
 			Foreground(KbEvenBg).
 			Render(endArrow) +
 		lipgloss.NewStyle().
 			Foreground(KbEvenText).
 			Render("  "+driver+": "+conn)
-	return StatusBar{mode: mode, bindings: kb, fixed: statusKb, focus: focusEditor}
+	return StatusBar{mode: mode, keyMap: km, fixed: statusKb, focus: focusEditor}
 }
 
 func (f StatusBar) Init() tea.Cmd {

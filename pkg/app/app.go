@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/danvergara/dblab/pkg/bubbletui"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/sshdb"
@@ -15,7 +16,7 @@ type App struct {
 }
 
 // New bootstrap a new application.
-func New(opts command.Options, tuiKeyBindings *command.TUIKeyMap) (*App, error) {
+func New(opts command.Options, km keys.KeyMap) (*App, error) {
 	var sc *sshdb.SSHConfig
 
 	if opts.SSHHost != "" {
@@ -40,7 +41,7 @@ func New(opts command.Options, tuiKeyBindings *command.TUIKeyMap) (*App, error) 
 		return nil, err
 	}
 
-	m, err := bubbletui.NewModel(c, tuiKeyBindings)
+	m, err := bubbletui.NewModel(c, km)
 	if err != nil {
 		return nil, err
 	}

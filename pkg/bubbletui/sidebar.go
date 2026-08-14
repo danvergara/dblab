@@ -11,10 +11,15 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/Digital-Shane/treeview/v2"
 
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
-	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
+)
+
+var (
+	startSearch  = "/"
+	cancelSearch = "esc"
 )
 
 func dbObjectHasType(nodeType string) func(*treeview.Node[*client.DBNode]) bool {
@@ -34,15 +39,16 @@ type selectViewMsg struct {
 }
 
 type SidebarViewport struct {
-	c        *client.Client
-	bindings *command.TUIKeyMap
+	c      *client.Client
+	keyMap keys.SidebarKeyMap
 
 	sidebarViewport viewport.Model
 	dbTree          *treeview.TuiTreeModel[*client.DBNode]
 	width, height   int
 
-	selected bool
-	dump     io.Writer
+	selected  bool
+	searching bool
+	dump      io.Writer
 }
 
 type DBGraphTreeBuilderProvider struct{}
@@ -58,7 +64,7 @@ func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNod
 	return do.Children
 }
 
-func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKeyMap) (SidebarViewport, error) {
+func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKeyMap) (SidebarViewport, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -69,9 +75,9 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, kb *command.TUIKe
 	}
 
 	svp := SidebarViewport{
-		c:        c,
-		bindings: kb,
-		dump:     dump,
+		c:      c,
+		keyMap: km,
+		dump:   dump,
 	}
 
 	svp.sidebarViewport = viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
@@ -112,7 +118,7 @@ func (s *SidebarViewport) SetSize(w, h int) {
 func (s *SidebarViewport) newTuiTreeModel(tree *treeview.Tree[*client.DBNode], width, height int) *treeview.TuiTreeModel[*client.DBNode] {
 	// Create custom key map to avoid key conflicts
 	keyMap := treeview.DefaultKeyMap()
-	keyMap.SearchStart = []string{"/"}
+	keyMap.SearchStart = []string{startSearch}
 	keyMap.Up = []string{"up", "k", "w"}
 	keyMap.Down = []string{"down", "j", "s"}
 	keyMap.Toggle = []string{"enter"}
@@ -172,7 +178,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 		}
 
 		switch {
-		case key.Matches(msg, s.bindings.PageTop):
+		case key.Matches(msg, s.keyMap.GoToTop):
 			ctx := context.Background()
 
 			for nodeInfo, err := range s.dbTree.AllVisible(ctx) {
@@ -184,7 +190,7 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 				break
 			}
 			return s, nil
-		case key.Matches(msg, s.bindings.PageBottom):
+		case key.Matches(msg, s.keyMap.GoToBottom):
 			ctx := context.Background()
 
 			var bottomNodeID string
@@ -209,11 +215,17 @@ func (s SidebarViewport) Update(msg tea.Msg) (SidebarViewport, tea.Cmd) {
 
 		switch msg.String() {
 		case "left", "h":
-			s.sidebarViewport.ScrollLeft(4)
-			return s, nil
+			if !s.searching {
+				s.sidebarViewport.ScrollLeft(4)
+			}
 		case "right", "l":
-			s.sidebarViewport.ScrollRight(4)
-			return s, nil
+			if !s.searching {
+				s.sidebarViewport.ScrollRight(4)
+			}
+		case startSearch:
+			s.searching = true
+		case cancelSearch:
+			s.searching = false
 		}
 
 		if s.dbTree != nil {

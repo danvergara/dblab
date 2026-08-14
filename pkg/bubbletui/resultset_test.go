@@ -5,13 +5,13 @@ import (
 
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
-	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestResulset_UpdateBeforeResize(t *testing.T) {
-	kb := command.DefaultKeyMap()
-	rs := NewResultSet(kb)
+	var km = keys.DefaultKeyMap()
+	rs := NewResultSet(km.ResultSet)
 	if tp, ok := rs.tablesMetadata[0].(*TablePanel); ok {
 		cols := []table.Column{{Title: "id", Width: 15}, {Title: "name", Width: 15}}
 		rows := []table.Row{

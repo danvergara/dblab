@@ -10,7 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
-	"github.com/danvergara/dblab/pkg/command"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -41,16 +41,17 @@ type modeChangeMsg struct {
 }
 
 type Editor struct {
-	editor     textarea.Model
-	bindings   *command.TUIKeyMap
+	editor textarea.Model
+	keyMap keys.EditorKeyMap
+
 	mode       Mode
 	register   string
 	pendingCmd string
 	dump       io.Writer
 }
 
-func NewEditor(kb *command.TUIKeyMap) Editor {
-	var isDark = compat.HasDarkBackground
+func NewEditor(km keys.EditorKeyMap) Editor {
+	isDark := compat.HasDarkBackground
 	var dump *os.File
 
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
@@ -69,7 +70,7 @@ func NewEditor(kb *command.TUIKeyMap) Editor {
 	ta.SetStyles(s)
 	ta.Focus()
 
-	return Editor{editor: ta, bindings: kb, dump: dump}
+	return Editor{editor: ta, keyMap: km, dump: dump}
 }
 
 func (e *Editor) SetWidth(w int) {
@@ -101,7 +102,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	case querySelectedMsg:
 		e.editor.SetValue(msg.QueryText)
 	case tea.KeyPressMsg:
-		if key.Matches(msg, e.bindings.Editor.ExecuteQuery) {
+		if key.Matches(msg, e.keyMap.ExecuteQuery) {
 			editorContent := e.editor.Value()
 
 			queriesToRun := prepareQueriesForExecution(editorContent)
@@ -116,7 +117,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			return e, fireQueryCmd
 		}
 
-		if key.Matches(msg, e.bindings.Editor.ExecuteSingleQuery) {
+		if key.Matches(msg, e.keyMap.ExecuteSingleQuery) {
 			value := e.editor.Value()
 
 			if len(value) == 0 {
@@ -165,16 +166,19 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			case "x":
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyDelete})
 				return e, cmd
-			case "0":
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyHome})
-				return e, cmd
-			case "$":
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
-				return e, cmd
 			case "ctrl+d":
 				e.editor.Reset() // Clears text, cursor, and history
 				return e, nil
-			case "G":
+			}
+
+			switch {
+			case key.Matches(msg, e.keyMap.LineStart):
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyHome})
+				return e, cmd
+			case key.Matches(msg, e.keyMap.LineEnd):
+				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
+				return e, cmd
+			case key.Matches(msg, e.keyMap.GoToBottom):
 				// LineCount() returns the total number of lines.
 				// Line() returns the current 0-indexed line position.
 				lastLine := e.editor.LineCount() - 1
@@ -182,15 +186,12 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 					e.editor.CursorDown()
 				}
 				return e, nil
-			case "g":
+			case key.Matches(msg, e.keyMap.GoToTop):
 				for e.editor.Line() > 0 {
 					e.editor.CursorUp()
 				}
 				return e, nil
-			}
-
-			switch {
-			case key.Matches(msg, e.bindings.Editor.Insert):
+			case key.Matches(msg, e.keyMap.Insert):
 				e.mode = InsertMode
 				styles := e.editor.Styles()
 				styles.Cursor.Blink = true
@@ -200,19 +201,19 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 				}
 				return e, fireModeChangeCmd
 
-			case key.Matches(msg, e.bindings.Editor.Left):
+			case key.Matches(msg, e.keyMap.Left):
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 				return e, cmd
 
-			case key.Matches(msg, e.bindings.Editor.Right):
+			case key.Matches(msg, e.keyMap.Right):
 				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 				return e, cmd
 
-			case key.Matches(msg, e.bindings.Editor.Down):
+			case key.Matches(msg, e.keyMap.Down):
 				e.editor.CursorDown()
 				return e, nil
 
-			case key.Matches(msg, e.bindings.Editor.Up):
+			case key.Matches(msg, e.keyMap.Up):
 				e.editor.CursorUp()
 				return e, nil
 			}
@@ -220,7 +221,7 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			return e, nil
 		case InsertMode:
 			switch {
-			case key.Matches(msg, e.bindings.Editor.Normal):
+			case key.Matches(msg, e.keyMap.Normal):
 				e.mode = NormalMode
 				styles := e.editor.Styles()
 				styles.Cursor.Blink = false

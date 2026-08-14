@@ -15,8 +15,8 @@ import (
 
 	"github.com/Digital-Shane/treeview/v2"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
-	"github.com/danvergara/dblab/pkg/command"
 	"github.com/danvergara/dblab/pkg/drivers"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -142,7 +142,7 @@ type Model struct {
 	editorWidth           int
 
 	// Key Bindings.
-	keys *command.TUIKeyMap
+	keyMap keys.KeyMap
 
 	// constant text on the client.
 	renderedTitle string
@@ -156,7 +156,7 @@ type Model struct {
 // NewModel returns a pointer to the main dblab bubbletea model.
 // It also buids the sub-models, along with styling and the app title.
 // If DBLAB_DEBUG is set, the constructor function will create a messages.log file to log bubbletui events.
-func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
+func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -166,7 +166,7 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 		}
 	}
 	ctx := context.Background()
-	svp, err := NewSidebarViewport(ctx, c, kb)
+	svp, err := NewSidebarViewport(ctx, c, km.Sidebar)
 	if err != nil {
 		return nil, err
 	}
@@ -179,17 +179,17 @@ func NewModel(c *client.Client, kb *command.TUIKeyMap) (*Model, error) {
 	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteText)
 	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreen)
 
-	editor := NewEditor(kb)
+	editor := NewEditor(km.Editor)
 
 	m := &Model{
 		focus:           focusEditor,
 		c:               c,
-		keys:            kb,
+		keyMap:          km,
 		editor:          editor,
 		sidebarViewport: svp,
-		resulstset:      NewResultSet(kb),
+		resulstset:      NewResultSet(km.ResultSet),
 		help:            h,
-		statusBar:       NewStatusBar(editor.mode, kb, c.Driver(), c.Conn()),
+		statusBar:       NewStatusBar(editor.mode, km, c.Driver(), c.Conn()),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
@@ -251,23 +251,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmd = m.editor.Focus()
 				return m, cmd
 			}
-		case "f8":
+		}
+		switch {
+		case key.Matches(msg, m.keyMap.Help):
+			m.focus = focusHelp
+		case key.Matches(msg, m.keyMap.Quit):
+			if m.cancelQuery != nil {
+				m.cancelQuery()
+				m.cancelQuery = nil
+			} else if key.Matches(msg, m.keyMap.Quit) {
+				return m, tea.Quit
+			}
+		case key.Matches(msg, m.keyMap.History):
 			m.focus = focusHistory
 			m.queryHistory.state = stateLoading
 			cmd = m.queryHistory.Init()
 			cmds = append(cmds, cmd)
-		}
-		switch {
-		case key.Matches(msg, m.keys.Help):
-			m.focus = focusHelp
-		case key.Matches(msg, m.keys.Quit):
-			if m.cancelQuery != nil {
-				m.cancelQuery()
-				m.cancelQuery = nil
-			} else if key.Matches(msg, m.keys.Quit) {
-				return m, tea.Quit
-			}
-		case key.Matches(msg, m.keys.Navigation.Right):
+		case key.Matches(msg, m.keyMap.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor
 				m.sidebarViewport.selected = false
@@ -276,14 +276,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusBar.ShowFocus(m.focus)
 			}
 			return m, tea.Batch(cmds...)
-		case key.Matches(msg, m.keys.Navigation.Down):
+		case key.Matches(msg, m.keyMap.Navigation.Down):
 			if m.focus == focusEditor {
 				m.focus = focusTable
 				m.editor.Blur()
 				m.resulstset.Focus()
 				m.statusBar.ShowFocus(m.focus)
 			}
-		case key.Matches(msg, m.keys.Navigation.Left):
+		case key.Matches(msg, m.keyMap.Navigation.Left):
 			if m.focus == focusTable {
 				m.focus = focusList
 				m.sidebarViewport.selected = true
@@ -297,7 +297,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebarViewport.selected = true
 				m.statusBar.ShowFocus(m.focus)
 			}
-		case key.Matches(msg, m.keys.Navigation.Up):
+		case key.Matches(msg, m.keyMap.Navigation.Up):
 			if m.focus == focusTable {
 				m.focus = focusEditor
 				cmd = m.editor.Focus()
@@ -305,7 +305,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusBar.ShowFocus(m.focus)
 				cmds = append(cmds, cmd)
 			}
-			return m, tea.Batch(cmds...)
 		}
 	case modeChangeMsg:
 		m.statusBar, cmd = m.statusBar.Update(msg)
@@ -373,7 +372,7 @@ func (m Model) View() tea.View {
 	case focusHistory:
 		v.SetContent(m.queryHistory.View().Content)
 	case focusHelp:
-		v.SetContent(setModalContent(m.help.View(m.keys), m.width, m.height))
+		v.SetContent(setModalContent(m.help.View(m.keyMap), m.width, m.height))
 	default:
 		textAreaBorder := darkPurple
 

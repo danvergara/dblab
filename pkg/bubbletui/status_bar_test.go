@@ -3,15 +3,16 @@ package bubbletui
 import (
 	"testing"
 
+	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 )
 
 func TestModelStatusBarTracksEditorModeChanges(t *testing.T) {
 	c, _ := client.New(command.Options{Driver: "sqlite", Host: "/tmp/file.bd"})
-	kb := &command.TUIKeyMap{}
-	editor := NewEditor(kb)
-	m := &Model{editor: editor, statusBar: NewStatusBar(editor.mode, kb, c.Driver(), c.Conn())}
+	km := keys.DefaultKeyMap()
+	editor := NewEditor(km.Editor)
+	m := &Model{editor: editor, statusBar: NewStatusBar(editor.mode, km, c.Driver(), c.Conn())}
 
 	updated, _ := m.Update(modeChangeMsg{mode: InsertMode})
 	model, ok := updated.(Model)
