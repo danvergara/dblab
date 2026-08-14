@@ -21,6 +21,17 @@ import (
 	"github.com/danvergara/dblab/pkg/pagination"
 )
 
+type QueryType string
+
+const (
+	JSONSuffix = "| json"
+)
+
+const (
+	NormalQuery QueryType = "NORMAL"
+	JSONQuery   QueryType = "JSON"
+)
+
 type TableRef struct {
 	Schema string
 	Name   string
@@ -35,6 +46,8 @@ type QueryResult struct {
 	QueryIndex int
 	Query      string
 	ResultSet  [][]string
+	QueryType  QueryType
+	JSONData   []byte
 	Headers    []string
 	Timestamp  time.Time
 	Duration   time.Duration
@@ -207,8 +220,10 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 		wg.Add(1)
 		go func(index int, query string) {
 			defer wg.Done()
+			var isJSONQuery bool
 
 			result := QueryResult{
+				QueryType:  NormalQuery,
 				QueryIndex: index,
 				Query:      query,
 				Timestamp:  time.Now(),
@@ -229,17 +244,19 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 			// If the user cancels or it times out, the driver halts execution.
 			if isReadQuery(query) {
 				start := time.Now()
-				rows, err := c.db.QueryxContext(ctx, q, args...)
+
+				query, isJSONQuery = trimJSONSuffix(query)
+
+				rows, err := c.db.QueryxContext(ctx, query, args...)
 				result.Duration = time.Since(start)
 				if err != nil {
 					result.Error = err
 					resultChan <- result
 					return
 				}
-
 				defer rows.Close()
 
-				columnNames, err := rows.Columns()
+				columns, err := rows.Columns()
 				if err != nil {
 					result.Error = err
 					resultChan <- result
@@ -253,61 +270,107 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 					return
 				}
 
-				resultSet := make([][]string, 0)
+				switch {
+				case isJSONQuery:
+					result.QueryType = JSONQuery
+					if len(columns) != 1 {
+						result.Error = fmt.Errorf("JSON view requires exactly 1 column, but your query selected %d columns", len(columns))
+						resultChan <- result
+						return
+					}
 
-				rowsCount := 0
-				for rows.Next() {
-					rowsCount++
-					// cols is an []any of all of the column results.
-					cols, err := rows.SliceScan()
-					if err != nil {
+					dbType := strings.ToUpper(colTypes[0].DatabaseTypeName())
+
+					if !c.isValidJSONColumn(dbType) {
+						result.Error = fmt.Errorf("| json requires a JSON column, but %q is %s", columns[0], dbType)
+						resultChan <- result
+						return
+					}
+
+					var rawData []byte
+					var hasRows bool
+					// We guaranteed there is exactly 1 column, so we can scan directly into a single variable.
+					if rows.Next() {
+						hasRows = true
+						if err := rows.Scan(&rawData); err != nil {
+							result.Error = fmt.Errorf("failed to scan JSON data: %w", err)
+							resultChan <- result
+							return
+						}
+					}
+
+					if !hasRows {
+						result.Error = fmt.Errorf("no data returned")
+						resultChan <- result
+						return
+					}
+
+					if err := rows.Err(); err != nil {
 						result.Error = err
 						resultChan <- result
 						return
 					}
 
-					// Convert []any into []string.
-					s := make([]string, len(cols))
-					for i, v := range cols {
-						switch val := v.(type) {
-						case []byte:
-							// Isolate []byte and check the database type
-							dbType := colTypes[i].DatabaseTypeName()
+					result.JSONData = rawData
+					resultChan <- result
+				default:
+					resultSet := make([][]string, 0)
 
-							// Check for both MySQL BLOBs and Postgres BYTEA
-							switch dbType {
-							case "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "BYTEA":
-								// Safely represent the BLOB without printing raw binary
-								s[i] = fmt.Sprintf("[BLOB - %d bytes]", len(val))
-							default:
-								// It's a normal string/text type returned as []byte, safe to convert
-								s[i] = string(val)
-							}
-						case string, rune:
-							s[i] = fmt.Sprintf("%s", val)
-						case nil:
-							s[i] = fmt.Sprint(val)
-						default:
-							s[i] = fmt.Sprintf("%v", val)
+					rowsCount := 0
+					for rows.Next() {
+						rowsCount++
+						// cols is an []any of all of the column results.
+						cols, err := rows.SliceScan()
+						if err != nil {
+							result.Error = err
+							resultChan <- result
+							return
 						}
+
+						// Convert []any into []string.
+						s := make([]string, len(cols))
+						for i, v := range cols {
+							switch val := v.(type) {
+							case []byte:
+								// Isolate []byte and check the database type
+								dbType := colTypes[i].DatabaseTypeName()
+
+								// Check for both MySQL BLOBs and Postgres BYTEA
+								switch dbType {
+								case "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "BYTEA":
+									// Safely represent the BLOB without printing raw binary
+									s[i] = fmt.Sprintf("[BLOB - %d bytes]", len(val))
+								default:
+									// It's a normal string/text type returned as []byte, safe to convert
+									s[i] = string(val)
+								}
+							case string, rune:
+								s[i] = fmt.Sprintf("%s", val)
+							case nil:
+								s[i] = fmt.Sprint(val)
+							default:
+								s[i] = fmt.Sprintf("%v", val)
+							}
+						}
+
+						resultSet = append(resultSet, s)
 					}
 
-					resultSet = append(resultSet, s)
-				}
-				if err := rows.Err(); err != nil {
-					result.Error = err
-					resultChan <- result
-					return
-				}
+					if err := rows.Err(); err != nil {
+						result.Error = err
+						resultChan <- result
+						return
+					}
 
-				// Send the result back over the thread-safe channel.
-				result.ResultSet = resultSet
-				result.Headers = columnNames
-				result.RowCount = rowsCount
-				resultChan <- result
+					// Send the result back over the thread-safe channel.
+					result.ResultSet = resultSet
+					result.Headers = columns
+					result.RowCount = rowsCount
+					resultChan <- result
+				}
 			} else {
 				start := time.Now()
-				execResult, err := c.db.ExecContext(ctx, q, args...)
+				execResult, err := c.db.ExecContext(ctx, query, args...)
 				result.Duration = time.Since(start)
 				if err != nil {
 					result.Error = err
@@ -624,6 +687,28 @@ func (c *Client) viewDefintion(view ViewRef) ([][]string, []string, error) {
 	return c.Query(query, args...)
 }
 
+func (c *Client) isValidJSONColumn(dbTypeName string) bool {
+	dbTypeName = strings.ToUpper(dbTypeName)
+
+	switch c.driver {
+	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
+		return dbTypeName == "JSON" || dbTypeName == "JSONB" || dbTypeName == "TEXT" || dbTypeName == "VARCHAR"
+	case drivers.MySQL:
+		return dbTypeName == "JSON"
+	case drivers.Oracle:
+		return dbTypeName == "JSON" || dbTypeName == "CLOB" || dbTypeName == "BLOB" || dbTypeName == "VARCHAR2"
+	case drivers.SQLServer:
+		return dbTypeName == "NVARCHAR" || dbTypeName == "VARCHAR" || dbTypeName == "TEXT" || dbTypeName == "JSON"
+	case drivers.SQLite:
+		// SQLite is dynamically typed. It's safer to allow everything
+		// and let json.Indent() act as the final validator.
+		return true
+
+	default:
+		return dbTypeName == "JSON" || dbTypeName == "JSONB"
+	}
+}
+
 // commentRegex matches both single-line (--) and multi-line (/* */) SQL comments.
 var commentRegex = regexp.MustCompile(`(?s)/\*.*?\*/|--.*?\n`)
 
@@ -653,4 +738,17 @@ func isReadQuery(query string) bool {
 		// INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, etc.
 		return false
 	}
+}
+
+// trimJSONSuffix reports whether the query requests the JSON view,
+// returning the query with the suffix removed.
+func trimJSONSuffix(query string) (string, bool) {
+	trimmed := strings.TrimSpace(query)
+	if len(trimmed) < len(JSONSuffix) {
+		return query, false
+	}
+	if strings.EqualFold(trimmed[len(trimmed)-len(JSONSuffix):], JSONSuffix) {
+		return strings.TrimSpace(trimmed[:len(trimmed)-len(JSONSuffix)]), true
+	}
+	return query, false
 }

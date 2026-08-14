@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -139,6 +140,59 @@ func (suite *ClientTestSuite) generateURL() string {
 	default:
 		return ""
 	}
+}
+
+// jsonViewPayload is the document used across the JSON view tests. It covers every
+// token type the highlighter styles: keys, strings, numbers, booleans and null.
+const jsonViewPayload = `{"name":"dblab","tags":["sql","tui"],"count":42,"ok":true,"extra":null}`
+
+// jsonExpr returns a driver specific expression yielding a single JSON typed column,
+// so the JSON view can be exercised without a JSON column in the schema.
+func (suite *ClientTestSuite) jsonExpr(payload string) string {
+	switch suite.driver {
+	case drivers.Postgres:
+		return fmt.Sprintf("'%s'::jsonb", payload)
+	case drivers.MySQL:
+		return fmt.Sprintf("CAST('%s' AS JSON)", payload)
+	default:
+		// SQLite is dynamically typed, so a plain string literal is enough.
+		return fmt.Sprintf("'%s'", payload)
+	}
+}
+
+// actorTable returns the actor table reference for the active driver.
+func (suite *ClientTestSuite) actorTable() string {
+	if suite.driver == drivers.Postgres {
+		return "public.actor"
+	}
+	return "actor"
+}
+
+// connOptions returns the connection options used by the JSON view tests.
+func (suite *ClientTestSuite) connOptions() command.Options {
+	return command.Options{
+		Driver: suite.driver,
+		User:   suite.user,
+		Pass:   suite.password,
+		Host:   suite.host,
+		Port:   suite.port.Port(),
+		DBName: suite.dbName,
+		Schema: suite.dbSchema,
+		SSL:    "disable",
+		Limit:  100,
+	}
+}
+
+// runAsyncQueries drains the result channel into a map keyed by query index.
+func (suite *ClientTestSuite) runAsyncQueries(c *Client, queries ...string) map[int]QueryResult {
+	resultChan := c.AsyncQuery(context.Background(), queries, 5)
+
+	resultsByIndex := make(map[int]QueryResult)
+	for r := range resultChan {
+		resultsByIndex[r.QueryIndex] = r
+	}
+
+	return resultsByIndex
 }
 
 func (suite *ClientTestSuite) TestNewClientByURL() {
@@ -546,6 +600,149 @@ func (suite *ClientTestSuite) TestAsyncQueryConcurrencyLimit() {
 		suite.Len(r.Headers, 4)
 		suite.Len(r.ResultSet, 200)
 	}
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryJSONView() {
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	query := fmt.Sprintf("SELECT %s AS doc | json", suite.jsonExpr(jsonViewPayload))
+
+	results := suite.runAsyncQueries(c, query)
+	suite.Require().Len(results, 1)
+
+	r := results[0]
+	suite.Require().NoError(r.Error)
+	suite.Equal(JSONQuery, r.QueryType)
+	suite.NotEmpty(r.JSONData)
+
+	// The engines normalize JSON (jsonb reorders keys, MySQL compacts whitespace),
+	// so compare the decoded document rather than the raw bytes.
+	var got, want map[string]any
+	suite.Require().NoError(json.Unmarshal(r.JSONData, &got))
+	suite.Require().NoError(json.Unmarshal([]byte(jsonViewPayload), &want))
+	suite.Equal(want, got)
+
+	// The suffix is stripped before execution but kept on the result, since
+	// QueryResult.Query is what feeds the query history.
+	suite.Equal(query, r.Query)
+
+	// The table oriented fields stay empty on a JSON view.
+	suite.Empty(r.ResultSet)
+	suite.Empty(r.Headers)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryJSONViewSuffixVariants() {
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	expr := suite.jsonExpr(jsonViewPayload)
+
+	for _, suffix := range []string{"| json", "| JSON", "| Json", "| json   "} {
+		suite.Run(suffix, func() {
+			results := suite.runAsyncQueries(c, fmt.Sprintf("SELECT %s AS doc %s", expr, suffix))
+			suite.Require().Len(results, 1)
+
+			r := results[0]
+			suite.Require().NoError(r.Error)
+			suite.Equal(JSONQuery, r.QueryType)
+			suite.NotEmpty(r.JSONData)
+		})
+	}
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryJSONViewMultipleColumns() {
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	query := fmt.Sprintf("SELECT %s AS doc, 1 AS n | json", suite.jsonExpr(jsonViewPayload))
+
+	results := suite.runAsyncQueries(c, query)
+	suite.Require().Len(results, 1)
+
+	r := results[0]
+	suite.Require().Error(r.Error)
+	suite.Equal(JSONQuery, r.QueryType)
+	suite.Contains(r.Error.Error(), "requires exactly 1 column")
+	suite.Empty(r.JSONData)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryJSONViewNonJSONColumn() {
+	if suite.driver == drivers.SQLite {
+		suite.T().Skip("SQLite is dynamically typed, every column type is accepted")
+	}
+
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	results := suite.runAsyncQueries(c, "SELECT 1 AS n | json")
+	suite.Require().Len(results, 1)
+
+	r := results[0]
+	suite.Require().Error(r.Error)
+	suite.Equal(JSONQuery, r.QueryType)
+	suite.Contains(r.Error.Error(), "requires a JSON column")
+	suite.Empty(r.JSONData)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryJSONViewNoRows() {
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	query := fmt.Sprintf(
+		"SELECT %s AS doc FROM %s WHERE 1 = 0 | json",
+		suite.jsonExpr(jsonViewPayload),
+		suite.actorTable(),
+	)
+
+	results := suite.runAsyncQueries(c, query)
+	suite.Require().Len(results, 1)
+
+	r := results[0]
+	suite.Require().Error(r.Error)
+	suite.Equal(JSONQuery, r.QueryType)
+	suite.Contains(r.Error.Error(), "no data returned")
+	suite.Empty(r.JSONData)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryWithoutJSONSuffix() {
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	query := fmt.Sprintf("SELECT %s AS doc", suite.jsonExpr(jsonViewPayload))
+
+	results := suite.runAsyncQueries(c, query)
+	suite.Require().Len(results, 1)
+
+	r := results[0]
+	suite.Require().NoError(r.Error)
+	suite.Equal(NormalQuery, r.QueryType)
+	suite.Nil(r.JSONData)
+	suite.Len(r.Headers, 1)
+	suite.Len(r.ResultSet, 1)
+}
+
+func (suite *ClientTestSuite) TestAsyncQueryJSONViewMixedBatch() {
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	jsonQuery := fmt.Sprintf("SELECT %s AS doc | json", suite.jsonExpr(jsonViewPayload))
+	actorQuery := fmt.Sprintf("SELECT * FROM %s;", suite.actorTable())
+
+	results := suite.runAsyncQueries(c, jsonQuery, actorQuery)
+	suite.Require().Len(results, 2)
+
+	jsonResult := results[0]
+	suite.NoError(jsonResult.Error)
+	suite.Equal(JSONQuery, jsonResult.QueryType)
+	suite.NotEmpty(jsonResult.JSONData)
+
+	actorResult := results[1]
+	suite.NoError(actorResult.Error)
+	suite.Equal(NormalQuery, actorResult.QueryType)
+	suite.Nil(actorResult.JSONData)
+	suite.Len(actorResult.Headers, 4)
+	suite.Len(actorResult.ResultSet, 200)
 }
 
 func TestClietnTestSuite(t *testing.T) {

@@ -1,6 +1,8 @@
 package bubbletui
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -11,11 +13,30 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/quick"
+	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/danvergara/dblab/internal/history"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/danvergara/dblab/pkg/command"
 	"github.com/davecgh/go-spew/spew"
 )
+
+const (
+	dblabJSONStyle = "dblab-cyberpunk"
+)
+
+// Register the dblab-cyberpunk style Highlight json inspects.
+var _ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
+	chroma.NameTag:             "#FF00FF bold", // keys        → hiMagenta
+	chroma.LiteralStringDouble: "#39FF14",      // strings     → cyberGreen
+	chroma.LiteralString:       "#39FF14",
+	chroma.LiteralNumber:       "#BF40BF",      // numbers     → neonPurple
+	chroma.KeywordConstant:     "#BF40BF bold", // true/false/null
+	chroma.Punctuation:         "#E0E0E0",      // {} [] : ,   → whiteText
+	chroma.Error:               "#FF0000 bold",
+	chroma.Background:          "#E0E0E0", // default fg, no bg set
+}))
 
 // tabStyles is for tab styling.
 // The tabs are used to show table metadata.
@@ -252,16 +273,43 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 
 			if qr.Error != nil {
 				errPanel := newTextPanel()
-				errPanel.SetContent(fmt.Sprintf("query #%d failed\n\n%s", i+1, qr.Error.Error()))
+				errorText := fmt.Sprintf("query #%d failed\n\n%s", i+1, qr.Error.Error())
+				styledError := errorStyle.Render(errorText)
+				errPanel.SetContent(styledError)
 				r.tablesMetadata[i] = errPanel
 				continue
 			}
 
-			panel := newTablePanel(r.height, r.width)
-			tableContentColumns, tableContentRows := populateTable(qr.Headers, qr.ResultSet)
-			panel.table.SetColumns(tableContentColumns)
-			panel.table.SetRows(tableContentRows)
-			r.tablesMetadata[i] = panel
+			switch qr.QueryType {
+			case client.JSONQuery:
+				jsonPanel := newTextPanel()
+				var prettyJSON bytes.Buffer
+				if err := json.Indent(&prettyJSON, qr.JSONData, "", "  "); err != nil {
+					errorText := fmt.Sprintf("query #%d failed\n\n%s", i+1, err)
+					styledError := errorStyle.Render(errorText)
+					jsonPanel.SetContent(styledError)
+					r.tablesMetadata[i] = jsonPanel
+					continue
+				}
+
+				var highlighted bytes.Buffer
+				if err := quick.Highlight(&highlighted, prettyJSON.String(), "json", "terminal256", dblabJSONStyle); err != nil {
+					errorText := fmt.Sprintf("query #%d failed\n\n%s", i+1, err)
+					styledError := errorStyle.Render(errorText)
+					jsonPanel.SetContent(styledError)
+					r.tablesMetadata[i] = jsonPanel
+					continue
+				}
+
+				jsonPanel.SetContent(highlighted.String())
+				r.tablesMetadata[i] = jsonPanel
+			case client.NormalQuery:
+				panel := newTablePanel(r.height, r.width)
+				tableContentColumns, tableContentRows := populateTable(qr.Headers, qr.ResultSet)
+				panel.table.SetColumns(tableContentColumns)
+				panel.table.SetRows(tableContentRows)
+				r.tablesMetadata[i] = panel
+			}
 		}
 
 		r.activeTab = 0
