@@ -12,3 +12,4 @@ The key features are:
   * Query history: executed queries are automatically saved and can be browsed or re-used from a searchable list.  
   * Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
   * Built-in help modal: press `?` to display a help overlay showing all available key bindings; press `Esc` to dismiss it.
+  * Per-panel key bindings: the query editor, the sidebar tree, the result set panel and the panel navigation each have their own section in `.dblab.yaml`, so every panel can be rebound independently.

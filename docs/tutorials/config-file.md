@@ -87,7 +87,11 @@ dblab --config --cfg-name "prod"
 
 ### Key bindings
 
-Key bindings can also be configured through the `.dblab.yaml` file. There is a field called `keybindings` where you can customize the default shortcuts. Under `keybindings`, an `editor` section configures the Vim-style query editor (movement between normal and insert mode, cursor motion in normal mode, and query execution shortcuts). By default, the keybindings are not loaded from the config file, so you need to use the `--keybindings` or `-k` flag to load them.
+Key bindings can also be configured through the `.dblab.yaml` file. There is a field called `keybindings` where you can customize the default shortcuts. By default, the keybindings are not loaded from the config file, so you need to use the `--keybindings` or `-k` flag to load them.
+
+The bindings are grouped by the part of the UI they belong to — `navigation` for moving focus between the three panels, `editor` for the Vim-style query editor, `sidebar` for the database tree, and `resultset` for the result set panel — plus `help`, `quit` and `history` at the top level. Because each panel has its own section, you can rebind, say, the editor's jump-to-top key without touching the sidebar's.
+
+Every field has a default, so you only need to list the ones you want to change. The following example spells out all of them:
 
 ```{ .yaml .copy }
 
@@ -101,14 +105,9 @@ database:
     driver: "postgres"
 limit: 50
 keybindings:
-  next-tab: 'tab'
-  prev-tab: 'shift+tab'
-  page-top: 'g'
-  page-bottom: 'G'
-  end-of-line: '$'
-  beginning-of-line: '0'
   help: '?'
   quit: 'ctrl+c'
+  history: 'alt+h'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'
@@ -119,10 +118,24 @@ keybindings:
     down: 'j'
     left: 'h'
     right: 'l'
+    line-start: '0'
+    line-end: '$'
+    go-top: 'g'
+    go-bottom: 'G'
     insert: 'i'
     normal: 'esc'
     execute-query: 'ctrl+e'
     execute-single-query: 'ctrl+r'
+  sidebar:
+    go-top: 'shift+k'
+    go-bottom: 'shift+j'
+  resultset:
+    next-tab: 'tab'
+    prev-tab: 'shift+tab'
+    line-start: '0'
+    line-end: '$'
+    go-top: 'g'
+    go-bottom: 'G'
 
 ```
 
@@ -133,3 +146,7 @@ To load the keybindings from the config file, run:
 dblab --config --keybindings
 
 ```
+
+!!! warning
+
+    If you wrote your config file before the per-panel sections existed, the top-level `next-tab`, `prev-tab`, `page-top`, `page-bottom`, `end-of-line` and `beginning-of-line` fields are no longer read — move them under `resultset`, `sidebar` or `editor` as shown above. See [key bindings configuration](../usage.md#key-bindings-configuration) for the full mapping from the old names to the new ones.
