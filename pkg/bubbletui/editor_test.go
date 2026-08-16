@@ -44,7 +44,7 @@ func TestInsertQueriesAndExecute(t *testing.T) {
 	q, ok := cmd().(executeQueryMsg)
 	assert.True(t, ok, "Message should be a executeQueryMsg")
 	for i, expectedQuery := range queries {
-		assert.Equal(t, q.queriesToRun[i],expectedQuery)
+		assert.Equal(t, q.queriesToRun[i], expectedQuery)
 	}
 }
 
