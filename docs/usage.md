@@ -281,7 +281,7 @@ Key bindings used to be partly flat: `next-tab`, `prev-tab`, `page-top`, `page-b
 
 The old top-level fields are no longer read: if your config still sets them, those bindings silently fall back to their defaults. Two things to be aware of while migrating:
 
-- The sidebar's jump-to-top / jump-to-bottom defaults changed from <kbd>g</kbd> / <kbd>G</kbd> to <kbd>shift+k</kbd> / <kbd>shift+j</kbd>, which leaves <kbd>g</kbd> / <kbd>G</kbd> free for the editor and the result set.
+- The sidebar's jump-to-top / jump-to-bottom defaults changed from <kbd>g</kbd> / <kbd>G</kbd> to <kbd>alt+k</kbd> / <kbd>alt+j</kbd>, which leaves <kbd>g</kbd> / <kbd>G</kbd> free for the editor and the result set.
 - The editor gained `line-start`, `line-end`, `go-top` and `go-bottom`. These motions already worked, but were hardcoded to <kbd>0</kbd>, <kbd>$</kbd>, <kbd>g</kbd> and <kbd>G</kbd>; they are now configurable.
 
 The previously deprecated top-level `execute-query` field is gone as well — use `execute-query` under `keybindings.editor`.
@@ -385,8 +385,8 @@ keybindings:
     execute-single-query: 'ctrl+r'
   # the database tree on the left
   sidebar:
-    go-top: 'shift+k'
-    go-bottom: 'shift+j'
+    go-top: 'alt+k'
+    go-bottom: 'alt+j'
   # the result set panel and its metadata tabs
   resultset:
     next-tab: 'tab'
@@ -476,7 +476,7 @@ dblab connects to a single database (the `--db` flag is mandatory) and displays 
 
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/tree-view.png){ width="700" : .center }
 
-Navigate the tree with <kbd>Up</kbd> and <kbd>Down</kbd> (or <kbd>k</kbd> and <kbd>j</kbd>), and press <kbd>Enter</kbd> on a table to load its rows into the result set panel. Jump straight to the first or last visible node with <kbd>shift+k</kbd> and <kbd>shift+j</kbd> (`keybindings.sidebar.go-top` and `keybindings.sidebar.go-bottom`), and scroll the tree sideways with <kbd>h</kbd> and <kbd>l</kbd> when a name is wider than the panel.
+Navigate the tree with <kbd>Up</kbd> and <kbd>Down</kbd> (or <kbd>k</kbd> and <kbd>j</kbd>), and press <kbd>Enter</kbd> on a table to load its rows into the result set panel. Jump straight to the first or last visible node with <kbd>alt+k</kbd> and <kbd>alt+j</kbd> (`keybindings.sidebar.go-top` and `keybindings.sidebar.go-bottom`), and scroll the tree sideways with <kbd>h</kbd> and <kbd>l</kbd> when a name is wider than the panel.
 
 Press <kbd>/</kbd> to search the tree by name and <kbd>Esc</kbd> to leave the search. While a search is active every character you type — including <kbd>h</kbd> and <kbd>l</kbd> — goes to the search box instead of scrolling the tree.
 
@@ -599,8 +599,8 @@ These are the defaults; see [Key bindings configuration](#key-bindings-configura
 |-----|-------------|--------------|
 | <kbd>Arrow Up</kbd> / <kbd>k</kbd> | Move up the tree | — |
 | <kbd>Arrow Down</kbd> / <kbd>j</kbd> | Move down the tree | — |
-| <kbd>shift+k</kbd> | Jump to the first visible node | `sidebar.go-top` |
-| <kbd>shift+j</kbd> | Jump to the last visible node | `sidebar.go-bottom` |
+| <kbd>alt+k</kbd> | Jump to the first visible node | `sidebar.go-top` |
+| <kbd>alt+j</kbd> | Jump to the last visible node | `sidebar.go-bottom` |
 | <kbd>h</kbd> / <kbd>l</kbd> | Scroll the tree left / right | — |
 | <kbd>/</kbd> | Search the tree by name | — |
 | <kbd>Esc</kbd> | Leave the search | — |

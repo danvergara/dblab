@@ -127,8 +127,8 @@ keybindings:
     execute-query: 'ctrl+e'
     execute-single-query: 'ctrl+r'
   sidebar:
-    go-top: 'shift+k'
-    go-bottom: 'shift+j'
+    go-top: 'alt+k'
+    go-bottom: 'alt+j'
   resultset:
     next-tab: 'tab'
     prev-tab: 'shift+tab'

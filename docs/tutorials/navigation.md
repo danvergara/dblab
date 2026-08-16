@@ -19,7 +19,7 @@ Focus the sidebar and move through the tree with the <kbd>Arrow Up</kbd> and <kb
 
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/left-menu.png){ width="400" : .center }
 
-On a long catalog you don't have to walk the whole tree: <kbd>shift+k</kbd> and <kbd>shift+j</kbd> jump to the first and last visible node, and <kbd>/</kbd> starts a search by name — type part of the table you're after and press <kbd>Esc</kbd> when you're done searching. If a name is wider than the panel, <kbd>h</kbd> and <kbd>l</kbd> scroll the tree sideways.
+On a long catalog you don't have to walk the whole tree: <kbd>alt+k</kbd> and <kbd>alt+j</kbd> jump to the first and last visible node, and <kbd>/</kbd> starts a search by name — type part of the table you're after and press <kbd>Esc</kbd> when you're done searching. If a name is wider than the panel, <kbd>h</kbd> and <kbd>l</kbd> scroll the tree sideways.
 
 Once the table you want is highlighted, press <kbd>Enter</kbd> to select it. dblab loads its rows into the result set panel and fills in the metadata tabs described below.
 
