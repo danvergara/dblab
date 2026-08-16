@@ -111,8 +111,8 @@ type EditorKeyMap struct {
 }
 
 type SidebarKeyMap struct {
-	GoToTop    string `fig:"go-top" default:"shift+k"`
-	GoToBottom string `fig:"go-bottom" default:"shift+j"`
+	GoToTop    string `fig:"go-top" default:"alt+k"`
+	GoToBottom string `fig:"go-bottom" default:"alt+j"`
 }
 
 type ResultSetKeyMap struct {

@@ -88,7 +88,7 @@ keybindings:
     execute-single-query: 'ctrl+r'
   sidebar:
     go-top: 'foo'
-    go-bottom: 'shift+j'
+    go-bottom: 'J'
   resultset:
     next-tab: 'bar'
     prev-tab: 'shift+tab'

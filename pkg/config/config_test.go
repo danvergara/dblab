@@ -207,8 +207,8 @@ func TestSetupKeybindings(t *testing.T) {
 	assert.Contains(t, km.Editor.ExecuteSingleQuery, "ctrl+r")
 
 	// Sidebar.
-	assert.Contains(t, km.Sidebar.GoToTop, "foo") // should be shift+k, but it tests the value comes from the config file
-	assert.Contains(t, km.Sidebar.GoToBottom, "shift+j")
+	assert.Contains(t, km.Sidebar.GoToTop, "foo") // should be alt+k, but it tests the value comes from the config file
+	assert.Contains(t, km.Sidebar.GoToBottom, "alt+j")
 
 	// Result set.
 	assert.Contains(t, km.ResultSet.NextTab, "bar") // should be tab, but it tests the value comes from the config file
