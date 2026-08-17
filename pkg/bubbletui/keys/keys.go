@@ -210,12 +210,12 @@ type SidebarKeyMap struct {
 func DefaultSidebarKeyMap() SidebarKeyMap {
 	return SidebarKeyMap{
 		GoToTop: key.NewBinding(
-			key.WithKeys("shift+k"),
-			key.WithHelp("shift+k", "go to top (sidebar database graph)"),
+			key.WithKeys("alt+k"),
+			key.WithHelp("alt+k", "go to top (sidebar database graph)"),
 		),
 		GoToBottom: key.NewBinding(
-			key.WithKeys("shift+j"),
-			key.WithHelp("shift+j", "go to bottom (sidebar database graph)"),
+			key.WithKeys("alt+j"),
+			key.WithHelp("alt+j", "go to bottom (sidebar database graph)"),
 		),
 	}
 }
