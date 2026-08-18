@@ -9,6 +9,7 @@ type KeyMap struct {
 	Help       key.Binding
 	Quit       key.Binding
 	History    key.Binding
+	FullScreen key.Binding
 	Navigation NavigationKeyMap
 	Editor     EditorKeyMap
 	Sidebar    SidebarKeyMap
@@ -29,6 +30,10 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("alt+h"),
 			key.WithHelp("alt+h", "query history"),
 		),
+		FullScreen: key.NewBinding(
+			key.WithKeys("alt+f"),
+			key.WithHelp("alt+f", "fullscreen focus"),
+		),
 		Navigation: DefaultNavitationKeyMap(),
 		Editor:     DefaultEditorKeyMap(),
 		Sidebar:    DefaultSidebarKeyMap(),
@@ -43,9 +48,10 @@ func ReadKeyMapFromConfig() (KeyMap, error) {
 	}
 
 	km := KeyMap{
-		Help:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Help), key.WithHelp(cfg.KeyBindings.Help, "toggle help")),
-		Quit:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Quit), key.WithHelp(cfg.KeyBindings.Quit, "quit")),
-		History: key.NewBinding(key.WithKeys(cfg.KeyBindings.History), key.WithHelp(cfg.KeyBindings.History, "query history")),
+		Help:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Help), key.WithHelp(cfg.KeyBindings.Help, "toggle help")),
+		Quit:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Quit), key.WithHelp(cfg.KeyBindings.Quit, "quit")),
+		FullScreen: key.NewBinding(key.WithKeys(cfg.KeyBindings.FullScreen), key.WithHelp(cfg.KeyBindings.FullScreen, "fullscreen focus")),
+		History:    key.NewBinding(key.WithKeys(cfg.KeyBindings.History), key.WithHelp(cfg.KeyBindings.History, "query history")),
 		Navigation: NavigationKeyMap{
 			Up:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Up), key.WithHelp(cfg.KeyBindings.Navigation.Up, "Toggle to the panel above")),
 			Down:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Down), key.WithHelp(cfg.KeyBindings.Navigation.Down, "Toggle to the panel below")),
@@ -92,7 +98,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 		{k.Sidebar.GoToBottom, k.Sidebar.GoToTop},
 		{k.ResultSet.NextTab, k.ResultSet.PrevTab, k.ResultSet.LineStart, k.ResultSet.LineEnd, k.ResultSet.GoToTop, k.ResultSet.GoToBottom, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
 		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.Insert, k.Editor.Normal, k.Editor.GoToBottom, k.Editor.GoToTop},
-		{k.Editor.LineStart, k.Editor.LineEnd, k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.Help, k.Quit},
+		{k.Editor.LineStart, k.Editor.LineEnd, k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.FullScreen, k.Help, k.Quit},
 	}
 }
 

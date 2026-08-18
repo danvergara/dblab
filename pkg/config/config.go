@@ -75,6 +75,7 @@ type KeyBindings struct {
 	Help       string `fig:"help" default:"?"`
 	Quit       string `fig:"quit" default:"ctrl+c"`
 	History    string `fig:"history" default:"alt+h"`
+	FullScreen string `fig:"fullscreen" default:"alt+f"`
 	Navigation NavigationBindgins
 	Editor     EditorKeyMap
 	Sidebar    SidebarKeyMap
