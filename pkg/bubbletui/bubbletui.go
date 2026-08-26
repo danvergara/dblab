@@ -232,6 +232,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
+			if m.fullScreen && (m.focus == focusEditor || m.focus == focusTable) {
+				m.toggleFullScreen()
+			}
 			if m.focus == focusHelp {
 				m.focus = focusEditor
 				cmd = m.editor.Focus()
@@ -254,7 +257,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = m.queryHistory.Init()
 			cmds = append(cmds, cmd)
 		case key.Matches(msg, m.keyMap.FullScreen):
-			m.toggleFullScreen()
+			if !m.fullScreen {
+				m.toggleFullScreen()
+			}
 		case key.Matches(msg, m.keyMap.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor
@@ -540,7 +545,7 @@ func (m *Model) fullScreenSizes() {
 	switch m.focus {
 	case focusEditor:
 		m.editorWidth = m.width - 4
-		m.editorHeight = m.height - 2
+		m.editorHeight = m.height
 		m.editor.SetWidth(m.editorWidth)
 		m.editor.SetHeight(m.editorHeight)
 	case focusTable:
