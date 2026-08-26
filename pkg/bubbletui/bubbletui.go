@@ -232,13 +232,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
-			if m.fullScreen && (m.focus == focusEditor || m.focus == focusTable) {
-				m.toggleFullScreen()
-			}
 			if m.focus == focusHelp {
 				m.focus = focusEditor
 				cmd = m.editor.Focus()
+				m.resulstset.Blur()
+				m.sidebarViewport.selected = false
+				m.applySizes()
 				return m, cmd
+			}
+			if m.fullScreen {
+				m.toggleFullScreen()
 			}
 		}
 		switch {
@@ -340,8 +343,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
 		m.focus = focusEditor
+		m.resulstset.Blur()
+		m.sidebarViewport.selected = false
 		m.editor.Focus()
 		m.editor, cmd = m.editor.Update(msg)
+		m.applySizes()
 		cmds = append(cmds, cmd)
 	}
 
@@ -517,11 +523,10 @@ func (m *Model) runConcurrentlyCmd(ctx context.Context, queries []string, maxCon
 // toggleFullScreen toggles full-screen mode for the currently focused panel.
 // Full screen is only supported for the editor and result set panels.
 func (m *Model) toggleFullScreen() {
-	if !m.fullScreen && m.focus != focusEditor && m.focus != focusTable {
-		return
+	if m.focus == focusEditor || m.focus == focusTable {
+		m.fullScreen = !m.fullScreen
+		m.applySizes()
 	}
-	m.fullScreen = !m.fullScreen
-	m.applySizes()
 }
 
 // applySizes recomputes widget dimensions, picking the full-screen layout
