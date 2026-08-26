@@ -35,6 +35,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
   * Query history: executed queries are automatically saved and can be browsed or re-used from a searchable list.  
   * Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).  
   * Built-in help modal: press `?` to display a help overlay showing all available key bindings; press `Esc` to dismiss it.  
+  * Full-screen mode: press `alt+f` to expand the focused query editor or result set panel to fill the terminal; press `Esc` to exit.  
 
 ## Installation
 

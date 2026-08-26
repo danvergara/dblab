@@ -147,6 +147,9 @@ type Model struct {
 	// constant text on the client.
 	renderedTitle string
 
+	// FullScreen flag
+	fullScreen bool
+
 	dump io.Writer
 
 	// Stores the kill switch.
@@ -194,6 +197,7 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
 		queryHistory:    NewHistoryModel(),
+		fullScreen:      false,
 	}
 
 	return m, nil
@@ -212,35 +216,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		// Bubble Tea can deliver a transient zero-sized resize event before the
+		// real terminal size is known; sizing the layout to it would produce
+		// negative widths/heights downstream, so ignore it.
+		if msg.Width <= 0 || msg.Height <= 0 {
+			return m, tea.Batch(cmds...)
+		}
+
 		m.height = msg.Height
 		m.width = msg.Width
 
-		availableHeight := m.height - lipgloss.Height(m.statusBar.View().Content)
-
-		m.leftWidth = m.width / 5
-		m.rightWidth = m.width - m.leftWidth
-
-		m.titleWidth = m.leftWidth
-
-		m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
-		m.sidebarViewportWidth = m.leftWidth
-
-		m.editorWidth = m.rightWidth - 4
-		m.editorHeight = availableHeight/3 - 2
-
-		m.resultSetHeight = availableHeight - m.editorHeight - 2
-		m.resultSetWidth = m.rightWidth - 4
-
-		m.help.SetWidth(msg.Width)
-
-		m.editor.SetHeight(m.editorHeight)
-		m.editor.SetWidth(m.editorWidth)
-
-		m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
-		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
-		m.queryHistory.SetSize(msg.Width, msg.Height)
-		m.statusBar.SetWidth(msg.Width)
-
+		m.applySizes()
 		return m, tea.Batch(cmds...)
 
 	case tea.KeyPressMsg:
@@ -249,7 +235,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusHelp {
 				m.focus = focusEditor
 				cmd = m.editor.Focus()
+				m.resulstset.Blur()
+				m.sidebarViewport.selected = false
+				m.applySizes()
 				return m, cmd
+			}
+			if m.fullScreen {
+				m.toggleFullScreen()
 			}
 		}
 		switch {
@@ -267,6 +259,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.queryHistory.state = stateLoading
 			cmd = m.queryHistory.Init()
 			cmds = append(cmds, cmd)
+		case key.Matches(msg, m.keyMap.FullScreen):
+			if !m.fullScreen {
+				m.toggleFullScreen()
+			}
 		case key.Matches(msg, m.keyMap.Navigation.Right):
 			if m.focus == focusList {
 				m.focus = focusEditor
@@ -275,6 +271,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 				m.statusBar.ShowFocus(m.focus)
 			}
+			m.applySizes()
 			return m, tea.Batch(cmds...)
 		case key.Matches(msg, m.keyMap.Navigation.Down):
 			if m.focus == focusEditor {
@@ -297,6 +294,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebarViewport.selected = true
 				m.statusBar.ShowFocus(m.focus)
 			}
+
+			// Full screen only applies to the editor and result set panels,
+			// so leave it when navigating into the sidebar.
+			m.fullScreen = false
 		case key.Matches(msg, m.keyMap.Navigation.Up):
 			if m.focus == focusTable {
 				m.focus = focusEditor
@@ -306,6 +307,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 			}
 		}
+		m.applySizes()
 	case modeChangeMsg:
 		m.statusBar, cmd = m.statusBar.Update(msg)
 		cmds = append(cmds, cmd)
@@ -341,8 +343,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
 		m.focus = focusEditor
+		m.resulstset.Blur()
+		m.sidebarViewport.selected = false
 		m.editor.Focus()
 		m.editor, cmd = m.editor.Update(msg)
+		m.applySizes()
 		cmds = append(cmds, cmd)
 	}
 
@@ -374,6 +379,11 @@ func (m Model) View() tea.View {
 	case focusHelp:
 		v.SetContent(setModalContent(m.help.View(m.keyMap), m.width, m.height))
 	default:
+		if m.fullScreen {
+			v.SetContent(m.fullScreenView())
+			return v
+		}
+
 		textAreaBorder := darkPurple
 
 		if m.focus == focusEditor {
@@ -413,6 +423,19 @@ func (m Model) View() tea.View {
 	}
 
 	return v
+}
+
+// fullScreenView renders only the currently focused panel, filling the
+// entire terminal, without the title, status bar, or the other panels.
+func (m Model) fullScreenView() string {
+	switch m.focus {
+	case focusEditor:
+		return editorStyle.BorderForeground(neonPurple).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
+	case focusTable:
+		return m.resulstset.View().Content
+	default:
+		return ""
+	}
 }
 
 func (m *Model) Run() error {
@@ -495,6 +518,74 @@ func (m *Model) runConcurrentlyCmd(ctx context.Context, queries []string, maxCon
 		qsMsg.queriesResult = finalResults
 		return qsMsg
 	}
+}
+
+// toggleFullScreen toggles full-screen mode for the currently focused panel.
+// Full screen is only supported for the editor and result set panels.
+func (m *Model) toggleFullScreen() {
+	if m.focus == focusEditor || m.focus == focusTable {
+		m.fullScreen = !m.fullScreen
+		m.applySizes()
+	}
+}
+
+// applySizes recomputes widget dimensions, picking the full-screen layout
+// when fullScreen is active and the split layout otherwise.
+func (m *Model) applySizes() {
+	if m.fullScreen {
+		m.fullScreenSizes()
+		return
+	}
+	m.defaultSizes()
+}
+
+// fullScreenSizes sizes only the currently focused panel to occupy the
+// entire terminal, so the title, status bar, and other panels can be
+// hidden from the view.
+func (m *Model) fullScreenSizes() {
+	m.help.SetWidth(m.width)
+	m.queryHistory.SetSize(m.width, m.height)
+	m.statusBar.SetWidth(m.width)
+
+	switch m.focus {
+	case focusEditor:
+		m.editorWidth = m.width - 4
+		m.editorHeight = m.height
+		m.editor.SetWidth(m.editorWidth)
+		m.editor.SetHeight(m.editorHeight)
+	case focusTable:
+		m.resultSetWidth = m.width - 4
+		m.resultSetHeight = m.height - 2
+		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
+	}
+}
+
+func (m *Model) defaultSizes() {
+	availableHeight := m.height - lipgloss.Height(m.statusBar.View().Content)
+
+	m.leftWidth = m.width / 5
+	m.rightWidth = m.width - m.leftWidth
+
+	m.titleWidth = m.leftWidth
+
+	m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
+	m.sidebarViewportWidth = m.leftWidth
+
+	m.editorWidth = m.rightWidth - 4
+	m.editorHeight = availableHeight/3 - 2
+
+	m.resultSetHeight = availableHeight - m.editorHeight - 2
+	m.resultSetWidth = m.rightWidth - 4
+
+	m.help.SetWidth(m.width)
+
+	m.editor.SetHeight(m.editorHeight)
+	m.editor.SetWidth(m.editorWidth)
+
+	m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
+	m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
+	m.queryHistory.SetSize(m.width, m.height)
+	m.statusBar.SetWidth(m.width)
 }
 
 // prepareQueriesForExecution functions splits the text coming from the text editor by ';',

@@ -89,7 +89,7 @@ dblab --config --cfg-name "prod"
 
 Key bindings can also be configured through the `.dblab.yaml` file. There is a field called `keybindings` where you can customize the default shortcuts. By default, the keybindings are not loaded from the config file, so you need to use the `--keybindings` or `-k` flag to load them.
 
-The bindings are grouped by the part of the UI they belong to — `navigation` for moving focus between the three panels, `editor` for the Vim-style query editor, `sidebar` for the database tree, and `resultset` for the result set panel — plus `help`, `quit` and `history` at the top level. Because each panel has its own section, you can rebind, say, the editor's jump-to-top key without touching the sidebar's.
+The bindings are grouped by the part of the UI they belong to — `navigation` for moving focus between the three panels, `editor` for the Vim-style query editor, `sidebar` for the database tree, and `resultset` for the result set panel — plus `help`, `quit`, `history` and `fullscreen` at the top level. Because each panel has its own section, you can rebind, say, the editor's jump-to-top key without touching the sidebar's.
 
 Every field has a default, so you only need to list the ones you want to change. The following example spells out all of them:
 
@@ -108,6 +108,7 @@ keybindings:
   help: '?'
   quit: 'ctrl+c'
   history: 'alt+h'
+  fullscreen: 'alt+f'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'
