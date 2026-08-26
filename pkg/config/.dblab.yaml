@@ -67,7 +67,8 @@ limit: 50
 keybindings:
   help: '?'
   quit: 'ctrl+c'
-  history: 'f8'
+  history: 'alt+h'
+  fullscreen: 'alt+f'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'

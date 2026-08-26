@@ -184,7 +184,8 @@ func TestSetupKeybindings(t *testing.T) {
 
 	assert.Contains(t, km.Help, "?")
 	assert.Contains(t, km.Quit, "ctrl+c")
-	assert.Contains(t, km.History, "f8")
+	assert.Contains(t, km.History, "alt+h")
+	assert.Contains(t, km.FullScreen, "alt+f")
 
 	// Navigation.
 	assert.Contains(t, km.Navigation.Up, "ctrl+k")
