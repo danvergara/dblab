@@ -42,6 +42,10 @@ The result set panel has one tab per view of the selected table. Press <kbd>tab<
 
 While moving through a result set, the selected cell is highlighted so you can see where you are. Press <kbd>Enter</kbd> on a cell to copy its content.
 
+### Going full screen
+
+Focus the query editor or the result set panel and press <kbd>alt+f</kbd> to expand it to fill the whole terminal, hiding the title, status bar and the other panels — handy when you're reading a wide result set or writing a long query. Press <kbd>Esc</kbd> to return to the split layout; moving focus to the sidebar leaves full-screen mode too, since it isn't available there.
+
 ### Writing your first query
 
 Focus the query editor with the panel navigation keys. The editor works like Vim: it starts in **normal** mode, where keystrokes are commands rather than text.

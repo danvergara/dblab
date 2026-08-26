@@ -64,6 +64,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Query history: executed queries are persisted across sessions and can be browsed/re-used via a filterable list.
 - Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (supported for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
 - Built-in help modal: press <kbd>?</kbd> to display a help overlay showing all available key bindings; press <kbd>Esc</kbd> to dismiss it.
+- Full-screen mode: press <kbd>alt+f</kbd> to expand the focused query editor or result set panel to fill the terminal; press <kbd>Esc</kbd> to exit.
 - Per-panel key bindings: the query editor, the sidebar tree, the result set panel and the panel navigation each have their own section in `.dblab.yaml`, so every panel can be rebound independently.
 
 ## Installation
@@ -307,8 +308,8 @@ Key bindings can be configured through the `.dblab.yaml` file. There is a field 
 Bindings are grouped by the part of the UI they belong to, so every panel can be rebound independently of the others:
 
 | Section | What it controls |
-|---------|------------------|
-| `keybindings` (top level) | `help`, `quit` and `history`, which are global |
+| --------- | ------------------ |
+| `keybindings` (top level) | `help`, `quit`, `history` and `fullscreen`, which are global |
 | `keybindings.navigation` | moving focus between the three panels |
 | `keybindings.editor` | the Vim-style query editor: cursor motion in normal mode, mode switching, and query execution |
 | `keybindings.sidebar` | jumping to the top / bottom of the sidebar tree |
@@ -413,6 +414,7 @@ keybindings:
   help: '?'
   quit: 'ctrl+c'
   history: 'alt+h'
+  fullscreen: 'alt+f'
   # moving focus between the three panels
   navigation:
     up: 'ctrl+k'
@@ -544,6 +546,13 @@ Move around a result set with the arrow keys or <kbd>h</kbd>/<kbd>j</kbd>/<kbd>k
 
 There are no pagination controls — they proved too slow to page through a table effectively. To work through a large table, write a `SELECT` with explicit `OFFSET` and `LIMIT` instead.
 
+### Full-screen mode
+
+Focus the query editor or the result set panel and press <kbd>alt+f</kbd> (`fullscreen`) to expand it to fill the entire terminal, hiding the title, status bar and the other panels. Press <kbd>Esc</kbd> to return to the split layout. Full-screen mode is also left automatically if you navigate focus away from the editor or result set panel — it isn't available for the sidebar tree.
+
+<img src="screenshots/fullscreen-editor.png" />
+<img src="screenshots/fullscreen-resultset.png" />
+
 ## Query editor
 
 ### Modes
@@ -672,8 +681,9 @@ Applies to all tabs of the result set panel.
 | Key | Description | Config field |
 |-----|-------------|--------------|
 | <kbd>Alt+h</kbd>  | Open the query history view | `history` |
+| <kbd>Alt+f</kbd> | Expand the focused query editor or result set panel to full screen | `fullscreen` |
 | <kbd>?</kbd> | Open the help modal showing all key bindings | `help` |
-| <kbd>Esc</kbd> | Dismiss the help modal (or return to normal mode in the query editor) | — |
+| <kbd>Esc</kbd> | Dismiss the help modal or query history, exit full-screen mode (or return to normal mode in the query editor) | — |
 | <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application | `quit` |
 
 ## Contribute
@@ -687,4 +697,5 @@ Applies to all tabs of the result set panel.
 - Check [wiki](https://github.com/danvergara/dblab/wiki) for extra documentation
 
 ## License
+
 The MIT License (MIT). See [LICENSE](LICENSE) file for more details.
