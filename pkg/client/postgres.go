@@ -316,3 +316,7 @@ func (p *postgres) fetchViews(_ context.Context, parentName, parentID string) ([
 
 	return views, nil
 }
+
+func (p *postgres) Schemas(ctx context.Context) ([]string, error) {
+	return nil, nil
+}

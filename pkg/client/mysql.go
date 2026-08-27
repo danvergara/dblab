@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -196,4 +197,8 @@ func (m *mysql) fetchViews(_ context.Context, parentName, parentID string) ([]*D
 	}
 
 	return views, nil
+}
+
+func (m *mysql) Schemas(ctx context.Context) ([]string, error) {
+	return nil, errors.New("schemas not supported")
 }

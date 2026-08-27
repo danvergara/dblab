@@ -311,3 +311,7 @@ func (m *mssql) fetchViews(_ context.Context, parentName, parentID string) ([]*D
 
 	return views, nil
 }
+
+func (m *mssql) Schemas(ctx context.Context) ([]string, error) {
+	return nil, nil
+}

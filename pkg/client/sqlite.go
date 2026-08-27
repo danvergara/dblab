@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -208,4 +209,8 @@ func (s *sqlite) fetchViews(_ context.Context, parentName, parentID string) ([]*
 	}
 
 	return views, nil
+}
+
+func (s *sqlite) Schemas(ctx context.Context) ([]string, error) {
+	return nil, errors.New("schemas not supported")
 }

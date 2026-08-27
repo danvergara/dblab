@@ -78,6 +78,7 @@ type databaseQuerier interface {
 	Indexes(table TableRef) (string, []any, error)
 	Catalog(context.Context) (*DBNode, error)
 	GetViewDefinition(view ViewRef) (string, []any, error)
+	Schemas(ctx context.Context) ([]string, error)
 }
 
 // Client is used to store the pool of db connection.
@@ -676,6 +677,10 @@ func (c *Client) indexes(table TableRef) ([][]string, []string, error) {
 
 func (c *Client) Catalog(ctx context.Context) (*DBNode, error) {
 	return c.databaseQuerier.Catalog(ctx)
+}
+
+func (c *Client) Schemas(ctx context.Context) ([]string, error) {
+	return c.databaseQuerier.Schemas(ctx)
 }
 
 func (c *Client) viewDefintion(view ViewRef) ([][]string, []string, error) {

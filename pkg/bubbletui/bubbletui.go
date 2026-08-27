@@ -611,6 +611,8 @@ func prepareQueriesForExecution(rawText string) []string {
 	return validQueries
 }
 
+// setModalContent places a text block vertically in a styled box.
+// Receives the content as string and the dimensions as integers.
 func setModalContent(content string, width, height int) string {
 	formStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).

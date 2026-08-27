@@ -304,3 +304,7 @@ func (o *oracle) fetchViews(_ context.Context, parentName, parentID string) ([]*
 
 	return views, nil
 }
+
+func (o *oracle) Schemas(ctx context.Context) ([]string, error) {
+	return nil, nil
+}
