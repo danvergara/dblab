@@ -199,6 +199,10 @@ func (m *mysql) fetchViews(_ context.Context, parentName, parentID string) ([]*D
 	return views, nil
 }
 
-func (m *mysql) Schemas(ctx context.Context) ([]string, error) {
-	return nil, errors.New("schemas not supported")
+func (m *mysql) Schemas() (string, []any, error) {
+	return "", nil, errors.New("schemas not supported")
+}
+
+func (m *mysql) SetActiveSchema(schema string) (string, []any, error) {
+	return "", nil, errors.New("schemas not supported")
 }

@@ -10,6 +10,7 @@ type KeyMap struct {
 	Quit       key.Binding
 	History    key.Binding
 	FullScreen key.Binding
+	Schemas    key.Binding
 	Navigation NavigationKeyMap
 	Editor     EditorKeyMap
 	Sidebar    SidebarKeyMap
@@ -34,6 +35,10 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("alt+f"),
 			key.WithHelp("alt+f", "fullscreen focus"),
 		),
+		Schemas: key.NewBinding(
+			key.WithKeys("ctrl+s"),
+			key.WithHelp("ctrl+s", "database schemas available for the current user"),
+		),
 		Navigation: DefaultNavitationKeyMap(),
 		Editor:     DefaultEditorKeyMap(),
 		Sidebar:    DefaultSidebarKeyMap(),
@@ -52,6 +57,7 @@ func ReadKeyMapFromConfig() (KeyMap, error) {
 		Quit:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Quit), key.WithHelp(cfg.KeyBindings.Quit, "quit")),
 		FullScreen: key.NewBinding(key.WithKeys(cfg.KeyBindings.FullScreen), key.WithHelp(cfg.KeyBindings.FullScreen, "fullscreen focus")),
 		History:    key.NewBinding(key.WithKeys(cfg.KeyBindings.History), key.WithHelp(cfg.KeyBindings.History, "query history")),
+		Schemas:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Schemas), key.WithHelp(cfg.KeyBindings.Schemas, "database schemas available for the user")),
 		Navigation: NavigationKeyMap{
 			Up:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Up), key.WithHelp(cfg.KeyBindings.Navigation.Up, "Toggle to the panel above")),
 			Down:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Down), key.WithHelp(cfg.KeyBindings.Navigation.Down, "Toggle to the panel below")),

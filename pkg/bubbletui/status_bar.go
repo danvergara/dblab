@@ -18,6 +18,7 @@ type StatusBar struct {
 	width  int
 	keyMap keys.KeyMap
 	fixed  string
+	schema string
 	focus  focusState
 }
 
@@ -59,6 +60,10 @@ func (f *StatusBar) ShowFocus(focus focusState) {
 	f.focus = focus
 }
 
+func (f *StatusBar) SetSchema(schema string) {
+	f.schema = schema
+}
+
 func (f *StatusBar) SetWidth(width int) {
 	f.width = width - 4
 }
@@ -83,9 +88,19 @@ func (f StatusBar) View() tea.View {
 			Render(endArrow) +
 		f.fixed
 
-	rightBlock := lipgloss.NewStyle().
-		Foreground(FocusBg).
-		Render(startArrow) +
+	var rightBlock string
+	if f.schema != "" {
+		rightBlock =
+			lipgloss.NewStyle().
+				Foreground(KbEvenText).
+				Render("current schema:" + " ")
+	}
+	rightBlock += lipgloss.NewStyle().
+		Foreground(InsertModeBg).
+		Render(f.schema+" ") +
+		lipgloss.NewStyle().
+			Foreground(FocusBg).
+			Render(startArrow) +
 		lipgloss.NewStyle().
 			Bold(true).
 			Background(FocusBg).

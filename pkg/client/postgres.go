@@ -8,6 +8,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var (
+	postgresSchemaQuery = sq.Select("schema_name").
+		From("information_schema.schemata").
+		Where(sq.NotEq{
+			"schema_name ": []string{"information_schema", "pg_catalog"},
+		}).
+		PlaceholderFormat(sq.Dollar)
+)
+
 // postgres struct is in charge of perform all the postgres related queries,
 // without the client knowing.
 type postgres struct {
@@ -191,13 +200,7 @@ func (p *postgres) GetViewDefinition(view ViewRef) (string, []any, error) {
 
 // fetchSchemas method lists all the schemas of the current database.
 func (p *postgres) fetchSchemas(_ context.Context, parentID string) ([]*DBNode, error) {
-	query, args, err := sq.Select("schema_name").
-		From("information_schema.schemata").
-		Where(sq.NotEq{
-			"schema_name ": []string{"information_schema", "pg_catalog"},
-		}).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
+	query, args, err := postgresSchemaQuery.ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -317,6 +320,10 @@ func (p *postgres) fetchViews(_ context.Context, parentName, parentID string) ([
 	return views, nil
 }
 
-func (p *postgres) Schemas(ctx context.Context) ([]string, error) {
-	return nil, nil
+func (p *postgres) Schemas() (string, []any, error) {
+	return postgresSchemaQuery.ToSql()
+}
+
+func (p *postgres) SetActiveSchema(schema string) (string, []any, error) {
+	return fmt.Sprintf("set search_path = '%s'", schema), nil, nil
 }

@@ -78,7 +78,8 @@ type databaseQuerier interface {
 	Indexes(table TableRef) (string, []any, error)
 	Catalog(context.Context) (*DBNode, error)
 	GetViewDefinition(view ViewRef) (string, []any, error)
-	Schemas(ctx context.Context) ([]string, error)
+	Schemas() (string, []any, error)
+	SetActiveSchema(schema string) (string, []any, error)
 }
 
 // Client is used to store the pool of db connection.
@@ -680,7 +681,39 @@ func (c *Client) Catalog(ctx context.Context) (*DBNode, error) {
 }
 
 func (c *Client) Schemas(ctx context.Context) ([]string, error) {
-	return c.databaseQuerier.Schemas(ctx)
+	query, args, err := c.databaseQuerier.Schemas()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	schemas := make([]string, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+
+		schemas = append(schemas, name)
+	}
+
+	return schemas, nil
+}
+
+func (c *Client) SetActiveSchema(ctx context.Context, schema string) error {
+	query, args, err := c.databaseQuerier.SetActiveSchema(schema)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.db.ExecContext(ctx, query, args...)
+	return err
+
 }
 
 func (c *Client) viewDefintion(view ViewRef) ([][]string, []string, error) {
