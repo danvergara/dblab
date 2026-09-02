@@ -472,12 +472,6 @@ func (m *Model) Run() error {
 	return nil
 }
 
-func (m *Model) setSchema(schema string) tea.Cmd {
-	return func() tea.Msg {
-		return nil
-	}
-}
-
 // runTableMetadata gets the given table's metadata asynchronously.
 // If the query succeeds, it returns metadataSucessMsg with the metadata,
 // otherwise it returns metadataErrMsg with the error.
