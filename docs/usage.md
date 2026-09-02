@@ -131,6 +131,8 @@ dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 --
 dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
 
+Whether you pass `--schema` or not, the schema the session is currently using is shown in the status bar and can be changed at any time with <kbd>ctrl+s</kbd> — see [Active schema](#active-schema).
+
 You can use the `--readonly` flag to open a connection in read-only mode. This prevents any write operations (INSERT, UPDATE, DELETE, etc.) from being executed, which is useful when you want to safely browse a production database. The same can be achieved via the configuration file by setting `readonly: true` on a database profile (see [Configuration](#configuration)).
 
 ```{ .sh .copy }
@@ -258,7 +260,7 @@ Bindings are grouped by the part of the UI they belong to, so every panel can be
 
 | Section | What it controls |
 |---------|------------------|
-| `keybindings` (top level) | `help`, `quit`, `history` and `fullscreen`, which are global |
+| `keybindings` (top level) | `help`, `quit`, `history`, `fullscreen` and `schemas`, which are global |
 | `keybindings.navigation` | moving focus between the three panels |
 | `keybindings.editor` | the Vim-style query editor: cursor motion in normal mode, mode switching, and query execution |
 | `keybindings.sidebar` | jumping to the top / bottom of the sidebar tree |
@@ -364,6 +366,8 @@ keybindings:
   quit: 'ctrl+c'
   history: 'alt+h'
   fullscreen: 'alt+f'
+  # opens the active schema picker (postgres and oracle only)
+  schemas: 'ctrl+s'
   # moving focus between the three panels
   navigation:
     up: 'ctrl+k'
@@ -501,6 +505,18 @@ Move around a result set with the arrow keys or <kbd>h</kbd>/<kbd>j</kbd>/<kbd>k
 
     There are no pagination controls — they proved too slow to page through a table effectively. To work through a large table, write a `SELECT` with explicit `OFFSET` and `LIMIT` instead.
 
+### Active schema
+
+The right-hand side of the status bar shows the schema the session is currently using, as `active schema: <name>`. On startup that's whatever you passed to `--schema`, or the session default (`current_schema()` on PostgreSQL, `SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')` on Oracle) when the flag is omitted.
+
+Press <kbd>ctrl+s</kbd> (`schemas`) from any panel to open the schema picker, a filterable list of the schemas the connected user can see. Type to narrow the list, press <kbd>Enter</kbd> to make the highlighted schema the active one, or press <kbd>Esc</kbd> to close the picker without changing anything. Focus returns to the query editor either way.
+
+Switching the active schema changes the database session — `set search_path` on PostgreSQL, `ALTER SESSION SET CURRENT_SCHEMA` on Oracle — so unqualified table names in the queries you execute resolve against the new schema. The sidebar tree is left as it is: it keeps listing the schemas it was built with, and selecting a table there still reads that table's own schema, so browsing the catalog is unaffected.
+
+!!! note
+
+    The schema picker is only available for PostgreSQL and Oracle, the two drivers where dblab tracks an active schema. On MySQL, SQLite and SQL Server <kbd>ctrl+s</kbd> does nothing and the status bar has no schema segment.
+
 ### Full-screen mode
 
 Focus the query editor or the result set panel and press <kbd>alt+f</kbd> (`fullscreen`) to expand it to fill the entire terminal, hiding the title, status bar and the other panels. Press <kbd>Esc</kbd> to return to the split layout. Full-screen mode is also left automatically if you navigate focus away from the editor or result set panel — it isn't available for the sidebar tree.
@@ -549,7 +565,7 @@ While a batch is running, press <kbd>Ctrl+c</kbd> to cancel it; press <kbd>Ctrl+
 
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/query-history.png){ width="400" : .center }
 
-dblab automatically saves every executed query to a local history file (`$XDG_CONFIG_HOME/dblab/dblab.gob`). Press <kbd>F8</kbd> to open the query history view, which displays past queries sorted newest-first in a filterable list. Use the built-in search to narrow results, press <kbd>Enter</kbd> to load the selected query back into the editor, or press <kbd>Esc</kbd> to return without selecting anything.
+dblab automatically saves every executed query to a local history file (`$XDG_CONFIG_HOME/dblab/dblab.gob`). Press <kbd>alt+h</kbd> to open the query history view, which displays past queries sorted newest-first in a filterable list. Use the built-in search to narrow results, press <kbd>Enter</kbd> to load the selected query back into the editor, or press <kbd>Esc</kbd> to return without selecting anything.
 
 ## Help modal
 
@@ -633,6 +649,7 @@ Applies to all tabs of the result set panel.
 |-----|-------------|--------------|
 | <kbd>Alt+h</kbd>  | Open the query history view | `history` |
 | <kbd>Alt+f</kbd> | Expand the focused query editor or result set panel to full screen | `fullscreen` |
+| <kbd>Ctrl+s</kbd> | Open the schema picker to change the active schema (PostgreSQL and Oracle) | `schemas` |
 | <kbd>?</kbd> | Open the help modal showing all key bindings | `help` |
-| <kbd>Esc</kbd> | Dismiss the help modal or query history, exit full-screen mode (or return to normal mode in the query editor) | — |
+| <kbd>Esc</kbd> | Dismiss the help modal, the query history or the schema picker, exit full-screen mode (or return to normal mode in the query editor) | — |
 | <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application | `quit` |
