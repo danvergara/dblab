@@ -115,7 +115,6 @@ func (m *mysql) GetViewDefinition(view ViewRef) (string, []any, error) {
 			"TABLE_NAME":   view.Name,
 		}).
 		ToSql()
-
 	if err != nil {
 		return "", nil, err
 	}
@@ -206,3 +205,5 @@ func (m *mysql) Schemas() (string, []any, error) {
 func (m *mysql) SetActiveSchema(schema string) (string, []any, error) {
 	return "", nil, errors.New("schemas not supported")
 }
+
+func (m *mysql) GetActiveSchemaQuery() string { return "" }

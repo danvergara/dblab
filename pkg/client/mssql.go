@@ -322,3 +322,5 @@ func (m *mssql) Schemas() (string, []any, error) {
 func (m *mssql) SetActiveSchema(schema string) (string, []any, error) {
 	return "", nil, errors.New("schemas not supported")
 }
+
+func (m *mssql) GetActiveSchemaQuery() string { return "" }

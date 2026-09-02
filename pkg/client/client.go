@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"regexp"
 	"strings"
@@ -80,6 +81,7 @@ type databaseQuerier interface {
 	GetViewDefinition(view ViewRef) (string, []any, error)
 	Schemas() (string, []any, error)
 	SetActiveSchema(schema string) (string, []any, error)
+	GetActiveSchemaQuery() string
 }
 
 // Client is used to store the pool of db connection.
@@ -98,6 +100,8 @@ type Client struct {
 
 // New return an instance of the client.
 func New(opts command.Options) (*Client, error) {
+	ctx := context.Background()
+
 	conn, opts, err := connection.BuildConnectionFromOpts(opts)
 	if err != nil {
 		return nil, err
@@ -140,16 +144,16 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	if c.schema != "" {
-		switch c.driver {
-		case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH:
-			if _, err = db.Exec(fmt.Sprintf("set search_path = '%s'", c.schema)); err != nil {
-				return nil, err
-			}
-		case drivers.Oracle:
-			if _, err = db.Exec(fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s", c.schema)); err != nil {
-				return nil, err
-			}
+		if err := c.SetActiveSchema(ctx, c.schema); err != nil {
+			return nil, err
 		}
+	} else {
+		defaultSchema, err := c.fetchActiveSchema(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		c.schema = defaultSchema
 	}
 
 	if c.readOnly {
@@ -182,6 +186,11 @@ func New(opts command.Options) (*Client, error) {
 	c.paginationManager = pm
 
 	return c, nil
+}
+
+// Schema returns the current active schema.
+func (c *Client) Schema() string {
+	return c.schema
 }
 
 // DB Return the db attribute.
@@ -702,18 +711,25 @@ func (c *Client) Schemas(ctx context.Context) ([]string, error) {
 		schemas = append(schemas, name)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return schemas, nil
 }
 
 func (c *Client) SetActiveSchema(ctx context.Context, schema string) error {
-	query, args, err := c.databaseQuerier.SetActiveSchema(schema)
-	if err != nil {
+	switch c.driver {
+	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+		query, args, err := c.databaseQuerier.SetActiveSchema(schema)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.db.ExecContext(ctx, query, args...)
 		return err
 	}
-
-	_, err = c.db.ExecContext(ctx, query, args...)
-	return err
-
+	return nil
 }
 
 func (c *Client) viewDefintion(view ViewRef) ([][]string, []string, error) {
@@ -747,6 +763,25 @@ func (c *Client) isValidJSONColumn(dbTypeName string) bool {
 	}
 }
 
+func (c *Client) fetchActiveSchema(ctx context.Context) (string, error) {
+	switch c.driver {
+	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+		query := c.databaseQuerier.GetActiveSchemaQuery()
+		var schemaName sql.NullString
+		if err := c.db.GetContext(ctx, &schemaName, query); err != nil {
+			return "", err
+		}
+
+		if schemaName.Valid {
+			return schemaName.String, nil
+		}
+	}
+
+	return "", nil
+}
+
+// func (c *Client) setActive
+//
 // commentRegex matches both single-line (--) and multi-line (/* */) SQL comments.
 var commentRegex = regexp.MustCompile(`(?s)/\*.*?\*/|--.*?\n`)
 

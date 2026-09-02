@@ -8,14 +8,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var (
-	postgresSchemaQuery = sq.Select("schema_name").
-		From("information_schema.schemata").
-		Where(sq.NotEq{
-			"schema_name ": []string{"information_schema", "pg_catalog"},
-		}).
-		PlaceholderFormat(sq.Dollar)
-)
+var postgresSchemaQuery = sq.Select("schema_name").
+	From("information_schema.schemata").
+	Where(sq.NotEq{
+		"schema_name ": []string{"information_schema", "pg_catalog"},
+	}).
+	PlaceholderFormat(sq.Dollar)
 
 // postgres struct is in charge of perform all the postgres related queries,
 // without the client knowing.
@@ -326,4 +324,8 @@ func (p *postgres) Schemas() (string, []any, error) {
 
 func (p *postgres) SetActiveSchema(schema string) (string, []any, error) {
 	return fmt.Sprintf("set search_path = '%s'", schema), nil, nil
+}
+
+func (p *postgres) GetActiveSchemaQuery() string {
+	return "SELECT current_schema();"
 }
