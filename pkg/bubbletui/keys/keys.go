@@ -57,12 +57,12 @@ func ReadKeyMapFromConfig() (KeyMap, error) {
 		Quit:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Quit), key.WithHelp(cfg.KeyBindings.Quit, "quit")),
 		FullScreen: key.NewBinding(key.WithKeys(cfg.KeyBindings.FullScreen), key.WithHelp(cfg.KeyBindings.FullScreen, "fullscreen focus")),
 		History:    key.NewBinding(key.WithKeys(cfg.KeyBindings.History), key.WithHelp(cfg.KeyBindings.History, "query history")),
-		Schemas:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Schemas), key.WithHelp(cfg.KeyBindings.Schemas, "database schemas available for the user")),
+		Schemas:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Schemas), key.WithHelp(cfg.KeyBindings.Schemas, "pick the active database schema")),
 		Navigation: NavigationKeyMap{
-			Up:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Up), key.WithHelp(cfg.KeyBindings.Navigation.Up, "Toggle to the panel above")),
-			Down:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Down), key.WithHelp(cfg.KeyBindings.Navigation.Down, "Toggle to the panel below")),
-			Left:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Left), key.WithHelp(cfg.KeyBindings.Navigation.Left, "Toggle to the panel on the left")),
-			Right: key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Right), key.WithHelp(cfg.KeyBindings.Navigation.Right, "Toggle to the panel on the right")),
+			Up:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Up), key.WithHelp(cfg.KeyBindings.Navigation.Up, "toggle to the panel above")),
+			Down:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Down), key.WithHelp(cfg.KeyBindings.Navigation.Down, "toggle to the panel below")),
+			Left:  key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Left), key.WithHelp(cfg.KeyBindings.Navigation.Left, "toggle to the panel on the left")),
+			Right: key.NewBinding(key.WithKeys(cfg.KeyBindings.Navigation.Right), key.WithHelp(cfg.KeyBindings.Navigation.Right, "toggle to the panel on the right")),
 		},
 		Editor: EditorKeyMap{
 			Up:                 key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Up), key.WithHelp(cfg.KeyBindings.Editor.Up, "move up (editor)")),
@@ -104,7 +104,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 		{k.Sidebar.GoToBottom, k.Sidebar.GoToTop},
 		{k.ResultSet.NextTab, k.ResultSet.PrevTab, k.ResultSet.LineStart, k.ResultSet.LineEnd, k.ResultSet.GoToTop, k.ResultSet.GoToBottom, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
 		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.Insert, k.Editor.Normal, k.Editor.GoToBottom, k.Editor.GoToTop},
-		{k.Editor.LineStart, k.Editor.LineEnd, k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.FullScreen, k.Help, k.Quit},
+		{k.Editor.LineStart, k.Editor.LineEnd, k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.FullScreen, k.Schemas, k.Help, k.Quit},
 	}
 }
 
