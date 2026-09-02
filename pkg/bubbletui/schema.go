@@ -47,6 +47,7 @@ type SchemaModel struct {
 
 func NewSchemaModel(c *client.Client) *SchemaModel {
 	delegate := list.NewDefaultDelegate()
+	delegate.ShowDescription = false
 
 	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
