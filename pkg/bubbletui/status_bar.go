@@ -22,7 +22,7 @@ type StatusBar struct {
 	focus  focusState
 }
 
-func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn string) StatusBar {
+func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn, schema string) StatusBar {
 	var statusKb = lipgloss.NewStyle().
 		Background(KbOddBg).
 		Foreground(KbOddText).
@@ -41,7 +41,7 @@ func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn string) StatusBar {
 		lipgloss.NewStyle().
 			Foreground(KbEvenText).
 			Render("  "+driver+": "+conn)
-	return StatusBar{mode: mode, keyMap: km, fixed: statusKb, focus: focusEditor}
+	return StatusBar{mode: mode, keyMap: km, fixed: statusKb, focus: focusEditor, schema: schema}
 }
 
 func (f StatusBar) Init() tea.Cmd {
@@ -93,7 +93,7 @@ func (f StatusBar) View() tea.View {
 		rightBlock =
 			lipgloss.NewStyle().
 				Foreground(KbEvenText).
-				Render("current schema:" + " ")
+				Render("active schema:" + " ")
 	}
 	rightBlock += lipgloss.NewStyle().
 		Foreground(InsertModeBg).

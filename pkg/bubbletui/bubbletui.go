@@ -194,7 +194,7 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(km.ResultSet),
 		help:            h,
-		statusBar:       NewStatusBar(editor.mode, km, c.Driver(), c.Conn()),
+		statusBar:       NewStatusBar(editor.mode, km, c.Driver(), c.Conn(), c.Schema()),
 		schemas:         NewSchemaModel(c),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
@@ -355,7 +355,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
 	case schemaSelectedMsg:
+		m.focus = focusEditor
+		m.editor.Focus()
 		m.statusBar.SetSchema(msg.Name)
+		m.applySizes()
+		m.editor, cmd = m.editor.Update(msg)
+		cmds = append(cmds, cmd)
 	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
 		m.focus = focusEditor
 		m.resulstset.Blur()

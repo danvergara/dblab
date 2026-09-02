@@ -75,6 +75,7 @@ keybindings:
   help: '?'
   quit: 'ctrl+c'
   history: 'alt+h'
+  schemas: 'ctrl+s'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'
