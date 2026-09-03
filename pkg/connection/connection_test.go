@@ -793,12 +793,28 @@ func TestFormatPostgresURL(t *testing.T) {
 				err:      ErrInvalidPostgresURLFormat,
 			},
 		},
+		{
+			name: "valid url with schema",
+			given: given{
+				opts: command.Options{
+					URL: "postgres://user:password@localhost:5432/db?sslmode=disable&search_path=my_schema",
+				},
+			},
+			want: want{
+				uri: "postgres://user:password@localhost:5432/db?search_path=my_schema&sslmode=disable",
+			},
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			uri, err := formatPostgresURL(tc.given.opts)
+			var (
+				uri string
+				err error
+			)
+
+			uri, tc.given.opts, err = formatPostgresURL(tc.given.opts)
 
 			if tc.want.hasError {
 				assert.Error(t, err)
