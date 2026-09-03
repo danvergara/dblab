@@ -86,16 +86,17 @@ type databaseQuerier interface {
 
 // Client is used to store the pool of db connection.
 type Client struct {
-	db                *sqlx.DB
-	dbName            string
-	databaseQuerier   databaseQuerier
-	user              string
-	port              string
-	driver, schema    string
-	host              string
-	paginationManager *pagination.Manager
-	limit             uint
-	readOnly          bool
+	db                    *sqlx.DB
+	dbName                string
+	databaseQuerier       databaseQuerier
+	user                  string
+	port                  string
+	driver, schema        string
+	defaultSchemaSelected bool
+	host                  string
+	paginationManager     *pagination.Manager
+	limit                 uint
+	readOnly              bool
 }
 
 // New return an instance of the client.
@@ -147,6 +148,7 @@ func New(opts command.Options) (*Client, error) {
 		if err := c.SetActiveSchema(ctx, c.schema); err != nil {
 			return nil, err
 		}
+		c.defaultSchemaSelected = true
 	} else {
 		defaultSchema, err := c.fetchActiveSchema(ctx)
 		if err != nil {
@@ -191,6 +193,11 @@ func New(opts command.Options) (*Client, error) {
 // Schema returns the current active schema.
 func (c *Client) Schema() string {
 	return c.schema
+}
+
+// DefaultSchemaSelected returns if the default schema was selected by  the schema flag.
+func (c *Client) DefaultSchemaSelected() bool {
+	return c.defaultSchemaSelected
 }
 
 // DB Return the db attribute.

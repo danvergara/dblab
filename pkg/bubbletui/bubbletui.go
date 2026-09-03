@@ -267,14 +267,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.toggleFullScreen()
 			}
 		case key.Matches(msg, m.keyMap.Schemas):
-			switch m.c.Driver() {
-			case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
-				m.focus = focusSchemas
-				m.schemas.state = stateLoading
-				cmd = m.schemas.Init()
-				cmds = append(cmds, cmd)
-			default:
-				return m, nil
+			if !m.c.DefaultSchemaSelected() {
+				switch m.c.Driver() {
+				case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+					m.focus = focusSchemas
+					m.schemas.state = stateLoading
+					cmd = m.schemas.Init()
+					cmds = append(cmds, cmd)
+				default:
+					return m, nil
+				}
 			}
 		case key.Matches(msg, m.keyMap.Navigation.Right):
 			if m.focus == focusList {
@@ -355,19 +357,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
 	case schemaSelectedMsg:
-		m.focus = focusEditor
-		m.editor.Focus()
+		m.backToNormal()
 		m.statusBar.SetSchema(msg.Name)
-		m.applySizes()
 		m.editor, cmd = m.editor.Update(msg)
 		cmds = append(cmds, cmd)
 	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
-		m.focus = focusEditor
-		m.resulstset.Blur()
-		m.sidebarViewport.selected = false
-		m.editor.Focus()
+		m.backToNormal()
 		m.editor, cmd = m.editor.Update(msg)
-		m.applySizes()
 		cmds = append(cmds, cmd)
 	}
 
@@ -390,6 +386,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) backToNormal() {
+	m.focus = focusEditor
+	m.resulstset.Blur()
+	m.sidebarViewport.selected = false
+	m.editor.Focus()
+	m.applySizes()
 }
 
 func (m Model) View() tea.View {
