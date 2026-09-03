@@ -88,6 +88,8 @@ The sidebar keeps showing the same tree — switching the active schema doesn't 
 
     This applies to PostgreSQL and Oracle only. MySQL, SQLite and SQL Server have no active schema in dblab, so <kbd>ctrl+s</kbd> does nothing there and the status bar shows no schema.
 
+    The picker also requires that you didn't pin a schema at startup. If you started dblab with `--schema`, with a `schema` field in the config file, or with `search_path=<schema>` in a PostgreSQL connection URL, that schema is fixed for the whole session and <kbd>ctrl+s</kbd> does nothing.
+
 ### Reusing a query you ran before
 
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/query-history.png){ width="400" : .center }

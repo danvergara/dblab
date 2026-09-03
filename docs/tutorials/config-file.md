@@ -30,7 +30,7 @@ limit: 50
 
 The `readonly` field is optional. When set to `true`, dblab forces the database session into read-only mode, preventing any write operations (INSERT, UPDATE, DELETE, etc.). This is useful when you want to safely browse a production database. The same can be achieved via the `--readonly` CLI flag.
 
-The `schema` field is optional too, and only applies to PostgreSQL and Oracle. It only sets the schema dblab starts with: once the app is running you can switch to any other schema you have access to with <kbd>ctrl+s</kbd>, and the schema in use is shown in the status bar. See [active schema](../usage.md#active-schema).
+The `schema` field is optional too, and only applies to PostgreSQL and Oracle. Setting it pins the session to that schema: the schema in use is shown in the status bar, but the <kbd>ctrl+s</kbd> picker is disabled. Leave it out to be able to switch to any other schema you have access to while the app is running. See [active schema](../usage.md#active-schema).
 
 Once created, we can launch `dblab` with the command:
 

@@ -64,7 +64,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Connection profiles with secure credential storage in the OS keyring.
 - Query history: executed queries are persisted across sessions and can be browsed/re-used via a filterable list.
 - Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (supported for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
-- Schema switching: press <kbd>ctrl+s</kbd> to pick the active schema from a filterable list without restarting the app (PostgreSQL and Oracle); the active schema is always shown in the status bar.
+- Schema switching: press <kbd>ctrl+s</kbd> to pick the active schema from a filterable list without restarting the app (PostgreSQL and Oracle, when no schema was pinned at startup); the active schema is always shown in the status bar.
 - Built-in help modal: press <kbd>?</kbd> to display a help overlay showing all available key bindings; press <kbd>Esc</kbd> to dismiss it.
 - Full-screen mode: press <kbd>alt+f</kbd> to expand the focused query editor or result set panel to fill the terminal; press <kbd>Esc</kbd> to exit.
 - Per-panel key bindings: the query editor, the sidebar tree, the result set panel and the panel navigation each have their own section in `.dblab.yaml`, so every panel can be rebound independently.
@@ -186,7 +186,13 @@ $ dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 
 $ dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
 
-Whether you pass `--schema` or not, the schema the session is currently using is shown in the status bar and can be changed at any time with <kbd>ctrl+s</kbd> — see [Active schema](#active-schema).
+For PostgreSQL, the schema can also be set directly in the connection URL with the `search_path` query parameter, instead of passing `--schema` alongside it. Both forms are equivalent:
+
+```sh
+$ dblab --url 'postgres://user:password@localhost:5432/database?sslmode=disable&search_path=myschema'
+```
+
+The schema the session is currently using is shown in the status bar. If you don't pin a schema — no `--schema` flag, no `schema` field in the config file and no `search_path` in the URL — you can also change it at any time with <kbd>ctrl+s</kbd>; see [Active schema](#active-schema).
 
 You can use the `--readonly` flag to open a connection in read-only mode. This prevents any write operations (INSERT, UPDATE, DELETE, etc.) from being executed, which is useful when you want to safely browse a production database. The same can be achieved via the configuration file by setting `readonly: true` on a database profile (see [Configuration](#configuration)).
 
@@ -554,7 +560,9 @@ There are no pagination controls — they proved too slow to page through a tabl
 
 ### Active schema
 
-The right-hand side of the status bar shows the schema the session is currently using, as `active schema: <name>`. On startup that's whatever you passed to `--schema`, or the session default (`current_schema()` on PostgreSQL, `SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')` on Oracle) when the flag is omitted.
+The right-hand side of the status bar shows the schema the session is currently using, as `active schema: <name>`. On startup that's whatever schema you pinned — via `--schema`, the `schema` field in `.dblab.yaml`, or the `search_path` query parameter of a PostgreSQL connection URL — or the session default (`current_schema()` on PostgreSQL, `SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')` on Oracle) when you pinned none.
+
+If you pinned a schema, that's the schema for the whole session and the picker below is disabled: <kbd>ctrl+s</kbd> does nothing. Omit the schema to be able to switch it from the app.
 
 Press <kbd>ctrl+s</kbd> (`schemas`) from any panel to open the schema picker, a filterable list of the schemas the connected user can see. Type to narrow the list, press <kbd>Enter</kbd> to make the highlighted schema the active one, or press <kbd>Esc</kbd> to close the picker without changing anything. Focus returns to the query editor either way.
 
@@ -698,7 +706,7 @@ Applies to all tabs of the result set panel.
 |-----|-------------|--------------|
 | <kbd>Alt+h</kbd>  | Open the query history view | `history` |
 | <kbd>Alt+f</kbd> | Expand the focused query editor or result set panel to full screen | `fullscreen` |
-| <kbd>Ctrl+s</kbd> | Open the schema picker to change the active schema (PostgreSQL and Oracle) | `schemas` |
+| <kbd>Ctrl+s</kbd> | Open the schema picker to change the active schema (PostgreSQL and Oracle, when no schema was pinned at startup) | `schemas` |
 | <kbd>?</kbd> | Open the help modal showing all key bindings | `help` |
 | <kbd>Esc</kbd> | Dismiss the help modal, the query history or the schema picker, exit full-screen mode (or return to normal mode in the query editor) | — |
 | <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application | `quit` |

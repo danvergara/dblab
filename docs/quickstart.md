@@ -41,6 +41,12 @@ dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 --
 dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
 
+For PostgreSQL, the schema can also be set directly in the connection URL with the `search_path` query parameter, instead of passing `--schema` alongside it:
+
+```{ .sh .copy }
+dblab --url 'postgres://user:password@localhost:5432/database?sslmode=disable&search_path=myschema'
+```
+
 You can use the `--readonly` flag to open a connection in read-only mode, preventing any write operations:
 
 ```{ .sh .copy }
