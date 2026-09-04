@@ -278,6 +278,23 @@ func (e *Editor) deleteCurrentLine() {
 		lines = append(lines[:row], lines[row+1:]...)
 
 		e.editor.SetValue(strings.Join(lines, "\n"))
+
+		targetRow := row
+		if targetRow >= len(lines) {
+			targetRow = len(lines) - 1
+		}
+
+		targetRow = max(0, targetRow)
+
+		for e.editor.Line() > 0 {
+			e.editor.CursorUp()
+		}
+
+		for e.editor.Line() < targetRow {
+			e.editor.CursorDown()
+		}
+
+		e.editor.CursorStart()
 	}
 }
 
