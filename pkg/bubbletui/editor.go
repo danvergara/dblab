@@ -100,7 +100,13 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case querySelectedMsg:
-		e.editor.SetValue(msg.QueryText)
+		e.editor.CursorEnd()
+		if e.editor.Value() != "" {
+			e.editor.InsertString("\n" + msg.QueryText + ";")
+		} else {
+			e.editor.InsertString(msg.QueryText + ";")
+		}
+		return e, nil
 	case tea.KeyPressMsg:
 		if key.Matches(msg, e.keyMap.ExecuteQuery) {
 			editorContent := e.editor.Value()
