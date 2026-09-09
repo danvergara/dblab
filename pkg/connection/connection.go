@@ -65,7 +65,7 @@ func BuildConnectionFromOpts(opts command.Options) (string, command.Options, err
 				opts.Driver = drivers.Postgres
 			}
 
-			conn, err := formatPostgresURL(opts)
+			conn, opts, err := formatPostgresURL(opts)
 
 			return conn, opts, err
 		}
@@ -288,14 +288,14 @@ func currentUser() (string, error) {
 }
 
 // formatPostgresURL returns valid uri for postgres connection.
-func formatPostgresURL(opts command.Options) (string, error) {
+func formatPostgresURL(opts command.Options) (string, command.Options, error) {
 	if !hasValidPostgresPrefix(opts.URL) {
-		return "", fmt.Errorf("invalid prefix %s : %w", opts.URL, ErrInvalidPostgresURLFormat)
+		return "", opts, fmt.Errorf("invalid prefix %s : %w", opts.URL, ErrInvalidPostgresURLFormat)
 	}
 
 	uri, err := url.Parse(opts.URL)
 	if err != nil {
-		return "", fmt.Errorf("%v : %w", err, ErrInvalidPostgresURLFormat)
+		return "", opts, fmt.Errorf("%v : %w", err, ErrInvalidPostgresURLFormat)
 	}
 
 	result := map[string]string{}
@@ -313,13 +313,17 @@ func formatPostgresURL(opts command.Options) (string, error) {
 		}
 	}
 
+	if result["search_path"] != "" {
+		opts.Schema = result["search_path"]
+	}
+
 	query := url.Values{}
 	for k, v := range result {
 		query.Add(k, v)
 	}
 	uri.RawQuery = query.Encode()
 
-	return uri.String(), nil
+	return uri.String(), opts, nil
 }
 
 // formatMySQLURL returns valid uri for mysql connection.

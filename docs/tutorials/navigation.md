@@ -76,11 +76,25 @@ Each statement gets its own result tab — "query #1", "query #2" and so on, thr
 
 While a batch is running, press <kbd>Ctrl+c</kbd> to cancel it; press <kbd>Ctrl+c</kbd> again to quit dblab.
 
+### Switching the active schema
+
+On PostgreSQL and Oracle, the right-hand side of the status bar tells you which schema the session is using — `active schema: public`, for instance. That's the schema unqualified table names in your queries resolve against, and you don't have to restart dblab to change it.
+
+Press <kbd>ctrl+s</kbd> to bring up the schema picker, which lists the schemas your user can see. Type to filter the list, press <kbd>Enter</kbd> on the one you want, and the status bar updates to show it; press <kbd>Esc</kbd> instead to close the picker and leave the schema alone. Either way you end up back in the query editor.
+
+The sidebar keeps showing the same tree — switching the active schema doesn't rebuild it, and picking a table there still reads that table's own schema. What changes is where an unqualified `SELECT` looks.
+
+!!! note
+
+    This applies to PostgreSQL and Oracle only. MySQL, SQLite and SQL Server have no active schema in dblab, so <kbd>ctrl+s</kbd> does nothing there and the status bar shows no schema.
+
+    The picker also requires that you didn't pin a schema at startup. If you started dblab with `--schema`, with a `schema` field in the config file, or with `search_path=<schema>` in a PostgreSQL connection URL, that schema is fixed for the whole session and <kbd>ctrl+s</kbd> does nothing.
+
 ### Reusing a query you ran before
 
 ![dblab](https://raw.githubusercontent.com/danvergara/dblab/main/assets/tutorials/images/query-history.png){ width="400" : .center }
 
-Every query you execute is saved to a local history file, so it survives across sessions. Press <kbd>F8</kbd> to open the history view, which lists your past queries newest-first. Type to filter the list, press <kbd>Enter</kbd> to load the highlighted query back into the editor, or press <kbd>Esc</kbd> to go back without picking anything.
+Every query you execute is saved to a local history file, so it survives across sessions. Press <kbd>alt+h</kbd> to open the history view, which lists your past queries newest-first. Type to filter the list, press <kbd>Enter</kbd> to load the highlighted query back into the editor, or press <kbd>Esc</kbd> to go back without picking anything.
 
 ### When you forget a key binding
 

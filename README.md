@@ -34,6 +34,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
 - [Navigation](#navigation)
     - [Panels and the sidebar tree](#panels-and-the-sidebar-tree)
     - [Result sets](#result-sets)
+    - [Active schema](#active-schema)
 - [Query editor](#query-editor)
     - [Modes](#modes)
     - [Editing and motions](#editing-and-motions)
@@ -63,6 +64,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Connection profiles with secure credential storage in the OS keyring.
 - Query history: executed queries are persisted across sessions and can be browsed/re-used via a filterable list.
 - Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (supported for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
+- Schema switching: press <kbd>ctrl+s</kbd> to pick the active schema from a filterable list without restarting the app (PostgreSQL and Oracle, when no schema was pinned at startup); the active schema is always shown in the status bar.
 - Built-in help modal: press <kbd>?</kbd> to display a help overlay showing all available key bindings; press <kbd>Esc</kbd> to dismiss it.
 - Full-screen mode: press <kbd>alt+f</kbd> to expand the focused query editor or result set panel to fill the terminal; press <kbd>Esc</kbd> to exit.
 - Per-panel key bindings: the query editor, the sidebar tree, the result set panel and the panel navigation each have their own section in `.dblab.yaml`, so every panel can be rebound independently.
@@ -183,6 +185,14 @@ $ dblab --url postgres://user:password@host:port/database?sslmode=[mode] --schem
 $ dblab --host localhost --user user2 --db FREEPDB1 --pass password --port 1521 --driver oracle --limit 50 --schema user1
 $ dblab --url 'oracle://user2:password@localhost:1521/FREEPDB1' --schema user1
 ```
+
+For PostgreSQL, the schema can also be set directly in the connection URL with the `search_path` query parameter, instead of passing `--schema` alongside it. Both forms are equivalent:
+
+```sh
+$ dblab --url 'postgres://user:password@localhost:5432/database?sslmode=disable&search_path=myschema'
+```
+
+The schema the session is currently using is shown in the status bar. If you don't pin a schema — no `--schema` flag, no `schema` field in the config file and no `search_path` in the URL — you can also change it at any time with <kbd>ctrl+s</kbd>; see [Active schema](#active-schema).
 
 You can use the `--readonly` flag to open a connection in read-only mode. This prevents any write operations (INSERT, UPDATE, DELETE, etc.) from being executed, which is useful when you want to safely browse a production database. The same can be achieved via the configuration file by setting `readonly: true` on a database profile (see [Configuration](#configuration)).
 
@@ -309,7 +319,7 @@ Bindings are grouped by the part of the UI they belong to, so every panel can be
 
 | Section | What it controls |
 | --------- | ------------------ |
-| `keybindings` (top level) | `help`, `quit`, `history` and `fullscreen`, which are global |
+| `keybindings` (top level) | `help`, `quit`, `history`, `fullscreen` and `schemas`, which are global |
 | `keybindings.navigation` | moving focus between the three panels |
 | `keybindings.editor` | the Vim-style query editor: cursor motion in normal mode, mode switching, and query execution |
 | `keybindings.sidebar` | jumping to the top / bottom of the sidebar tree |
@@ -415,6 +425,8 @@ keybindings:
   quit: 'ctrl+c'
   history: 'alt+h'
   fullscreen: 'alt+f'
+  # opens the active schema picker (postgres and oracle only)
+  schemas: 'ctrl+s'
   # moving focus between the three panels
   navigation:
     up: 'ctrl+k'
@@ -545,6 +557,18 @@ Selecting a table populates the result set panel, which has one tab per view of 
 Move around a result set with the arrow keys or <kbd>h</kbd>/<kbd>j</kbd>/<kbd>k</kbd>/<kbd>l</kbd>. The selected cell is highlighted so you can see where you are; press <kbd>Enter</kbd> on a cell to copy its content.
 
 There are no pagination controls — they proved too slow to page through a table effectively. To work through a large table, write a `SELECT` with explicit `OFFSET` and `LIMIT` instead.
+
+### Active schema
+
+The right-hand side of the status bar shows the schema the session is currently using, as `active schema: <name>`. On startup that's whatever schema you pinned — via `--schema`, the `schema` field in `.dblab.yaml`, or the `search_path` query parameter of a PostgreSQL connection URL — or the session default (`current_schema()` on PostgreSQL, `SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')` on Oracle) when you pinned none.
+
+If you pinned a schema, that's the schema for the whole session and the picker below is disabled: <kbd>ctrl+s</kbd> does nothing. Omit the schema to be able to switch it from the app.
+
+Press <kbd>ctrl+s</kbd> (`schemas`) from any panel to open the schema picker, a filterable list of the schemas the connected user can see. Type to narrow the list, press <kbd>Enter</kbd> to make the highlighted schema the active one, or press <kbd>Esc</kbd> to close the picker without changing anything. Focus returns to the query editor either way.
+
+Switching the active schema changes the database session — `set search_path` on PostgreSQL, `ALTER SESSION SET CURRENT_SCHEMA` on Oracle — so unqualified table names in the queries you execute resolve against the new schema. The sidebar tree is left as it is: it keeps listing the schemas it was built with, and selecting a table there still reads that table's own schema, so browsing the catalog is unaffected.
+
+The picker is only available for PostgreSQL and Oracle, the two drivers where dblab tracks an active schema. On MySQL, SQLite and SQL Server <kbd>ctrl+s</kbd> does nothing and the status bar has no schema segment.
 
 ### Full-screen mode
 
@@ -682,8 +706,9 @@ Applies to all tabs of the result set panel.
 |-----|-------------|--------------|
 | <kbd>Alt+h</kbd>  | Open the query history view | `history` |
 | <kbd>Alt+f</kbd> | Expand the focused query editor or result set panel to full screen | `fullscreen` |
+| <kbd>Ctrl+s</kbd> | Open the schema picker to change the active schema (PostgreSQL and Oracle, when no schema was pinned at startup) | `schemas` |
 | <kbd>?</kbd> | Open the help modal showing all key bindings | `help` |
-| <kbd>Esc</kbd> | Dismiss the help modal or query history, exit full-screen mode (or return to normal mode in the query editor) | — |
+| <kbd>Esc</kbd> | Dismiss the help modal, the query history or the schema picker, exit full-screen mode (or return to normal mode in the query editor) | — |
 | <kbd>Ctrl+c</kbd> | Cancel running queries if any; otherwise quit the application | `quit` |
 
 ## Contribute

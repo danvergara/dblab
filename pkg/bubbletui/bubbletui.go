@@ -46,6 +46,7 @@ const (
 	focusTable
 	focusHistory
 	focusHelp
+	focusSchemas
 )
 
 func (f focusState) String() string {
@@ -123,6 +124,7 @@ type Model struct {
 	queryHistory    *HistoryModel
 	help            help.Model
 	statusBar       StatusBar
+	schemas         *SchemaModel
 
 	// Manages the focus on the app.
 	focus focusState
@@ -192,7 +194,8 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(km.ResultSet),
 		help:            h,
-		statusBar:       NewStatusBar(editor.mode, km, c.Driver(), c.Conn()),
+		statusBar:       NewStatusBar(editor.mode, km, c.Driver(), c.Conn(), c.Schema()),
+		schemas:         NewSchemaModel(c),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
@@ -262,6 +265,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keyMap.FullScreen):
 			if !m.fullScreen {
 				m.toggleFullScreen()
+			}
+		case key.Matches(msg, m.keyMap.Schemas):
+			if !m.c.DefaultSchemaSelected() {
+				switch m.c.Driver() {
+				case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
+					m.focus = focusSchemas
+					m.schemas.state = stateLoading
+					cmd = m.schemas.Init()
+					cmds = append(cmds, cmd)
+				default:
+					return m, nil
+				}
 			}
 		case key.Matches(msg, m.keyMap.Navigation.Right):
 			if m.focus == focusList {
@@ -341,13 +356,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
-	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
-		m.focus = focusEditor
-		m.resulstset.Blur()
-		m.sidebarViewport.selected = false
-		m.editor.Focus()
+	case schemaSelectedMsg:
+		m.backToNormal()
+		m.statusBar.SetSchema(msg.Name)
 		m.editor, cmd = m.editor.Update(msg)
-		m.applySizes()
+		cmds = append(cmds, cmd)
+	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
+		m.backToNormal()
+		m.editor, cmd = m.editor.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 
@@ -364,9 +380,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case focusHistory:
 		m.queryHistory, cmd = m.queryHistory.Update(msg)
 		cmds = append(cmds, cmd)
+	case focusSchemas:
+		m.schemas, cmd = m.schemas.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) backToNormal() {
+	m.focus = focusEditor
+	m.resulstset.Blur()
+	m.sidebarViewport.selected = false
+	m.editor.Focus()
+	m.applySizes()
 }
 
 func (m Model) View() tea.View {
@@ -378,6 +405,8 @@ func (m Model) View() tea.View {
 		v.SetContent(m.queryHistory.View().Content)
 	case focusHelp:
 		v.SetContent(setModalContent(m.help.View(m.keyMap), m.width, m.height))
+	case focusSchemas:
+		v.SetContent(m.schemas.View().Content)
 	default:
 		if m.fullScreen {
 			v.SetContent(m.fullScreenView())
@@ -545,6 +574,7 @@ func (m *Model) applySizes() {
 func (m *Model) fullScreenSizes() {
 	m.help.SetWidth(m.width)
 	m.queryHistory.SetSize(m.width, m.height)
+	m.schemas.SetSize(m.width, m.height)
 	m.statusBar.SetWidth(m.width)
 
 	switch m.focus {
@@ -585,6 +615,7 @@ func (m *Model) defaultSizes() {
 	m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
 	m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
 	m.queryHistory.SetSize(m.width, m.height)
+	m.schemas.SetSize(m.width, m.height)
 	m.statusBar.SetWidth(m.width)
 }
 
@@ -611,6 +642,8 @@ func prepareQueriesForExecution(rawText string) []string {
 	return validQueries
 }
 
+// setModalContent places a text block vertically in a styled box.
+// Receives the content as string and the dimensions as integers.
 func setModalContent(content string, width, height int) string {
 	formStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).

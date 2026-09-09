@@ -18,10 +18,11 @@ type StatusBar struct {
 	width  int
 	keyMap keys.KeyMap
 	fixed  string
+	schema string
 	focus  focusState
 }
 
-func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn string) StatusBar {
+func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn, schema string) StatusBar {
 	var statusKb = lipgloss.NewStyle().
 		Background(KbOddBg).
 		Foreground(KbOddText).
@@ -40,7 +41,7 @@ func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn string) StatusBar {
 		lipgloss.NewStyle().
 			Foreground(KbEvenText).
 			Render("  "+driver+": "+conn)
-	return StatusBar{mode: mode, keyMap: km, fixed: statusKb, focus: focusEditor}
+	return StatusBar{mode: mode, keyMap: km, fixed: statusKb, focus: focusEditor, schema: schema}
 }
 
 func (f StatusBar) Init() tea.Cmd {
@@ -57,6 +58,10 @@ func (f StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 
 func (f *StatusBar) ShowFocus(focus focusState) {
 	f.focus = focus
+}
+
+func (f *StatusBar) SetSchema(schema string) {
+	f.schema = schema
 }
 
 func (f *StatusBar) SetWidth(width int) {
@@ -83,9 +88,19 @@ func (f StatusBar) View() tea.View {
 			Render(endArrow) +
 		f.fixed
 
-	rightBlock := lipgloss.NewStyle().
-		Foreground(FocusBg).
-		Render(startArrow) +
+	var rightBlock string
+	if f.schema != "" {
+		rightBlock =
+			lipgloss.NewStyle().
+				Foreground(KbEvenText).
+				Render("active schema:" + " ")
+	}
+	rightBlock += lipgloss.NewStyle().
+		Foreground(InsertModeBg).
+		Render(f.schema+" ") +
+		lipgloss.NewStyle().
+			Foreground(FocusBg).
+			Render(startArrow) +
 		lipgloss.NewStyle().
 			Bold(true).
 			Background(FocusBg).

@@ -2,10 +2,18 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+)
+
+var (
+	mssqlSchemasQuery = sq.Select("s.name").
+		From("sys.schemas AS s").
+		Join("sys.database_principals p ON s.principal_id = p.principal_id").
+		PlaceholderFormat(sq.AtP)
 )
 
 // mssql struct is in charge of perform all the SQL Server related queries.
@@ -190,12 +198,7 @@ func (m *mssql) GetViewDefinition(view ViewRef) (string, []any, error) {
 
 // fetchSchemas method lists all the schemas of the current database.
 func (m *mssql) fetchSchemas(_ context.Context, parentID string) ([]*DBNode, error) {
-	query, args, err := sq.Select("s.name").
-		From("sys.schemas AS s").
-		Join("sys.database_principals p ON s.principal_id = p.principal_id").
-		OrderBy("s.name").
-		PlaceholderFormat(sq.AtP).
-		ToSql()
+	query, args, err := mssqlSchemasQuery.ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -311,3 +314,13 @@ func (m *mssql) fetchViews(_ context.Context, parentName, parentID string) ([]*D
 
 	return views, nil
 }
+
+func (m *mssql) Schemas() (string, []any, error) {
+	return "", nil, errors.New("schemas not supported")
+}
+
+func (m *mssql) SetActiveSchema(schema string) (string, []any, error) {
+	return "", nil, errors.New("schemas not supported")
+}
+
+func (m *mssql) GetActiveSchemaQuery() string { return "" }

@@ -69,6 +69,7 @@ keybindings:
   quit: 'ctrl+c'
   history: 'alt+h'
   fullscreen: 'alt+f'
+  schemas: 'ctrl+s'
   navigation:
     up: 'ctrl+k'
     down: 'ctrl+j'

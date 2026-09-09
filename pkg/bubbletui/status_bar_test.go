@@ -12,7 +12,7 @@ func TestModelStatusBarTracksEditorModeChanges(t *testing.T) {
 	c, _ := client.New(command.Options{Driver: "sqlite", Host: "/tmp/file.bd"})
 	km := keys.DefaultKeyMap()
 	editor := NewEditor(km.Editor)
-	m := &Model{editor: editor, statusBar: NewStatusBar(editor.mode, km, c.Driver(), c.Conn())}
+	m := &Model{editor: editor, statusBar: NewStatusBar(editor.mode, km, c.Driver(), c.Conn(), c.Schema())}
 
 	updated, _ := m.Update(modeChangeMsg{mode: InsertMode})
 	model, ok := updated.(Model)

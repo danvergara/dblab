@@ -10,6 +10,14 @@ import (
 	_ "github.com/sijms/go-ora/v2"
 )
 
+var (
+	oracleSchemasQuery = `
+		SELECT DISTINCT owner AS schema_name
+		FROM all_tables
+		ORDER BY owner
+	`
+)
+
 // oracle struct is in charge of perform all the oracle related queries.
 type oracle struct {
 	db     *sqlx.DB
@@ -190,12 +198,7 @@ func (o *oracle) GetViewDefinition(view ViewRef) (string, []any, error) {
 
 // fetchSchemas method lists all the schemas of the current database.
 func (o *oracle) fetchSchemas(_ context.Context, parentID string) ([]*DBNode, error) {
-	query := `
-		SELECT DISTINCT owner AS schema_name
-		FROM all_tables
-		ORDER BY owner
-	`
-	rows, err := o.db.Query(query)
+	rows, err := o.db.Query(oracleSchemasQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -303,4 +306,16 @@ func (o *oracle) fetchViews(_ context.Context, parentName, parentID string) ([]*
 	}
 
 	return views, nil
+}
+
+func (o *oracle) Schemas() (string, []any, error) {
+	return oracleSchemasQuery, nil, nil
+}
+
+func (o *oracle) SetActiveSchema(schema string) (string, []any, error) {
+	return fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s", schema), nil, nil
+}
+
+func (o *oracle) GetActiveSchemaQuery() string {
+	return "SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL;"
 }
