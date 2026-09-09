@@ -351,20 +351,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
 		cmds = append(cmds, cmd)
+		return m, tea.Batch(cmds...)
 	case updateGraphMsg, updateGraphErrMsg:
 		m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
 		cmds = append(cmds, cmd)
 		m.resulstset, cmd = m.resulstset.Update(msg)
 		cmds = append(cmds, cmd)
+		return m, tea.Batch(cmds...)
 	case schemaSelectedMsg:
 		m.backToNormal()
 		m.statusBar.SetSchema(msg.Name)
 		m.editor, cmd = m.editor.Update(msg)
 		cmds = append(cmds, cmd)
+		return m, tea.Batch(cmds...)
 	case querySelectedMsg, queryHistoryErrMsg, backToNormalMsg:
 		m.backToNormal()
 		m.editor, cmd = m.editor.Update(msg)
-		cmds = append(cmds, cmd)
+		return m, cmd
 	}
 
 	switch m.focus {
