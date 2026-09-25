@@ -65,7 +65,7 @@ func (f *StatusBar) SetSchema(schema string) {
 }
 
 func (f *StatusBar) SetWidth(width int) {
-	f.width = width - 4
+	f.width = width
 }
 
 func (f StatusBar) View() tea.View {
