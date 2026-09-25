@@ -111,7 +111,7 @@ func (s *SidebarViewport) SetSize(w, h int) {
 	s.sidebarViewport.SetHeight(s.height)
 
 	if s.dbTree != nil {
-		s.dbTree = s.newTuiTreeModel(s.dbTree.Tree, 0, s.height-2)
+		s.dbTree = s.newTuiTreeModel(s.dbTree.Tree, 0, s.height)
 	}
 }
 

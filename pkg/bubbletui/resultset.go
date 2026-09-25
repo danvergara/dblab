@@ -157,8 +157,8 @@ func (r *ResultSet) SetSize(w, h int) {
 	r.viewport.SetHeight(h)
 	for _, panel := range r.tablesMetadata {
 		if tp, ok := panel.(*TablePanel); ok {
-			tp.table.SetHeight(h - 2)
-			tp.table.SetWidth(w - 2)
+			tp.table.SetHeight(h)
+			tp.table.SetWidth(w)
 		}
 	}
 }
@@ -460,8 +460,8 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 func newTablePanel(height, width int) *TablePanel {
 	t := table.New(
 		table.WithFocused(true),
-		table.WithWidth(max(width-2, 0)),
-		table.WithHeight(max(height-2, 0)),
+		table.WithWidth(max(width, 0)),
+		table.WithHeight(max(height, 0)),
 	)
 
 	s := table.DefaultStyles()

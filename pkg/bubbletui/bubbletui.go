@@ -582,12 +582,12 @@ func (m *Model) fullScreenSizes() {
 
 	switch m.focus {
 	case focusEditor:
-		m.editorWidth = m.width - 4
+		m.editorWidth = m.width - 1
 		m.editorHeight = m.height
 		m.editor.SetWidth(m.editorWidth)
 		m.editor.SetHeight(m.editorHeight)
 	case focusTable:
-		m.resultSetWidth = m.width - 4
+		m.resultSetWidth = m.width - 1
 		m.resultSetHeight = m.height - 2
 		m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
 	}
@@ -604,11 +604,11 @@ func (m *Model) defaultSizes() {
 	m.sidebarViewportHeight = availableHeight - m.titleHeight - 2
 	m.sidebarViewportWidth = m.leftWidth
 
-	m.editorWidth = m.rightWidth - 4
+	m.editorWidth = m.rightWidth
 	m.editorHeight = availableHeight/3 - 2
 
 	m.resultSetHeight = availableHeight - m.editorHeight - 2
-	m.resultSetWidth = m.rightWidth - 4
+	m.resultSetWidth = m.rightWidth
 
 	m.help.SetWidth(m.width)
 
