@@ -70,9 +70,19 @@ func ReadKeyMapFromConfig() (KeyMap, error) {
 			Left:               key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Left), key.WithHelp(cfg.KeyBindings.Editor.Left, "move left (editor)")),
 			Right:              key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Right), key.WithHelp(cfg.KeyBindings.Editor.Right, "move right (editor)")),
 			Insert:             key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Insert), key.WithHelp(cfg.KeyBindings.Editor.Insert, "insert mode (editor)")),
+			Append:             key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Append), key.WithHelp(cfg.KeyBindings.Editor.Append, "insert mode after the cursor (editor)")),
+			AppendLineEnd:      key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.AppendLineEnd), key.WithHelp(cfg.KeyBindings.Editor.AppendLineEnd, "insert mode at the end of the line (editor)")),
+			InsertLineStart:    key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.InsertLineStart), key.WithHelp(cfg.KeyBindings.Editor.InsertLineStart, "insert mode at the first non-blank character (editor)")),
+			OpenLineBelow:      key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.OpenLineBelow), key.WithHelp(cfg.KeyBindings.Editor.OpenLineBelow, "open a line below and insert (editor)")),
+			OpenLineAbove:      key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.OpenLineAbove), key.WithHelp(cfg.KeyBindings.Editor.OpenLineAbove, "open a line above and insert (editor)")),
 			Normal:             key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Normal), key.WithHelp(cfg.KeyBindings.Editor.Normal, "normal mode (editor)")),
+			Undo:               key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Undo), key.WithHelp(cfg.KeyBindings.Editor.Undo, "undo (editor)")),
+			Redo:               key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.Redo), key.WithHelp(cfg.KeyBindings.Editor.Redo, "redo (editor)")),
 			LineStart:          key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.LineStart), key.WithHelp(cfg.KeyBindings.Editor.LineStart, "line start (editor)")),
 			LineEnd:            key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.LineEnd), key.WithHelp(cfg.KeyBindings.Editor.LineEnd, "line end (editor)")),
+			WordForward:        key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.WordForward), key.WithHelp(cfg.KeyBindings.Editor.WordForward, "word forward (editor)")),
+			WordEnd:            key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.WordEnd), key.WithHelp(cfg.KeyBindings.Editor.WordEnd, "word end (editor)")),
+			WordBackward:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.WordBackward), key.WithHelp(cfg.KeyBindings.Editor.WordBackward, "word backward (editor)")),
 			GoToTop:            key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.GoToTop), key.WithHelp(cfg.KeyBindings.Editor.GoToTop, "go top (editor)")),
 			GoToBottom:         key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.GoToBottom), key.WithHelp(cfg.KeyBindings.Editor.GoToBottom, "go bottom (editor)")),
 			ExecuteQuery:       key.NewBinding(key.WithKeys(cfg.KeyBindings.Editor.ExecuteQuery), key.WithHelp(cfg.KeyBindings.Editor.ExecuteQuery, "execute queries in the editor (editor)")),
@@ -99,12 +109,14 @@ func (k KeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
+// FullHelp groups the bindings into one column per panel, so the help modal
+// stays at four columns and keeps fitting on narrow terminals.
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Sidebar.GoToBottom, k.Sidebar.GoToTop},
-		{k.ResultSet.NextTab, k.ResultSet.PrevTab, k.ResultSet.LineStart, k.ResultSet.LineEnd, k.ResultSet.GoToTop, k.ResultSet.GoToBottom, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
-		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.Insert, k.Editor.Normal, k.Editor.GoToBottom, k.Editor.GoToTop},
-		{k.Editor.LineStart, k.Editor.LineEnd, k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.FullScreen, k.Schemas, k.Help, k.Quit},
+		{k.Sidebar.GoToTop, k.Sidebar.GoToBottom, k.Navigation.Up, k.Navigation.Down, k.Navigation.Left, k.Navigation.Right, k.FullScreen, k.Schemas, k.Help, k.Quit},
+		{k.ResultSet.NextTab, k.ResultSet.PrevTab, k.ResultSet.LineStart, k.ResultSet.LineEnd, k.ResultSet.GoToTop, k.ResultSet.GoToBottom},
+		{k.Editor.Up, k.Editor.Down, k.Editor.Left, k.Editor.Right, k.Editor.LineStart, k.Editor.LineEnd, k.Editor.GoToTop, k.Editor.GoToBottom, k.Editor.WordForward, k.Editor.WordEnd, k.Editor.WordBackward},
+		{k.Editor.Insert, k.Editor.Append, k.Editor.AppendLineEnd, k.Editor.InsertLineStart, k.Editor.OpenLineBelow, k.Editor.OpenLineAbove, k.Editor.Normal, k.Editor.Undo, k.Editor.Redo, k.Editor.ExecuteQuery, k.Editor.ExecuteSingleQuery},
 	}
 }
 
@@ -121,9 +133,23 @@ type EditorKeyMap struct {
 	GoToTop    key.Binding
 	GoToBottom key.Binding
 
+	// Word motions.
+	WordForward  key.Binding
+	WordEnd      key.Binding
+	WordBackward key.Binding
+
 	// Mode Switching.
-	Insert key.Binding
-	Normal key.Binding
+	Insert          key.Binding
+	Append          key.Binding
+	AppendLineEnd   key.Binding
+	InsertLineStart key.Binding
+	OpenLineBelow   key.Binding
+	OpenLineAbove   key.Binding
+	Normal          key.Binding
+
+	// History.
+	Undo key.Binding
+	Redo key.Binding
 
 	// Actions.
 	ExecuteQuery       key.Binding
@@ -165,14 +191,56 @@ func DefaultEditorKeyMap() EditorKeyMap {
 			key.WithKeys("$"),
 			key.WithHelp("$", "navigate all the way to the right of the table"),
 		),
+		// --- Word motions ---
+		WordForward: key.NewBinding(
+			key.WithKeys("w"),
+			key.WithHelp("w", "word forward"),
+		),
+		WordEnd: key.NewBinding(
+			key.WithKeys("e"),
+			key.WithHelp("e", "word end"),
+		),
+		WordBackward: key.NewBinding(
+			key.WithKeys("b"),
+			key.WithHelp("b", "word backward"),
+		),
 		// --- Mode Switching ---
 		Insert: key.NewBinding(
 			key.WithKeys("i"),
 			key.WithHelp("i", "insert mode"),
 		),
+		Append: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "insert mode after the cursor"),
+		),
+		AppendLineEnd: key.NewBinding(
+			key.WithKeys("A"),
+			key.WithHelp("A", "insert mode at the end of the line"),
+		),
+		InsertLineStart: key.NewBinding(
+			key.WithKeys("I"),
+			key.WithHelp("I", "insert mode at the first non-blank character"),
+		),
+		OpenLineBelow: key.NewBinding(
+			key.WithKeys("o"),
+			key.WithHelp("o", "open a line below and insert"),
+		),
+		OpenLineAbove: key.NewBinding(
+			key.WithKeys("O"),
+			key.WithHelp("O", "open a line above and insert"),
+		),
 		Normal: key.NewBinding(
 			key.WithKeys("esc"),
 			key.WithHelp("esc", "normal mode"),
+		),
+		// --- History ---
+		Undo: key.NewBinding(
+			key.WithKeys("u"),
+			key.WithHelp("u", "undo"),
+		),
+		Redo: key.NewBinding(
+			key.WithKeys("U"),
+			key.WithHelp("U", "redo"),
 		),
 		// --- Actions ---
 		ExecuteQuery: key.NewBinding(
