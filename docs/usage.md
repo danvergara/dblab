@@ -390,8 +390,18 @@ keybindings:
     line-end: '$'
     go-top: 'g'
     go-bottom: 'G'
+    word-forward: 'w'
+    word-end: 'e'
+    word-backward: 'b'
     insert: 'i'
+    append: 'a'
+    append-line-end: 'A'
+    insert-line-start: 'I'
+    open-line-below: 'o'
+    open-line-above: 'O'
     normal: 'esc'
+    undo: 'u'
+    redo: 'U'
     execute-query: 'ctrl+e'
     execute-single-query: 'ctrl+r'
   # the database tree on the left
@@ -537,6 +547,8 @@ Focus the query editor or the result set panel and press <kbd>alt+f</kbd> (`full
 
 The query editor uses **normal** and **insert** modes, similar to Vim. When you focus the editor it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim).
 
+Besides <kbd>i</kbd>, a few other normal-mode commands enter insert mode at a specific position: <kbd>a</kbd> after the cursor, <kbd>A</kbd> at the end of the line, <kbd>I</kbd> at the first non-blank character, <kbd>o</kbd> opens a new line below and drops into it, and <kbd>O</kbd> does the same above the current line.
+
 Cursor movement depends on the mode: in insert mode use the arrow keys, in normal mode use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd> and <kbd>l</kbd>.
 
 ### Editing and motions
@@ -547,9 +559,11 @@ In normal mode:
 - <kbd>x</kbd> deletes the character under the cursor
 - <kbd>0</kbd> and <kbd>$</kbd> move to the beginning and end of the current line (`keybindings.editor.line-start` and `keybindings.editor.line-end`)
 - <kbd>g</kbd> and <kbd>G</kbd> jump to the first and last line of the buffer (`keybindings.editor.go-top` and `keybindings.editor.go-bottom`)
+- <kbd>w</kbd>, <kbd>e</kbd> and <kbd>b</kbd> move forward to the start of the next word, forward to the end of a word, and back to the start of the previous word — a run of punctuation counts as its own word, and an empty line is a stop too, just like in Vim (`keybindings.editor.word-forward`, `keybindings.editor.word-end` and `keybindings.editor.word-backward`)
+- <kbd>u</kbd> and <kbd>U</kbd> undo and redo the last change, up to 100 steps back (`keybindings.editor.undo` and `keybindings.editor.redo`)
 - <kbd>Ctrl+D</kbd> clears the entire editor content
 
-The cursor motions, the mode switches and the execute shortcuts are all configurable under `keybindings.editor`; the line-oriented commands (<kbd>dd</kbd>, <kbd>yy</kbd>, <kbd>p</kbd>, <kbd>x</kbd>) and <kbd>Ctrl+D</kbd> are fixed.
+The cursor motions, the word motions, undo/redo, the insert-mode entry commands, the mode switches and the execute shortcuts are all configurable under `keybindings.editor`; the line-oriented commands (<kbd>dd</kbd>, <kbd>yy</kbd>, <kbd>p</kbd>, <kbd>x</kbd>) and <kbd>Ctrl+D</kbd> are fixed.
 
 ### Executing queries
 
@@ -608,6 +622,11 @@ These are the defaults; see [Key bindings configuration](#key-bindings-configura
 | Key | Description | Config field |
 |-----|-------------|--------------|
 | <kbd>i</kbd> | Enter insert mode | `editor.insert` |
+| <kbd>a</kbd> | Enter insert mode after the cursor | `editor.append` |
+| <kbd>A</kbd> | Enter insert mode at the end of the line | `editor.append-line-end` |
+| <kbd>I</kbd> | Enter insert mode at the first non-blank character | `editor.insert-line-start` |
+| <kbd>o</kbd> | Open a new line below and enter insert mode | `editor.open-line-below` |
+| <kbd>O</kbd> | Open a new line above and enter insert mode | `editor.open-line-above` |
 | <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> | Move the cursor left, down, up, right | `editor.left` / `editor.down` / `editor.up` / `editor.right` |
 | <kbd>dd</kbd> | Delete the current line | — |
 | <kbd>yy</kbd> | Yank the current line | — |
@@ -615,6 +634,8 @@ These are the defaults; see [Key bindings configuration](#key-bindings-configura
 | <kbd>x</kbd> | Delete the character under the cursor | — |
 | <kbd>0</kbd> / <kbd>$</kbd> | Move to the start / end of the current line | `editor.line-start` / `editor.line-end` |
 | <kbd>g</kbd> / <kbd>G</kbd> | Jump to the first / last line of the buffer | `editor.go-top` / `editor.go-bottom` |
+| <kbd>w</kbd> / <kbd>e</kbd> / <kbd>b</kbd> | Move to the start of the next word / the end of a word / the start of the previous word | `editor.word-forward` / `editor.word-end` / `editor.word-backward` |
+| <kbd>u</kbd> / <kbd>U</kbd> | Undo / redo the last change | `editor.undo` / `editor.redo` |
 | <kbd>Ctrl+D</kbd> | Clear the entire editor content | — |
 
 ### Query editor (insert mode)

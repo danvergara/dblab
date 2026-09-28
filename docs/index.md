@@ -28,7 +28,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
   * Cross-platform support for macOS/Linux/Windows (32/64-bit)  
   * Simple installation (distributed as a single binary)  
   * Zero dependencies.  
-  * Vim-style query editor (normal and insert modes, line-oriented editing commands).  
+  * Vim-style query editor (normal and insert modes, word and line motions, undo/redo).  
   * Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results in separate tabs.  
   * Single-query execution: execute only the query on the current cursor line with `ctrl+r`, without running other statements in the editor.  
   * Connection profiles with secure credential storage in the OS keyring.  
