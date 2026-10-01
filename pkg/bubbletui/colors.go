@@ -3,14 +3,14 @@ package bubbletui
 import "charm.land/lipgloss/v2"
 
 // StatusBar Colors.
-var NormalModeText = lipgloss.Color("#116800")
-var NormalModeBg = lipgloss.Color("#a2cb27")
+var FocusText = lipgloss.Color("#116800")
+var FocusBg = lipgloss.Color("#a2cb27")
 
 var InsertModeText = lipgloss.Color("#ffffff")
 var InsertModeBg = lipgloss.Color("#ec5813")
 
-var FocusText = lipgloss.Color("#393939")
-var FocusBg = lipgloss.Color("#fcfcfc")
+var SchemaText = lipgloss.Color("#393939")
+var SchemaBg = lipgloss.Color("#fcfcfc")
 
 var KbOddText = lipgloss.Color("#bbbbbb")
 var KbOddBg = lipgloss.Color("#444444")

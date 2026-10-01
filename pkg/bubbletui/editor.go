@@ -6,52 +6,27 @@ import (
 	"strings"
 
 	"charm.land/bubbles/v2/key"
-	"charm.land/bubbles/v2/textarea"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"charm.land/lipgloss/v2/compat"
 	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/ionut-t/goeditor"
 )
-
-type Mode int
-
-const (
-	NormalMode Mode = iota
-	InsertMode
-)
-
-func (m Mode) String() string {
-	switch m {
-	case NormalMode:
-		return "NORMAL"
-	case InsertMode:
-		return "INSERT"
-	default:
-		return ""
-	}
-}
 
 type executeQueryMsg struct {
 	queriesToRun []string
 }
 
-type modeChangeMsg struct {
-	mode Mode
-}
-
 type Editor struct {
-	editor textarea.Model
-	keyMap keys.EditorKeyMap
+	geditor goeditor.Model
+	keyMap  keys.EditorKeyMap
 
-	mode       Mode
-	register   string
-	pendingCmd string
-	dump       io.Writer
+	dump          io.Writer
+	width, height int
 }
 
 func NewEditor(km keys.EditorKeyMap) Editor {
-	isDark := compat.HasDarkBackground
+	isDark := lipgloss.HasDarkBackground(os.Stdout, os.Stderr)
 	var dump *os.File
 
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
@@ -62,31 +37,35 @@ func NewEditor(km keys.EditorKeyMap) Editor {
 		}
 	}
 
-	ta := textarea.New()
-	ta.Placeholder = "Enter text..."
-	s := textarea.DefaultStyles(isDark)
-	s.Focused.Text = lipgloss.NewStyle().Foreground(mutedGreen)
-	s.Blurred.Text = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
-	ta.SetStyles(s)
-	ta.Focus()
+	geditor := goeditor.New(0, 0)
+	geditor.Focus()
+	geditor.SetCursorMode(goeditor.CursorBlink)
+	geditor.SetLanguage("sql", languageTheme(isDark))
+	geditor.WithSearchOptions(goeditor.SearchOptions{
+		IgnoreCase: true,
+		SmartCase:  true,
+		Wrap:       true,
+	})
+	geditor.SetExtraWordChars('-')
+	geditor.SetPlaceholder("Start typing...")
 
-	return Editor{editor: ta, keyMap: km, dump: dump}
+	return Editor{geditor: geditor, keyMap: km, dump: dump}
 }
 
-func (e *Editor) SetWidth(w int) {
-	e.editor.SetWidth(w - 4)
-}
-
-func (e *Editor) SetHeight(h int) {
-	e.editor.SetHeight(h - 2)
+func (e *Editor) SetSize(w, h int) {
+	if e.width == w && e.height == h {
+		return
+	}
+	e.width, e.height = w, h
+	e.geditor.SetSize(w-4, h-2)
 }
 
 func (e *Editor) Blur() {
-	e.editor.Blur()
+	e.geditor.Blur()
 }
 
-func (e *Editor) Focus() tea.Cmd {
-	return e.editor.Focus()
+func (e *Editor) Focus() {
+	e.geditor.Focus()
 }
 
 func (e Editor) Init() tea.Cmd {
@@ -100,16 +79,18 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case querySelectedMsg:
-		e.editor.CursorEnd()
-		if e.editor.Value() != "" {
-			e.editor.InsertString("\n" + msg.QueryText + ";")
+		if e.geditor.GetCurrentContent() != "" {
+			e.geditor.SetContent(e.geditor.GetCurrentContent() + "\n" + msg.QueryText + ";")
 		} else {
-			e.editor.InsertString(msg.QueryText + ";")
+			e.geditor.SetContent(msg.QueryText + ";")
 		}
-		return e, nil
+		_ = e.geditor.SetCursorPositionEnd()
+		editorModel, cmd := e.geditor.Update(msg)
+		e.geditor = editorModel
+		return e, cmd
 	case tea.KeyPressMsg:
 		if key.Matches(msg, e.keyMap.ExecuteQuery) {
-			editorContent := e.editor.Value()
+			editorContent := e.geditor.GetCurrentContent()
 
 			queriesToRun := prepareQueriesForExecution(editorContent)
 			if len(queriesToRun) == 0 {
@@ -119,18 +100,17 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			fireQueryCmd := func() tea.Msg {
 				return executeQueryMsg{queriesToRun: queriesToRun}
 			}
-
 			return e, fireQueryCmd
 		}
 
 		if key.Matches(msg, e.keyMap.ExecuteSingleQuery) {
-			value := e.editor.Value()
+			value := e.geditor.GetCurrentContent()
 
 			if len(value) == 0 {
 				return e, nil
 			}
 
-			query := queryAtCursor(value, e.editor.Line())
+			query := queryAtCursor(value, e.geditor.GetCursorPosition().Row)
 			if len(query) == 0 {
 				return e, nil
 			}
@@ -140,113 +120,18 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 			}
 			return e, fireQueryCmd
 		}
-
-		switch e.mode {
-		case NormalMode:
-			char := msg.String()
-			if e.pendingCmd != "" {
-				switch e.pendingCmd {
-				case "d":
-					if char == "d" {
-						e.deleteCurrentLine()
-					}
-					e.pendingCmd = ""
-					return e, nil
-
-				case "y":
-					if char == "y" {
-						e.yankCurrentLine()
-					}
-					e.pendingCmd = ""
-					return e, nil
-				}
-			}
-
-			switch char {
-			case "d", "y":
-				e.pendingCmd = char
-				return e, nil
-			case "p":
-				e.pasteAfter()
-				return e, nil
-			case "x":
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyDelete})
-				return e, cmd
-			case "ctrl+d":
-				e.editor.Reset() // Clears text, cursor, and history
-				return e, nil
-			}
-
-			switch {
-			case key.Matches(msg, e.keyMap.LineStart):
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyHome})
-				return e, cmd
-			case key.Matches(msg, e.keyMap.LineEnd):
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
-				return e, cmd
-			case key.Matches(msg, e.keyMap.GoToBottom):
-				// LineCount() returns the total number of lines.
-				// Line() returns the current 0-indexed line position.
-				lastLine := e.editor.LineCount() - 1
-				for e.editor.Line() < lastLine {
-					e.editor.CursorDown()
-				}
-				return e, nil
-			case key.Matches(msg, e.keyMap.GoToTop):
-				for e.editor.Line() > 0 {
-					e.editor.CursorUp()
-				}
-				return e, nil
-			case key.Matches(msg, e.keyMap.Insert):
-				e.mode = InsertMode
-				styles := e.editor.Styles()
-				styles.Cursor.Blink = true
-				e.editor.SetStyles(styles)
-				fireModeChangeCmd := func() tea.Msg {
-					return modeChangeMsg{mode: e.mode}
-				}
-				return e, fireModeChangeCmd
-
-			case key.Matches(msg, e.keyMap.Left):
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
-				return e, cmd
-
-			case key.Matches(msg, e.keyMap.Right):
-				e.editor, cmd = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyRight})
-				return e, cmd
-
-			case key.Matches(msg, e.keyMap.Down):
-				e.editor.CursorDown()
-				return e, nil
-
-			case key.Matches(msg, e.keyMap.Up):
-				e.editor.CursorUp()
-				return e, nil
-			}
-
-			return e, nil
-		case InsertMode:
-			switch {
-			case key.Matches(msg, e.keyMap.Normal):
-				e.mode = NormalMode
-				styles := e.editor.Styles()
-				styles.Cursor.Blink = false
-				e.editor.SetStyles(styles)
-				e.editor, _ = e.editor.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
-				fireModeChangeCmd := func() tea.Msg {
-					return modeChangeMsg{mode: e.mode}
-				}
-				return e, fireModeChangeCmd
-			}
-		}
 	}
 
-	e.editor, cmd = e.editor.Update(msg)
-	return e, cmd
+	var cmds []tea.Cmd
+	editorModel, cmd := e.geditor.Update(msg)
+	cmds = append(cmds, cmd)
+	e.geditor = editorModel
+
+	return e, tea.Batch(cmds...)
 }
 
 func (e Editor) View() tea.View {
-	return tea.NewView(e.editor.View())
+	return tea.NewView(e.geditor.View())
 }
 
 // queryAtCursor returns the text of the line the cursor is currently on.
@@ -259,55 +144,10 @@ func queryAtCursor(content string, currentIndex int) string {
 	return ""
 }
 
-func (e *Editor) yankCurrentLine() {
-	lines := strings.Split(e.editor.Value(), "\n")
-	row := e.editor.Line()
-
-	if row >= 0 && row < len(lines) {
-		e.register = lines[row]
-	}
-}
-
-func (e *Editor) deleteCurrentLine() {
-	lines := strings.Split(e.editor.Value(), "\n")
-	row := e.editor.Line()
-
-	if row >= 0 && row < len(lines) {
-		e.register = lines[row]
-
-		lines = append(lines[:row], lines[row+1:]...)
-
-		e.editor.SetValue(strings.Join(lines, "\n"))
-
-		targetRow := row
-		if targetRow >= len(lines) {
-			targetRow = len(lines) - 1
-		}
-
-		targetRow = max(0, targetRow)
-
-		for e.editor.Line() > 0 {
-			e.editor.CursorUp()
-		}
-
-		for e.editor.Line() < targetRow {
-			e.editor.CursorDown()
-		}
-
-		e.editor.CursorStart()
-	}
-}
-
-func (e *Editor) pasteAfter() {
-	if e.register == "" {
-		return
+func languageTheme(isDark bool) string {
+	if isDark {
+		return "catppuccin-mocha"
 	}
 
-	lines := strings.Split(e.editor.Value(), "\n")
-	row := e.editor.Line()
-
-	if row >= 0 && row < len(lines) {
-		lines = append(lines[:row+1], append([]string{e.register}, lines[row+1:]...)...)
-		e.editor.SetValue(strings.Join(lines, "\n"))
-	}
+	return "catppuccin-latte"
 }
