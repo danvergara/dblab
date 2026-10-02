@@ -34,9 +34,11 @@ var (
 	hiMagenta  = lipgloss.Color("#FF00FF") // High-visibility Magenta
 	mutedGreen = lipgloss.Color("#2ECC71") // Softer green for standard text
 	neonPurple = lipgloss.Color("#BF40BF") // Bright purple for highlights
+	neonViolet = lipgloss.Color("#9D00FF") // Blue-leaning violet — purple without the pink of neonPurple/hiMagenta
 	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
 	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
 	black      = lipgloss.Color("#000000")
+	neonOrange = lipgloss.Color("#FF6600")
 )
 
 const (
@@ -184,7 +186,10 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteText)
 	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreen)
 
-	editor := NewEditor(km.Editor)
+	editor, err := NewEditor(km.Editor)
+	if err != nil {
+		return nil, err
+	}
 
 	m := &Model{
 		focus:           focusEditor,
