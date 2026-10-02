@@ -58,7 +58,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Cross-platform support for macOS/Linux/Windows (32/64-bit)
 - Simple installation (distributed as a single binary)
 - Zero dependencies.
-- Vim-style query editor (normal and insert modes, line-oriented editing commands).
+- Vim-style query editor backed by a real modal-editing engine ([goeditor](https://github.com/ionut-t/goeditor)): normal/insert modes, word and line motions, undo/redo, visual mode selection, and in-buffer search, on top of the line-oriented editing commands.
 - Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results displayed in separate tabs.
 - Single-query execution: press <kbd>ctrl+r</kbd> to execute only the query on the current cursor line, without running other statements in the editor.
 - Connection profiles with secure credential storage in the OS keyring.
@@ -443,8 +443,18 @@ keybindings:
     line-end: '$'
     go-top: 'g'
     go-bottom: 'G'
+    word-forward: 'w'
+    word-end: 'e'
+    word-backward: 'b'
     insert: 'i'
     normal: 'esc'
+    append: 'a'
+    append-line-end: 'A'
+    insert-line-start: 'I'
+    open-line-below: 'o'
+    open-line-above: 'O'
+    undo: 'u'
+    redo: 'U'
     execute-query: 'ctrl+e'
     execute-single-query: 'ctrl+r'
   # the database tree on the left
@@ -581,9 +591,11 @@ Focus the query editor or the result set panel and press <kbd>alt+f</kbd> (`full
 
 ### Modes
 
-The query editor uses **normal** and **insert** modes, similar to Vim. When you focus the editor it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode (the cursor moves one character to the left, as in Vim).
+The query editor uses **normal** and **insert** modes, similar to Vim. When you focus the editor it starts in **normal** mode. Press <kbd>i</kbd> to enter insert mode and type or edit SQL; press <kbd>Escape</kbd> to return to normal mode. You can also enter insert mode with <kbd>a</kbd> (after the cursor), <kbd>A</kbd> (at the end of the line), <kbd>I</kbd> (at the first non-blank character), <kbd>o</kbd> (open a new line below) or <kbd>O</kbd> (open a new line above) — `editor.append`, `editor.append-line-end`, `editor.insert-line-start`, `editor.open-line-below` and `editor.open-line-above`.
 
 Cursor movement depends on the mode: in insert mode use the arrow keys, in normal mode use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd> and <kbd>l</kbd>.
+
+The status bar's left-hand badge shows which panel is focused rather than the editor's current mode; the editor itself still shows `-- NORMAL --` / `-- INSERT --` in its own status line.
 
 ### Editing and motions
 
@@ -591,11 +603,16 @@ In normal mode:
 
 - <kbd>dd</kbd> deletes the current line, <kbd>yy</kbd> yanks it into an internal register, and <kbd>p</kbd> pastes the yanked or deleted line after the current line
 - <kbd>x</kbd> deletes the character under the cursor
+- <kbd>w</kbd>, <kbd>e</kbd> and <kbd>b</kbd> move forward a word, to the end of a word and backward a word (`keybindings.editor.word-forward`, `keybindings.editor.word-end` and `keybindings.editor.word-backward`)
 - <kbd>0</kbd> and <kbd>$</kbd> move to the beginning and end of the current line (`keybindings.editor.line-start` and `keybindings.editor.line-end`)
 - <kbd>g</kbd> and <kbd>G</kbd> jump to the first and last line of the buffer (`keybindings.editor.go-top` and `keybindings.editor.go-bottom`)
-- <kbd>Ctrl+D</kbd> clears the entire editor content
+- <kbd>u</kbd> undoes the last change and <kbd>U</kbd> redoes it (`keybindings.editor.undo` and `keybindings.editor.redo`)
+- <kbd>v</kbd> / <kbd>V</kbd> enter visual / visual-line mode to select text, and <kbd>/</kbd> / <kbd>?</kbd> search the buffer forward / backward (<kbd>n</kbd> / <kbd>N</kbd> repeat the last search)
+- <kbd>Ctrl+D</kbd> / <kbd>Ctrl+U</kbd> scroll the view down / up by half a page
 
-The cursor motions, the mode switches and the execute shortcuts are all configurable under `keybindings.editor`; the line-oriented commands (<kbd>dd</kbd>, <kbd>yy</kbd>, <kbd>p</kbd>, <kbd>x</kbd>) and <kbd>Ctrl+D</kbd> are fixed.
+This is a full Vim emulation, so plenty of other standard commands (text objects, `J`, `~`, `r`, registers, and so on) work as well; the list above only covers what shows up in `keybindings.editor`.
+
+The cursor motions, the mode switches and the execute shortcuts are all configurable under `keybindings.editor`; the line-oriented commands (<kbd>dd</kbd>, <kbd>yy</kbd>, <kbd>p</kbd>, <kbd>x</kbd>), visual mode, search and <kbd>Ctrl+D</kbd> / <kbd>Ctrl+U</kbd> are fixed.
 
 ### Executing queries
 
@@ -654,15 +671,26 @@ These are the defaults; see [Key bindings configuration](#key-bindings-configura
 
 | Key | Description | Config field |
 |-----|-------------|--------------|
-| <kbd>i</kbd> | Enter insert mode | `editor.insert` |
+| <kbd>i</kbd> | Enter insert mode before the cursor | `editor.insert` |
+| <kbd>a</kbd> | Enter insert mode after the cursor | `editor.append` |
+| <kbd>A</kbd> | Enter insert mode at the end of the line | `editor.append-line-end` |
+| <kbd>I</kbd> | Enter insert mode at the first non-blank character | `editor.insert-line-start` |
+| <kbd>o</kbd> | Open a new line below and enter insert mode | `editor.open-line-below` |
+| <kbd>O</kbd> | Open a new line above and enter insert mode | `editor.open-line-above` |
 | <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> | Move the cursor left, down, up, right | `editor.left` / `editor.down` / `editor.up` / `editor.right` |
+| <kbd>w</kbd> / <kbd>e</kbd> / <kbd>b</kbd> | Move forward a word / to the end of a word / back a word | `editor.word-forward` / `editor.word-end` / `editor.word-backward` |
 | <kbd>dd</kbd> | Delete the current line | — |
 | <kbd>yy</kbd> | Yank the current line | — |
 | <kbd>p</kbd> | Paste the yanked or deleted line after the current line | — |
 | <kbd>x</kbd> | Delete the character under the cursor | — |
 | <kbd>0</kbd> / <kbd>$</kbd> | Move to the start / end of the current line | `editor.line-start` / `editor.line-end` |
 | <kbd>g</kbd> / <kbd>G</kbd> | Jump to the first / last line of the buffer | `editor.go-top` / `editor.go-bottom` |
-| <kbd>Ctrl+D</kbd> | Clear the entire editor content | — |
+| <kbd>u</kbd> | Undo the last change | `editor.undo` |
+| <kbd>U</kbd> | Redo the last undone change | `editor.redo` |
+| <kbd>v</kbd> / <kbd>V</kbd> | Enter visual / visual-line mode | — |
+| <kbd>/</kbd> / <kbd>?</kbd> | Search the buffer forward / backward | — |
+| <kbd>n</kbd> / <kbd>N</kbd> | Repeat the last search, forward / backward | — |
+| <kbd>Ctrl+D</kbd> / <kbd>Ctrl+U</kbd> | Scroll the view down / up by half a page | — |
 
 ### Query editor (insert mode)
 
