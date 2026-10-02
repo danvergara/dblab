@@ -184,7 +184,10 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteText)
 	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreen)
 
-	editor := NewEditor(km.Editor)
+	editor, err := NewEditor(km.Editor)
+	if err != nil {
+		return nil, err
+	}
 
 	m := &Model{
 		focus:           focusEditor,
@@ -194,7 +197,7 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		sidebarViewport: svp,
 		resulstset:      NewResultSet(km.ResultSet),
 		help:            h,
-		statusBar:       NewStatusBar(editor.mode, km, c.Driver(), c.Conn(), c.Schema()),
+		statusBar:       NewStatusBar(km, c.Driver(), c.Conn(), c.Schema()),
 		schemas:         NewSchemaModel(c),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
@@ -237,7 +240,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc":
 			if m.focus == focusHelp {
 				m.focus = focusEditor
-				cmd = m.editor.Focus()
+				m.editor.Focus()
 				m.resulstset.Blur()
 				m.sidebarViewport.selected = false
 				m.applySizes()
@@ -282,8 +285,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusList {
 				m.focus = focusEditor
 				m.sidebarViewport.selected = false
-				cmd = m.editor.Focus()
-				cmds = append(cmds, cmd)
+				m.editor.Focus()
 				m.statusBar.ShowFocus(m.focus)
 			}
 			m.applySizes()
@@ -316,16 +318,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keyMap.Navigation.Up):
 			if m.focus == focusTable {
 				m.focus = focusEditor
-				cmd = m.editor.Focus()
+				m.editor.Focus()
 				m.resulstset.Blur()
 				m.statusBar.ShowFocus(m.focus)
-				cmds = append(cmds, cmd)
 			}
 		}
 		m.applySizes()
-	case modeChangeMsg:
-		m.statusBar, cmd = m.statusBar.Update(msg)
-		cmds = append(cmds, cmd)
 	case selectTableMsg:
 		tableRef := client.TableRef{Name: msg.Table}
 		switch m.c.Driver() {
@@ -584,8 +582,7 @@ func (m *Model) fullScreenSizes() {
 	case focusEditor:
 		m.editorWidth = m.width - 1
 		m.editorHeight = m.height
-		m.editor.SetWidth(m.editorWidth)
-		m.editor.SetHeight(m.editorHeight)
+		m.editor.SetSize(m.editorWidth, m.editorHeight)
 	case focusTable:
 		m.resultSetWidth = m.width - 1
 		m.resultSetHeight = m.height - 2
@@ -611,10 +608,7 @@ func (m *Model) defaultSizes() {
 	m.resultSetWidth = m.rightWidth
 
 	m.help.SetWidth(m.width)
-
-	m.editor.SetHeight(m.editorHeight)
-	m.editor.SetWidth(m.editorWidth)
-
+	m.editor.SetSize(m.editorWidth, m.editorHeight)
 	m.sidebarViewport.SetSize(m.sidebarViewportWidth, m.sidebarViewportHeight)
 	m.resulstset.SetSize(m.resultSetWidth, m.resultSetHeight)
 	m.queryHistory.SetSize(m.width, m.height)

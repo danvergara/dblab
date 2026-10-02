@@ -58,7 +58,7 @@ SELECT * FROM customers LIMIT 10;
 
 Press <kbd>Escape</kbd> to go back to normal mode, then press <kbd>ctrl+e</kbd> to execute. The result appears in the **Data** tab.
 
-Normal mode also gives you the line-oriented editing commands you'd expect — <kbd>dd</kbd> to delete a line, <kbd>yy</kbd> and <kbd>p</kbd> to copy and paste one, <kbd>Ctrl+D</kbd> to clear the editor. The [key bindings reference](../usage.md#query-editor-normal-mode) has the full list.
+Normal mode also gives you the line-oriented editing commands you'd expect — <kbd>dd</kbd> to delete a line, <kbd>yy</kbd> and <kbd>p</kbd> to copy and paste one — plus full Vim motions like <kbd>w</kbd>/<kbd>e</kbd>/<kbd>b</kbd> for words and <kbd>u</kbd>/<kbd>U</kbd> for undo/redo. The [key bindings reference](../usage.md#query-editor-normal-mode) has the full list.
 
 ### Running one query out of several
 
