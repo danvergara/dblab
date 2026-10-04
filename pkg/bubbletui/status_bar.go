@@ -68,9 +68,10 @@ func (f StatusBar) View() tea.View {
 		Bold(true).
 		Background(FocusBg).
 		Foreground(FocusText).
-		Render("  "+f.focus.String()+"  ") +
+		Render(" "+f.focus.String()+" ") +
 		lipgloss.NewStyle().
 			Foreground(FocusBg).
+			Background(KbOddBg).
 			Render(endArrow) +
 		f.fixed
 
