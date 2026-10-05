@@ -14,7 +14,6 @@ const (
 )
 
 type StatusBar struct {
-	mode   Mode
 	width  int
 	keyMap keys.KeyMap
 	fixed  string
@@ -22,7 +21,7 @@ type StatusBar struct {
 	focus  focusState
 }
 
-func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn, schema string) StatusBar {
+func NewStatusBar(km keys.KeyMap, driver, conn, schema string) StatusBar {
 	var statusKb = lipgloss.NewStyle().
 		Background(KbOddBg).
 		Foreground(KbOddText).
@@ -41,7 +40,7 @@ func NewStatusBar(mode Mode, km keys.KeyMap, driver, conn, schema string) Status
 		lipgloss.NewStyle().
 			Foreground(KbEvenText).
 			Render("  "+driver+": "+conn)
-	return StatusBar{mode: mode, keyMap: km, fixed: statusKb, focus: focusEditor, schema: schema}
+	return StatusBar{keyMap: km, fixed: statusKb, focus: focusEditor, schema: schema}
 }
 
 func (f StatusBar) Init() tea.Cmd {
@@ -49,10 +48,6 @@ func (f StatusBar) Init() tea.Cmd {
 }
 
 func (f StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
-	switch msg := msg.(type) {
-	case modeChangeMsg:
-		f.mode = msg.mode
-	}
 	return f, nil
 }
 
@@ -69,22 +64,14 @@ func (f *StatusBar) SetWidth(width int) {
 }
 
 func (f StatusBar) View() tea.View {
-	modeColorBg := NormalModeBg
-	modeColorText := NormalModeText
-
-	if f.mode == InsertMode {
-		modeColorBg = InsertModeBg
-		modeColorText = InsertModeText
-	}
-
 	leftBlock := lipgloss.NewStyle().
 		Bold(true).
-		Background(modeColorBg).
-		Foreground(modeColorText).
-		Render("  "+f.mode.String()+"  ") +
+		Background(FocusBg).
+		Foreground(FocusText).
+		Render(" "+f.focus.String()+" ") +
 		lipgloss.NewStyle().
+			Foreground(FocusBg).
 			Background(KbOddBg).
-			Foreground(modeColorBg).
 			Render(endArrow) +
 		f.fixed
 
@@ -92,20 +79,18 @@ func (f StatusBar) View() tea.View {
 	if f.schema != "" {
 		rightBlock =
 			lipgloss.NewStyle().
-				Foreground(KbEvenText).
+				Foreground(cyberGreen).
 				Render("active schema:" + " ")
 	}
-	rightBlock += lipgloss.NewStyle().
-		Foreground(InsertModeBg).
-		Render(f.schema+" ") +
+	rightBlock +=
 		lipgloss.NewStyle().
-			Foreground(FocusBg).
+			Foreground(SchemaBg).
 			Render(startArrow) +
-		lipgloss.NewStyle().
-			Bold(true).
-			Background(FocusBg).
-			Foreground(FocusText).
-			Render(" "+f.focus.String()+" ")
+			lipgloss.NewStyle().
+				Bold(true).
+				Background(SchemaBg).
+				Foreground(SchemaText).
+				Render(" "+f.schema+" ")
 
 	spacerSize := f.width - lipgloss.Width(leftBlock) - lipgloss.Width(rightBlock)
 

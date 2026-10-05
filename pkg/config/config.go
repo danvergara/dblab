@@ -103,9 +103,23 @@ type EditorKeyMap struct {
 	GoToTop    string `fig:"go-top" default:"g"`
 	GoToBottom string `fig:"go-bottom" default:"G"`
 
+	// Word motions.
+	WordForward  string `fig:"word-forward" default:"w"`
+	WordEnd      string `fig:"word-end" default:"e"`
+	WordBackward string `fig:"word-backward" default:"b"`
+
 	// Mode Switching.
-	Insert string `fig:"insert" default:"i"`
-	Normal string `fig:"normal" default:"esc"`
+	Insert          string `fig:"insert" default:"i"`
+	Normal          string `fig:"normal" default:"esc"`
+	Append          string `fig:"append" default:"a"`
+	AppendLineEnd   string `fig:"append-line-end" default:"A"`
+	InsertLineStart string `fig:"insert-line-start" default:"I"`
+	OpenLineBelow   string `fig:"open-line-below" default:"o"`
+	OpenLineAbove   string `fig:"open-line-above" default:"O"`
+
+	// History.
+	Undo string `fig:"undo" default:"u"`
+	Redo string `fig:"redo" default:"U"`
 
 	// Actions.
 	ExecuteQuery       string `fig:"execute-query" default:"ctrl+e"`
