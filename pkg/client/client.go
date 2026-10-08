@@ -30,6 +30,7 @@ const (
 
 const (
 	NormalQuery QueryType = "NORMAL"
+	DMLQuery    QueryType = "DML"
 	JSONQuery   QueryType = "JSON"
 )
 
@@ -403,6 +404,7 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 					return
 				}
 
+				result.QueryType = DMLQuery
 				result.ResultSet = make([][]string, 0)
 				result.Headers = make([]string, 0)
 				result.RowCount = int(affected)
@@ -787,8 +789,6 @@ func (c *Client) fetchActiveSchema(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-// func (c *Client) setActive
-//
 // commentRegex matches both single-line (--) and multi-line (/* */) SQL comments.
 var commentRegex = regexp.MustCompile(`(?s)/\*.*?\*/|--.*?\n`)
 

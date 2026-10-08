@@ -83,6 +83,10 @@ var (
 			Foreground(lipgloss.Color("#FF0000")).
 			Bold(true).
 			Padding(1, 2)
+	successStyle = lipgloss.NewStyle().
+			Foreground(cyberGreen).
+			Bold(true).
+			Padding(1, 2)
 )
 
 // metadataSucessMsg struct used to retrieve a given table's metadata asynchronously.

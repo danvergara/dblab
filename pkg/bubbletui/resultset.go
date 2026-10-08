@@ -327,6 +327,12 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				panel.table.SetColumns(tableContentColumns)
 				panel.table.SetRows(tableContentRows)
 				r.tablesMetadata[i] = panel
+			case client.DMLQuery:
+				rowsAffectedPanel := newTextPanel()
+				rowsAffected := fmt.Sprintf("%d rows affected", qr.RowCount)
+				styledSuccessMsg := successStyle.Render(rowsAffected)
+				rowsAffectedPanel.SetContent(styledSuccessMsg)
+				r.tablesMetadata[i] = rowsAffectedPanel
 			}
 		}
 
