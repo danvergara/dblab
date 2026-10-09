@@ -158,7 +158,6 @@ func (r *ResultSet) SetSize(w, h int) {
 	for _, panel := range r.tablesMetadata {
 		if tp, ok := panel.(*TablePanel); ok {
 			tp.table.SetHeight(h)
-			tp.table.SetWidth(w)
 		}
 	}
 }
@@ -205,14 +204,12 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			r.viewport.GotoTop()
-			return r, nil
 		case key.Matches(msg, r.keyMap.GoToBottom):
 			if tablePanel, ok := r.tablesMetadata[r.activeTab].(*TablePanel); ok {
 				tablePanel.GotoBottom()
 			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 			r.viewport.GotoBottom()
-			return r, nil
 		case key.Matches(msg, r.keyMap.NextTab):
 			if r.activeTab == len(r.tabs)-1 {
 				r.activeTab = 0
@@ -220,7 +217,6 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				r.activeTab = min(r.activeTab+1, len(r.tabs)-1)
 			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
-			return r, nil
 		case key.Matches(msg, r.keyMap.PrevTab):
 			if r.activeTab == 0 {
 				r.activeTab = len(r.tabs) - 1
@@ -228,10 +224,8 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				r.activeTab = max(r.activeTab-1, 0)
 			}
 			r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
-			return r, nil
 		case key.Matches(msg, r.keyMap.LineStart):
 			r.viewport.SetXOffset(0)
-			return r, nil
 		case key.Matches(msg, r.keyMap.LineEnd):
 			maxWidth := 0
 			for line := range strings.SplitSeq(r.tablesMetadata[r.activeTab].View().Content, "\n") {
@@ -244,24 +238,13 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 			maxOffset := max(maxWidth-r.viewport.Width(), 0)
 
 			r.viewport.SetXOffset(maxOffset)
-			return r, nil
 		}
-
 		switch msg.String() {
 		case "left", "h":
 			r.viewport.ScrollLeft(4)
-			return r, nil
 		case "right", "l":
 			r.viewport.ScrollRight(4)
-			return r, nil
 		}
-
-		r.viewport, cmd = r.viewport.Update(msg)
-		cmds = append(cmds, cmd)
-
-		r.tablesMetadata[r.activeTab], cmd = r.tablesMetadata[r.activeTab].Update(msg)
-		r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
-		cmds = append(cmds, cmd)
 	case queryErrMsg:
 		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
 		styledError := errorStyle.Render(errorText)
@@ -324,6 +307,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 			case client.NormalQuery:
 				panel := newTablePanel(r.height, r.width)
 				tableContentColumns, tableContentRows := populateTable(qr.Headers, qr.ResultSet)
+				panel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 				panel.table.SetColumns(tableContentColumns)
 				panel.table.SetRows(tableContentRows)
 				r.tablesMetadata[i] = panel
@@ -347,6 +331,14 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 		r.viewport.GotoTop()
 		return r, nil
 	}
+
+	r.tablesMetadata[r.activeTab], cmd = r.tablesMetadata[r.activeTab].Update(msg)
+	cmds = append(cmds, cmd)
+
+	r.viewport, cmd = r.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	r.viewport.SetContent(r.tablesMetadata[r.activeTab].View().Content)
 
 	return r, tea.Batch(cmds...)
 }
@@ -413,6 +405,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[0].(*TablePanel); ok {
 				tablePanel.table.SetColumns(tableContentColumns)
 				tablePanel.table.SetRows(tableContentRows)
+				tablePanel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 			}
 
 			// table columns.
@@ -420,6 +413,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[1].(*TablePanel); ok {
 				tablePanel.table.SetColumns(tableStructureColumns)
 				tablePanel.table.SetRows(tableStructureRows)
+				tablePanel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 			}
 
 			// table indexes.
@@ -427,6 +421,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[2].(*TablePanel); ok {
 				tablePanel.table.SetColumns(tableIndexColumns)
 				tablePanel.table.SetRows(tableIndexRows)
+				tablePanel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 			}
 
 			// table constraints.
@@ -434,6 +429,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[3].(*TablePanel); ok {
 				tablePanel.table.SetColumns(tableConstraintsColumns)
 				tablePanel.table.SetRows(tableConstraintsRows)
+				tablePanel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 			}
 		} else {
 			r.setupViews()
@@ -452,6 +448,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[1].(*TablePanel); ok {
 				tablePanel.table.SetColumns(viewContentColumns)
 				tablePanel.table.SetRows(viewContentRows)
+				tablePanel.table.SetWidth(calculateTotalTableWidth(viewContentColumns))
 			}
 		}
 	}
@@ -560,4 +557,12 @@ func saveQueriesCmd(queriesResult []client.QueryResult) tea.Cmd {
 
 		return nil
 	}
+}
+
+func calculateTotalTableWidth(columns []table.Column) int {
+	var totalWidth int
+	for _, c := range columns {
+		totalWidth += c.Width
+	}
+	return totalWidth
 }
