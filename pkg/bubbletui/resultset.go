@@ -413,7 +413,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[1].(*TablePanel); ok {
 				tablePanel.table.SetColumns(tableStructureColumns)
 				tablePanel.table.SetRows(tableStructureRows)
-				tablePanel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
+				tablePanel.table.SetWidth(calculateTotalTableWidth(tableStructureColumns))
 			}
 
 			// table indexes.
@@ -421,7 +421,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[2].(*TablePanel); ok {
 				tablePanel.table.SetColumns(tableIndexColumns)
 				tablePanel.table.SetRows(tableIndexRows)
-				tablePanel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
+				tablePanel.table.SetWidth(calculateTotalTableWidth(tableIndexColumns))
 			}
 
 			// table constraints.
@@ -429,7 +429,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			if tablePanel, ok := r.tablesMetadata[3].(*TablePanel); ok {
 				tablePanel.table.SetColumns(tableConstraintsColumns)
 				tablePanel.table.SetRows(tableConstraintsRows)
-				tablePanel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
+				tablePanel.table.SetWidth(calculateTotalTableWidth(tableConstraintsColumns))
 			}
 		} else {
 			r.setupViews()
