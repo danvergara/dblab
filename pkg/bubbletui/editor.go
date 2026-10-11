@@ -62,6 +62,7 @@ func NewEditor(km keys.EditorKeyMap) (Editor, error) {
 	geditor := goeditor.New(0, 0)
 	geditor.Focus()
 	geditor.SetCursorMode(goeditor.CursorBlink)
+	geditor.SetCommandLineHeight(0)
 	geditor.SetLanguage("sql", dblabSQLStyle)
 	geditor.WithSearchOptions(goeditor.SearchOptions{
 		IgnoreCase: true,
