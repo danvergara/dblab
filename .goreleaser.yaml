@@ -38,6 +38,20 @@ changelog:
       - '^docs:'
       - '^test:'
 
+nfpms:
+  - id: packages
+    package_name: dblab
+    homepage: "https://github.com/danvergara/dblab"
+    description: "Interactive client for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server"
+    maintainer: "Daniel Vergara <daniel.omar.vergara@gmail.com>"
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    bindir: /usr/bin
+
 homebrew_casks:
     # Name template of the recipe
   - name: dblab
