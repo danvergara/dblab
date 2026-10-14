@@ -293,7 +293,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusBar.ShowFocus(m.focus)
 			}
 			m.applySizes()
-			return m, tea.Batch(cmds...)
 		case key.Matches(msg, m.keyMap.Navigation.Down):
 			if m.focus == focusEditor {
 				m.focus = focusTable
@@ -301,6 +300,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.resulstset.Focus()
 				m.statusBar.ShowFocus(m.focus)
 			}
+			m.applySizes()
 		case key.Matches(msg, m.keyMap.Navigation.Left):
 			if m.focus == focusTable {
 				m.focus = focusList
@@ -319,6 +319,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Full screen only applies to the editor and result set panels,
 			// so leave it when navigating into the sidebar.
 			m.fullScreen = false
+			m.applySizes()
 		case key.Matches(msg, m.keyMap.Navigation.Up):
 			if m.focus == focusTable {
 				m.focus = focusEditor
@@ -326,8 +327,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.resulstset.Blur()
 				m.statusBar.ShowFocus(m.focus)
 			}
+			m.applySizes()
 		}
-		m.applySizes()
 	case selectTableMsg:
 		tableRef := client.TableRef{Name: msg.Table}
 		switch m.c.Driver() {
