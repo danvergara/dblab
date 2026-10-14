@@ -41,7 +41,7 @@ build:
 .PHONY: connect
 ## connect: Runs the connect command to list the previous connections available
 connect: build
-	@./dblab connect
+	DBLAB_DEBUG="" ./dblab connect
 
 .PHONY: run
 ## run: Runs the application with a connection to the PostgreSQL sakila database
