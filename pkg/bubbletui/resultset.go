@@ -23,7 +23,9 @@ import (
 )
 
 const (
-	dblabJSONStyle = "dblab-cyberpunk"
+	dblabJSONStyle   = "dblab-cyberpunk"
+	NoIndexesMsg     = "No indexes found"
+	NoConstraintsMsg = "No constraints found"
 )
 
 // Register the dblab-cyberpunk style Highlight json inspects.
@@ -423,19 +425,31 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 			}
 
 			// table indexes.
-			tableIndexColumns, tableIndexRows := populateTable(metadata.Indexes.Columns, metadata.Indexes.Rows)
-			if tablePanel, ok := r.tablesMetadata[2].(*TablePanel); ok {
-				tablePanel.table.SetColumns(tableIndexColumns)
-				tablePanel.table.SetRows(tableIndexRows)
-				tablePanel.table.SetWidth(calculateTotalTableWidth(tableIndexColumns))
+			if len(metadata.Indexes.Rows) == 0 {
+				indexesPanel := newTextPanel()
+				indexesPanel.SetContent(NoIndexesMsg)
+				r.tablesMetadata[2] = indexesPanel
+			} else {
+				indexesPanel := newTablePanel(r.height, r.width)
+				tableIndexColumns, tableIndexRows := populateTable(metadata.Indexes.Columns, metadata.Indexes.Rows)
+				indexesPanel.table.SetColumns(tableIndexColumns)
+				indexesPanel.table.SetRows(tableIndexRows)
+				indexesPanel.table.SetWidth(calculateTotalTableWidth(tableIndexColumns))
+				r.tablesMetadata[2] = indexesPanel
 			}
 
 			// table constraints.
-			tableConstraintsColumns, tableConstraintsRows := populateTable(metadata.Constraints.Columns, metadata.Constraints.Rows)
-			if tablePanel, ok := r.tablesMetadata[3].(*TablePanel); ok {
-				tablePanel.table.SetColumns(tableConstraintsColumns)
-				tablePanel.table.SetRows(tableConstraintsRows)
-				tablePanel.table.SetWidth(calculateTotalTableWidth(tableConstraintsColumns))
+			if len(metadata.Constraints.Rows) == 0 {
+				constraintsPanel := newTextPanel()
+				constraintsPanel.SetContent(NoConstraintsMsg)
+				r.tablesMetadata[3] = constraintsPanel
+			} else {
+				constraintsPanel := newTablePanel(r.height, r.width)
+				tableConstraintsColumns, tableConstraintsRows := populateTable(metadata.Constraints.Columns, metadata.Constraints.Rows)
+				constraintsPanel.table.SetColumns(tableConstraintsColumns)
+				constraintsPanel.table.SetRows(tableConstraintsRows)
+				constraintsPanel.table.SetWidth(calculateTotalTableWidth(tableConstraintsColumns))
+				r.tablesMetadata[3] = constraintsPanel
 			}
 		} else {
 			r.setupViews()
