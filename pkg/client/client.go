@@ -607,6 +607,13 @@ func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
 		)
+	case drivers.SQLite:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s LIMIT %d OFFSET %d;",
+			quoteSQLiteIdentifier(table.Name),
+			c.paginationManager.Limit(),
+			c.paginationManager.Offset(),
+		)
 	default:
 		query = fmt.Sprintf(
 			"SELECT * FROM %s LIMIT %d OFFSET %d;",
@@ -646,6 +653,13 @@ func (c *Client) viewContent(view ViewRef) ([][]string, []string, error) {
 			view.Name,
 			c.paginationManager.Offset(),
 			c.paginationManager.Limit(),
+		)
+	case drivers.SQLite:
+		query = fmt.Sprintf(
+			"SELECT * FROM %s LIMIT %d OFFSET %d;",
+			quoteSQLiteIdentifier(view.Name),
+			c.paginationManager.Limit(),
+			c.paginationManager.Offset(),
 		)
 	default:
 		query = fmt.Sprintf(
