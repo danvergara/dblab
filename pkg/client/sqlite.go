@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -32,7 +33,7 @@ func newSQLite(dbName string, db *sqlx.DB) *sqlite {
 
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
 func (s *sqlite) TableStructure(table TableRef) (string, []any, error) {
-	query := fmt.Sprintf("PRAGMA table_info(%s);", table.Name)
+	query := fmt.Sprintf("PRAGMA table_info(%s);", quoteSQLiteIdentifier(table.Name))
 	return query, nil, nil
 }
 
@@ -58,7 +59,7 @@ func (s *sqlite) Constraints(table TableRef) (string, []any, error) {
 
 // Indexes returns a query to get all the indexes of a table.
 func (s *sqlite) Indexes(table TableRef) (string, []any, error) {
-	query := fmt.Sprintf(`PRAGMA index_list(%s);`, table.Name)
+	query := fmt.Sprintf(`PRAGMA index_list(%s);`, quoteSQLiteIdentifier(table.Name))
 
 	return query, nil, nil
 }
@@ -220,3 +221,7 @@ func (s *sqlite) SetActiveSchema(schema string) (string, []any, error) {
 }
 
 func (s *sqlite) GetActiveSchemaQuery() string { return "" }
+
+func quoteSQLiteIdentifier(name string) string {
+	return `"` + strings.ReplaceAll(name, `"`, `""`) + `"`
+}
