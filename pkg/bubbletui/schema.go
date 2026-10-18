@@ -51,19 +51,19 @@ func NewSchemaModel(c *client.Client) *SchemaModel {
 
 	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteText)
+		Foreground(whiteColor)
 
 	// Cyber green color for the selected items with a magent border foreground.
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreen).
-		BorderLeftForeground(hiMagenta)
+		Foreground(cyberGreenColor).
+		BorderLeftForeground(hiMagentaColor)
 
 	schemaList := list.New([]list.Item{}, delegate, 0, 0)
 
 	schemaList.Title = "Select the current schema"
 	schemaList.Styles.Title = schemaList.Styles.Title.
-		Background(darkPurple).
-		Foreground(hiMagenta).
+		Background(darkPurpleColor).
+		Foreground(hiMagentaColor).
 		Bold(true)
 	schemaList.SetShowStatusBar(false)
 	schemaList.SetShowHelp(true)

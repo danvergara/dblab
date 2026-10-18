@@ -26,19 +26,6 @@ const MaxQueries = 5
 
 type focusState int
 
-var (
-	// colors.
-	green      = lipgloss.Color("#1fb009") // Normal green
-	purple     = lipgloss.Color("#800080")
-	cyberGreen = lipgloss.Color("#39FF14") // High-visibility neon green
-	hiMagenta  = lipgloss.Color("#FF00FF") // High-visibility Magenta
-	mutedGreen = lipgloss.Color("#2ECC71") // Softer green for standard text
-	neonPurple = lipgloss.Color("#BF40BF") // Bright purple for highlights
-	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
-	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
-	black      = lipgloss.Color("#000000")
-)
-
 const (
 	// focus state management.
 	focusEditor focusState = iota
@@ -74,8 +61,8 @@ var (
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(green).
-			Foreground(purple).
+			BorderForeground(greenColor).
+			Foreground(purpleColor).
 			AlignVertical(lipgloss.Center).
 			Align(lipgloss.Center)
 
@@ -84,7 +71,7 @@ var (
 			Bold(true).
 			Padding(1, 2)
 	successStyle = lipgloss.NewStyle().
-			Foreground(cyberGreen).
+			Foreground(cyberGreenColor).
 			Bold(true).
 			Padding(1, 2)
 )
@@ -184,9 +171,9 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 
 	h := help.New()
 	h.ShowAll = true
-	h.Styles.FullKey = lipgloss.NewStyle().Foreground(cyberGreen).Bold(true)
-	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteText)
-	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreen)
+	h.Styles.FullKey = lipgloss.NewStyle().Foreground(cyberGreenColor).Bold(true)
+	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteColor)
+	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreenColor)
 
 	editor, err := NewEditor(km.Editor)
 	if err != nil {
@@ -419,10 +406,10 @@ func (m Model) View() tea.View {
 			return v
 		}
 
-		textAreaBorder := darkPurple
+		textAreaBorder := darkPurpleColor
 
 		if m.focus == focusEditor {
-			textAreaBorder = neonPurple
+			textAreaBorder = neonPurpleColor
 		}
 
 		fullStatusBar := m.statusBar.View().Content
@@ -465,7 +452,7 @@ func (m Model) View() tea.View {
 func (m Model) fullScreenView() string {
 	switch m.focus {
 	case focusEditor:
-		return editorStyle.BorderForeground(neonPurple).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
+		return editorStyle.BorderForeground(neonPurpleColor).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
 	case focusTable:
 		return m.resulstset.View().Content
 	default:
@@ -649,7 +636,7 @@ func prepareQueriesForExecution(rawText string) []string {
 func setModalContent(content string, width, height int) string {
 	formStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(neonPurple).
+		BorderForeground(neonPurpleColor).
 		Padding(1, 2)
 	boxedForm := formStyle.Render(content)
 	return lipgloss.Place(

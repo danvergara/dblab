@@ -79,7 +79,7 @@ func (f StatusBar) View() tea.View {
 	if f.schema != "" {
 		rightBlock =
 			lipgloss.NewStyle().
-				Foreground(cyberGreen).
+				Foreground(cyberGreenColor).
 				Render("active schema:" + " ")
 	}
 	rightBlock +=

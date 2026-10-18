@@ -257,9 +257,9 @@ func (s SidebarViewport) View() string {
 	s.sidebarViewport.SetContent(s.dbTree.View().Content)
 	sideViewContent := s.sidebarViewport.View()
 
-	listBorder := darkPurple
+	listBorder := darkPurpleColor
 	if s.selected {
-		listBorder = neonPurple
+		listBorder = neonPurpleColor
 	}
 	sideViewContent = tablesListStyle.BorderForeground(listBorder).Height(s.height).Render(sideViewContent)
 
@@ -308,16 +308,16 @@ func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
 		treeview.WithStyleRule(
 			func(n *treeview.Node[*client.DBNode]) bool { return true },
 			lipgloss.NewStyle().
-				Foreground(whiteText).
+				Foreground(whiteColor).
 				PaddingLeft(2),
 
 			lipgloss.NewStyle().
-				Foreground(cyberGreen).
-				Background(darkPurple).
+				Foreground(cyberGreenColor).
+				Background(darkPurpleColor).
 				Bold(true).
 				BorderStyle(lipgloss.NormalBorder()).
 				BorderLeft(true).
-				BorderForeground(hiMagenta).
+				BorderForeground(hiMagentaColor).
 				PaddingLeft(1),
 		),
 		treeview.WithFormatter(func(node *treeview.Node[*client.DBNode]) (string, bool) {

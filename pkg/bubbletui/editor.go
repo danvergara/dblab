@@ -8,33 +8,11 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
-	"github.com/alecthomas/chroma/v2"
-	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ionut-t/goeditor"
 	"github.com/ionut-t/goeditor/core"
 )
-
-// dblabSQLStyle names the chroma style registered below, used for the query
-// editor's SQL syntax highlighting.
-const dblabSQLStyle = "dblab-cyberpunk-sql"
-
-// Register the dblab-cyberpunk-sql style the query editor highlights SQL with,
-// built from the same neon palette used across the rest of the app (see
-// cyberGreen, neonViolet, neonPurple and friends in bubbletui.go).
-var _ = styles.Register(chroma.MustNewStyle(dblabSQLStyle, chroma.StyleEntries{
-	chroma.Background:    "#E0E0E0",      // default text    → whiteText
-	chroma.Keyword:       "#9D00FF bold", // SELECT/FROM/... → neonViolet
-	chroma.NameBuiltin:   "#BF40BF bold", // VARCHAR/INT/... → neonPurple
-	chroma.Name:          "#2ECC71",      // identifiers     → mutedGreen
-	chroma.LiteralString: "#39FF14",      // 'strings'       → cyberGreen
-	chroma.LiteralNumber: "#FF6600",      // numbers         → neonOrange
-	chroma.Operator:      "#E0E0E0",      // + - * / = ...   → whiteText
-	chroma.Punctuation:   "#E0E0E0",      // ; , ( ) ...     → whiteText
-	chroma.Comment:       "#999999 italic",
-	chroma.Error:         "#FF0000 bold",
-}))
 
 type executeQueryMsg struct {
 	queriesToRun []string

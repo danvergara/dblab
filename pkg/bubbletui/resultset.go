@@ -13,30 +13,12 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/quick"
-	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/danvergara/dblab/internal/history"
 	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/davecgh/go-spew/spew"
 )
-
-const (
-	dblabJSONStyle = "dblab-cyberpunk"
-)
-
-// Register the dblab-cyberpunk style Highlight json inspects.
-var _ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
-	chroma.NameTag:             "#FF00FF bold", // keys        → hiMagenta
-	chroma.LiteralStringDouble: "#39FF14",      // strings     → cyberGreen
-	chroma.LiteralString:       "#39FF14",
-	chroma.LiteralNumber:       "#BF40BF",      // numbers     → neonPurple
-	chroma.KeywordConstant:     "#BF40BF bold", // true/false/null
-	chroma.Punctuation:         "#E0E0E0",      // {} [] : ,   → whiteText
-	chroma.Error:               "#FF0000 bold",
-	chroma.Background:          "#E0E0E0", // default fg, no bg set
-}))
 
 // tabStyles is for tab styling.
 // The tabs are used to show table metadata.
@@ -55,9 +37,9 @@ func newTabStyles() *tabStyles {
 	s.inactiveTab = lipgloss.NewStyle().
 		Padding(0, 1)
 	s.activeTabFocused = s.inactiveTab.
-		Background(neonPurple)
+		Background(neonPurpleColor)
 	s.activeTab = s.inactiveTab.
-		Background(darkPurple)
+		Background(darkPurpleColor)
 	s.border = lipgloss.RoundedBorder()
 	return s
 }
@@ -350,9 +332,9 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 }
 
 func (r ResultSet) View() tea.View {
-	tableBorder := darkPurple
+	tableBorder := darkPurpleColor
 	if r.focused {
-		tableBorder = neonPurple
+		tableBorder = neonPurpleColor
 	}
 
 	s := r.tabStyles
@@ -471,14 +453,14 @@ func newTablePanel(height, width int) *TablePanel {
 
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(hiMagenta).
+		BorderForeground(hiMagentaColor).
 		BorderBottom(true).
-		Foreground(cyberGreen).
+		Foreground(cyberGreenColor).
 		Bold(true)
 
 	s.Selected = s.Selected.
-		Foreground(black).
-		Background(cyberGreen).
+		Foreground(blackColor).
+		Background(cyberGreenColor).
 		Bold(true)
 
 	t.SetStyles(s)

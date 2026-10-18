@@ -48,19 +48,19 @@ func NewHistoryModel() *HistoryModel {
 
 	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteText)
+		Foreground(whiteColor)
 
 	// Cyber green color for the selected items with a magent border foreground.
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreen).
-		BorderLeftForeground(hiMagenta)
+		Foreground(cyberGreenColor).
+		BorderLeftForeground(hiMagentaColor)
 
 	// Set up the list model.
 	queryList := list.New([]list.Item{}, delegate, 0, 0)
 	queryList.Title = "Select a query from the history"
 	queryList.Styles.Title = queryList.Styles.Title.
-		Background(darkPurple).
-		Foreground(hiMagenta).
+		Background(darkPurpleColor).
+		Foreground(hiMagentaColor).
 		Bold(true)
 	queryList.SetShowStatusBar(false)
 	queryList.SetShowHelp(true)

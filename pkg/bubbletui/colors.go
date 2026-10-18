@@ -1,19 +1,92 @@
 package bubbletui
 
-import "charm.land/lipgloss/v2"
+import (
+	"charm.land/lipgloss/v2"
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/styles"
+)
 
-// StatusBar Colors.
-var FocusText = lipgloss.Color("#116800")
-var FocusBg = lipgloss.Color("#a2cb27")
+const (
+	// dblabJSONStyle names the chroma style, used for the query
+	// resulsets's JSON syntax highlighting.
+	dblabJSONStyle = "dblab-json"
+	// dblabSQLStyle names the chroma style, used for the query
+	// editor's SQL syntax highlighting.
+	dblabSQLStyle = "dblab-sql"
+)
 
-var InsertModeText = lipgloss.Color("#ffffff")
-var InsertModeBg = lipgloss.Color("#ec5813")
+const (
+	red   = "#FF0000"
+	white = "#ffffff"
+	black = "#000000"
 
-var SchemaText = lipgloss.Color("#393939")
-var SchemaBg = lipgloss.Color("#fcfcfc")
+	green          = "#1fb009" // Grass green
+	platinum       = "#E0E0E0"
+	purple         = "#800080"
+	cyberGreen     = "#39FF14" // High-visibility neon green
+	hiMagenta      = "#FF00FF" // High-visibility Magenta
+	mutedGreen     = "#2ECC71" // Softer green for standard text
+	neonPurple     = "#BF40BF" // Bright purple for highlights
+	darkPurple     = "#4B0082" // Off-white for readability
+	deepGreen      = "#116800" // Japanese Laurel
+	greenishYellow = "#a2cb27" // Lime green
+	neonOrange     = "#FF6600" // neonOrange
+	neonViolet     = "#9D00FF" // neonViolet
+	mediumGray     = "#999999" // mediumGray
+	charcoal       = "#393939" // charchoal, dark gray, onyx
+	soapstone      = "#fcfcfc" // off-white, snow
+	ashGray        = "#bbbbbb"
+	tundora        = "#444444" // dark eel, emperor
+	darkGray       = "#323232" // dark gray, dune
+)
 
-var KbOddText = lipgloss.Color("#bbbbbb")
-var KbOddBg = lipgloss.Color("#444444")
+var (
+	// General purpose lipgloss Colors.
+	greenColor      = lipgloss.Color(green)
+	purpleColor     = lipgloss.Color(purple)
+	cyberGreenColor = lipgloss.Color(cyberGreen)
+	hiMagentaColor  = lipgloss.Color(hiMagenta)
+	mutedGreenColor = lipgloss.Color(mutedGreen)
+	neonPurpleColor = lipgloss.Color(neonPurple)
+	darkPurpleColor = lipgloss.Color(darkPurple)
+	whiteColor      = lipgloss.Color(white)
+	blackColor      = lipgloss.Color(black)
 
-var KbEvenText = lipgloss.Color("#999999")
-var KbEvenBg = lipgloss.Color("#323232")
+	// StatusBar Colors.
+	FocusText  = lipgloss.Color(deepGreen)
+	FocusBg    = lipgloss.Color(greenishYellow)
+	SchemaText = lipgloss.Color(charcoal)
+	SchemaBg   = lipgloss.Color(soapstone)
+	KbOddText  = lipgloss.Color(ashGray)
+	KbOddBg    = lipgloss.Color(tundora)
+	KbEvenText = lipgloss.Color(mediumGray)
+	KbEvenBg   = lipgloss.Color(darkGray)
+)
+
+// Register the dblab-cyberpunk-sql style the query editor highlights SQL with,
+// built from the same neon palette used across the rest of the app (see
+// cyberGreen, neonViolet, neonPurple and friends in bubbletui.go).
+var _ = styles.Register(chroma.MustNewStyle(dblabSQLStyle, chroma.StyleEntries{
+	chroma.Background:    platinum,             // default text
+	chroma.Keyword:       neonViolet + " bold", // SELECT/FROM/...
+	chroma.NameBuiltin:   neonPurple + " bold", // VARCHAR/INT/...
+	chroma.Name:          mutedGreen,           // identifiers
+	chroma.LiteralString: cyberGreen,           // 'strings'
+	chroma.LiteralNumber: neonOrange,           // numbers
+	chroma.Operator:      platinum,             // + - * / = ...
+	chroma.Punctuation:   platinum,             // ; , ( ) ...
+	chroma.Comment:       mediumGray + " italic",
+	chroma.Error:         red + " bold",
+}))
+
+// Register the dblab-cyberpunk style Highlight json inspects.
+var _ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
+	chroma.NameTag:             hiMagenta + " bold", // keys
+	chroma.LiteralStringDouble: cyberGreen,          // strings
+	chroma.LiteralString:       cyberGreen,
+	chroma.LiteralNumber:       neonPurple,           // numbers
+	chroma.KeywordConstant:     neonPurple + " bold", // true/false/null
+	chroma.Punctuation:         platinum,             // {} [] : ,
+	chroma.Error:               red + " bold",
+	chroma.Background:          platinum, // default fg, no bg set
+}))

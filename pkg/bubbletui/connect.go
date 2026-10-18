@@ -154,17 +154,17 @@ func initConnectModel() *ConnectModel {
 	delegate.ShowDescription = false
 
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteText)
+		Foreground(whiteColor)
 
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreen).
-		BorderLeftForeground(hiMagenta)
+		Foreground(cyberGreenColor).
+		BorderLeftForeground(hiMagentaColor)
 
 	profileList := list.New([]list.Item{}, delegate, 0, 0)
 	profileList.Title = "Select your database"
 	profileList.Styles.Title = profileList.Styles.Title.
-		Background(darkPurple).
-		Foreground(hiMagenta).
+		Background(darkPurpleColor).
+		Foreground(hiMagentaColor).
 		Bold(true)
 	profileList.SetShowStatusBar(false)
 	profileList.SetShowHelp(true)
