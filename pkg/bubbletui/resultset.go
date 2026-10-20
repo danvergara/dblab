@@ -16,6 +16,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/alecthomas/chroma/v2/styles"
+	"github.com/atotto/clipboard"
 	"github.com/danvergara/dblab/internal/history"
 	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
@@ -239,11 +240,89 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 
 			r.viewport.SetXOffset(maxOffset)
 		}
+		exporting := false
+		format := "json"
+		var rows []table.Row
+		var columns []table.Column
 		switch msg.String() {
 		case "left", "h":
 			r.viewport.ScrollLeft(4)
 		case "right", "l":
 			r.viewport.ScrollRight(4)
+		case "c", "e", "C", "E":
+			exporting = true
+			fallthrough
+		default:
+			if exporting {
+				exporting = false
+				if tablePanel, ok := r.tablesMetadata[r.activeTab].(*TablePanel); ok {
+					if len(tablePanel.table.Rows()) > 0 && len(tablePanel.table.Columns()) > 0 {
+						exporting = true
+						columns = tablePanel.table.Columns()
+						if msg.String() == "c" || msg.String() == "e" {
+							rows = []table.Row{tablePanel.table.SelectedRow()}
+						} else {
+							rows = tablePanel.table.Rows()
+						}
+						if strings.ToLower(msg.String()) == "c" {
+							format = "csv"
+						}
+					}
+				}
+			}
+		}
+		if exporting {
+			var exportResult strings.Builder
+			fieldCounter := len(columns)
+			if format == "csv" {
+				exportResult.WriteString("\"")
+				for idc, col := range columns {
+					exportResult.WriteString(col.Title)
+					if idc < fieldCounter-1 {
+						exportResult.WriteString("\",\"")
+					}
+				}
+				exportResult.WriteString("\"\n")
+				for _, row := range rows {
+					exportResult.WriteString("\"")
+					for idf, field := range row {
+						exportResult.WriteString(field)
+						if idf < fieldCounter-1 {
+							exportResult.WriteString("\",\"")
+						}
+					}
+					exportResult.WriteString("\"\n")
+				}
+			} else {
+				if len(rows) > 1 {
+					exportResult.WriteString("[")
+				}
+				var base strings.Builder
+				base.WriteString("{")
+				for idc, col := range columns {
+					base.WriteString("\"")
+					base.WriteString(col.Title)
+					base.WriteString("\":\"%s\"")
+					if idc < fieldCounter-1 {
+						base.WriteString(",")
+					}
+				}
+				base.WriteString("}")
+				for idr, row := range rows {
+					values := make([]any, 0, fieldCounter)
+					for _, value := range row {
+						values = append(values, value)
+					}
+					fmt.Fprintf(&exportResult, base.String(), values...)
+					if idr < len(rows)-1 {
+						exportResult.WriteString(",")
+					}
+				}
+				if len(rows) > 1 {
+					exportResult.WriteString("]")
+				}
+			}
+			_ = clipboard.WriteAll(exportResult.String())
 		}
 	case queryErrMsg:
 		errorText := fmt.Sprintf("❌ QUERY FAILED\n\n%s", msg.err.Error())
