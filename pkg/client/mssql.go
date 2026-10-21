@@ -36,6 +36,10 @@ func newMSSQL(dbName, schema string, db *sqlx.DB) *mssql {
 	return &m
 }
 
+func (m *mssql) SanitizeIdentifier(name string) string {
+	return quoteMSSQLIdentifier(name)
+}
+
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
 func (m *mssql) TableStructure(table TableRef) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.AtP)

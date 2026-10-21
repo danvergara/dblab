@@ -28,9 +28,13 @@ func newMySQL(dbName string, db *sqlx.DB) *mysql {
 	return &m
 }
 
+func (m *mysql) SanitizeIdentifier(name string) string {
+	return quoteMySQLIdentifier(name)
+}
+
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
 func (m *mysql) TableStructure(table TableRef) (string, []any, error) {
-	query := fmt.Sprintf("DESCRIBE %s;", table.Name)
+	query := fmt.Sprintf("DESCRIBE %s;", m.SanitizeIdentifier(table.Name))
 	return query, nil, nil
 }
 
@@ -54,7 +58,7 @@ func (m *mysql) Constraints(table TableRef) (string, []any, error) {
 
 // Indexes returns a query to get all the indexes of a table.
 func (m *mysql) Indexes(table TableRef) (string, []any, error) {
-	query := fmt.Sprintf("SHOW INDEX FROM %s", table.Name)
+	query := fmt.Sprintf("SHOW INDEX FROM %s", m.SanitizeIdentifier(table.Name))
 	return query, nil, nil
 }
 

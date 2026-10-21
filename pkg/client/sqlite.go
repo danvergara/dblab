@@ -31,6 +31,10 @@ func newSQLite(dbName string, db *sqlx.DB) *sqlite {
 	return &s
 }
 
+func (s *sqlite) SanitizeIdentifier(name string) string {
+	return quoteSQLiteIdentifier(name)
+}
+
 // TableStructure returns a query string to retrieve all the relevant information of a given table.
 func (s *sqlite) TableStructure(table TableRef) (string, []any, error) {
 	query := fmt.Sprintf("PRAGMA table_info(%s);", quoteSQLiteIdentifier(table.Name))
