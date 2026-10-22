@@ -3,6 +3,7 @@ package bubbletui
 import (
 	"cmp"
 	"context"
+	"image/color"
 	"io"
 	"os"
 	"slices"
@@ -165,9 +166,9 @@ func NewModel(c *client.Client, km keys.KeyMap, theme Theme) (*Model, error) {
 
 	h := help.New()
 	h.ShowAll = true
-	h.Styles.FullKey = lipgloss.NewStyle().Foreground(cyberGreenColor).Bold(true)
-	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteColor)
-	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreenColor)
+	h.Styles.FullKey = lipgloss.NewStyle().Foreground(theme.Help.FullKeyFg).Bold(true)
+	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(theme.Help.FullDescFg)
+	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(theme.Help.FullSeparatorFg)
 
 	editor, err := NewEditor(km.Editor, theme.Editor)
 	if err != nil {
@@ -393,7 +394,7 @@ func (m Model) View() tea.View {
 	case focusHistory:
 		v.SetContent(m.queryHistory.View().Content)
 	case focusHelp:
-		v.SetContent(setModalContent(m.help.View(m.keyMap), m.width, m.height))
+		v.SetContent(setModalContent(m.help.View(m.keyMap), m.width, m.height, m.theme.Modal.BorderFg))
 	case focusSchemas:
 		v.SetContent(m.schemas.View().Content)
 	default:
@@ -630,10 +631,10 @@ func prepareQueriesForExecution(rawText string) []string {
 
 // setModalContent places a text block vertically in a styled box.
 // Receives the content as string and the dimensions as integers.
-func setModalContent(content string, width, height int) string {
+func setModalContent(content string, width, height int, bfg color.Color) string {
 	formStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(neonPurpleColor).
+		BorderForeground(bfg).
 		Padding(1, 2)
 	boxedForm := formStyle.Render(content)
 	return lipgloss.Place(

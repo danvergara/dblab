@@ -161,13 +161,13 @@ func initConnectModel() *ConnectModel {
 
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
 		Foreground(theme.SelectedTitle).
-		BorderLeftForeground(theme.SelectedTitleBorderLeftForeground)
+		BorderLeftForeground(theme.SelectedTitleBorderLFg)
 
 	profileList := list.New([]list.Item{}, delegate, 0, 0)
 	profileList.Title = "Select your database"
 	profileList.Styles.Title = profileList.Styles.Title.
-		Background(theme.ListTitleBackground).
-		Foreground(theme.ListTitleForeground).
+		Background(theme.ListTitleBg).
+		Foreground(theme.ListTitleFg).
 		Bold(true)
 	profileList.SetShowStatusBar(false)
 	profileList.SetShowHelp(true)
@@ -326,7 +326,7 @@ func (m *ConnectModel) View() tea.View {
 		spinnerView := fmt.Sprintf("\n %s %s\n", m.spinner.View(), m.loadingAction)
 		content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, spinnerView)
 	case stateForm:
-		content = setModalContent(m.list.View(), m.width, m.height)
+		content = setModalContent(m.list.View(), m.width, m.height, neonPurpleColor)
 	}
 
 	v.SetContent(content)

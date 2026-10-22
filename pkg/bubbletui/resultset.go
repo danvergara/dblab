@@ -149,7 +149,7 @@ func (r *ResultSet) SetSize(w, h int) {
 
 func (r *ResultSet) setupViews() {
 	viewDef := newTextPanel()
-	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
+	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 	r.tablesMetadata = []MetadataPanel{
 		viewDef,
 		columns,
@@ -157,10 +157,10 @@ func (r *ResultSet) setupViews() {
 }
 
 func (r *ResultSet) setupTables() {
-	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
-	data := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
-	constraints := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
-	indexes := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
+	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
+	data := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
+	constraints := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
+	indexes := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 	r.tablesMetadata = []MetadataPanel{
 		data,
 		columns,
@@ -290,7 +290,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				jsonPanel.SetContent(highlighted.String())
 				r.tablesMetadata[i] = jsonPanel
 			case client.NormalQuery:
-				panel := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
+				panel := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 				tableContentColumns, tableContentRows := populateTable(qr.Headers, qr.ResultSet)
 				panel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 				panel.table.SetColumns(tableContentColumns)
@@ -377,7 +377,7 @@ func (r ResultSet) View() tea.View {
 
 func (r *ResultSet) clearTables() {
 	for i := range r.tablesMetadata {
-		r.tablesMetadata[i] = newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
+		r.tablesMetadata[i] = newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 	}
 }
 

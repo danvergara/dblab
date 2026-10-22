@@ -95,7 +95,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKe
 		ctx,
 		[]*client.DBNode{root},
 		&DBGraphTreeBuilderProvider{},
-		treeview.WithProvider(createCyberpunkProvider(svp.theme.TextForeground, svp.theme.FocusedTextForeground, svp.theme.FocusedTextBackground, svp.theme.FocusedTextBorderForeground)),
+		treeview.WithProvider(createCyberpunkProvider(svp.theme.TextFg, svp.theme.FocusedTextFg, svp.theme.FocusedTextBg, svp.theme.FocusedTextBorderFg)),
 	)
 	if err != nil {
 		return svp, err
@@ -260,9 +260,9 @@ func (s SidebarViewport) View() string {
 	s.sidebarViewport.SetContent(s.dbTree.View().Content)
 	sideViewContent := s.sidebarViewport.View()
 
-	listBorder := s.theme.BorderForeground
+	listBorder := s.theme.BorderFg
 	if s.selected {
-		listBorder = s.theme.FocusedBorderForeground
+		listBorder = s.theme.FocusedBorderFg
 	}
 	sideViewContent = tablesListStyle.BorderForeground(listBorder).Height(s.height).Render(sideViewContent)
 
@@ -283,7 +283,7 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 			ctx,
 			[]*client.DBNode{root},
 			&DBGraphTreeBuilderProvider{},
-			treeview.WithProvider(createCyberpunkProvider(s.theme.TextForeground, s.theme.FocusedTextForeground, s.theme.FocusedTextBackground, s.theme.FocusedTextBorderForeground)),
+			treeview.WithProvider(createCyberpunkProvider(s.theme.TextFg, s.theme.FocusedTextFg, s.theme.FocusedTextBg, s.theme.FocusedTextBorderFg)),
 		)
 		if err != nil {
 			return updateGraphErrMsg{err}

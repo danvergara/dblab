@@ -8,6 +8,10 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 )
 
+// Foreground = Fg
+// Background = Bg
+// LeftForeground = LFg
+
 const (
 	// dblabJSONStyle names the chroma style, used for the query
 	// resulsets's JSON syntax highlighting.
@@ -99,6 +103,7 @@ type Theme struct {
 	Modal     ModalTheme
 	Sidebar   SidebarTheme
 	Editor    EditorTheme
+	Help      HelpTheme
 }
 
 type ResultSetTheme struct {
@@ -109,35 +114,33 @@ type ResultSetTheme struct {
 }
 
 type HeaderTheme struct {
-	Foreground       color.Color
-	BorderForeground color.Color
+	Fg       color.Color
+	BorderFg color.Color
 }
 
 type SelectedContentTheme struct {
-	Foreground color.Color
-	Background color.Color
+	Fg color.Color
+	Bg color.Color
 }
 
 // ModalTheme is them used for the ConnectModel, HistoryModel and the SchemaModel models.
 // Those model share the same styles and colors since they are modal used to show options.
 type ModalTheme struct {
-	BorderForeground                  color.Color
-	ListTitleBackground               color.Color
-	ListTitleForeground               color.Color
-	NormalTitle                       color.Color
-	SelectedTitle                     color.Color
-	SelectedTitleBorderLeftForeground color.Color
+	BorderFg               color.Color
+	ListTitleBg            color.Color
+	ListTitleFg            color.Color
+	NormalTitle            color.Color
+	SelectedTitle          color.Color
+	SelectedTitleBorderLFg color.Color
 }
 
 type SidebarTheme struct {
-	BorderForeground        color.Color
-	FocusedBorderForeground color.Color
-
-	TextForeground color.Color
-
-	FocusedTextForeground       color.Color
-	FocusedTextBackground       color.Color
-	FocusedTextBorderForeground color.Color
+	BorderFg            color.Color
+	FocusedBorderFg     color.Color
+	TextFg              color.Color
+	FocusedTextFg       color.Color
+	FocusedTextBg       color.Color
+	FocusedTextBorderFg color.Color
 }
 
 type EditorTheme struct {
@@ -148,6 +151,12 @@ type EditorTheme struct {
 type BannerTheme struct {
 	Text   color.Color
 	Border color.Color
+}
+
+type HelpTheme struct {
+	FullKeyFg       color.Color
+	FullDescFg      color.Color
+	FullSeparatorFg color.Color
 }
 
 func GetTheme(theme string) Theme {
@@ -165,35 +174,41 @@ func cyberPunkTheme() Theme {
 			Border: greenColor,
 		},
 		Modal: ModalTheme{
-			NormalTitle:                       whiteColor,
-			SelectedTitle:                     cyberGreenColor,
-			SelectedTitleBorderLeftForeground: hiMagentaColor,
-			ListTitleBackground:               darkPurpleColor,
-			ListTitleForeground:               hiMagentaColor,
+			BorderFg:               neonPurpleColor,
+			NormalTitle:            whiteColor,
+			SelectedTitle:          cyberGreenColor,
+			SelectedTitleBorderLFg: hiMagentaColor,
+			ListTitleBg:            darkPurpleColor,
+			ListTitleFg:            hiMagentaColor,
 		},
 		ResultSet: ResultSetTheme{
 			TableBorder:       darkPurpleColor,
 			ActiveTableBorder: neonPurpleColor,
 			Header: HeaderTheme{
-				Foreground:       cyberGreenColor,
-				BorderForeground: hiMagentaColor,
+				Fg:       cyberGreenColor,
+				BorderFg: hiMagentaColor,
 			},
 			SelectedContent: SelectedContentTheme{
-				Foreground: blackColor,
-				Background: cyberGreenColor,
+				Fg: blackColor,
+				Bg: cyberGreenColor,
 			},
 		},
 		Sidebar: SidebarTheme{
-			BorderForeground:            darkPurpleColor,
-			FocusedBorderForeground:     neonPurpleColor,
-			TextForeground:              whiteColor,
-			FocusedTextForeground:       cyberGreenColor,
-			FocusedTextBackground:       darkPurpleColor,
-			FocusedTextBorderForeground: hiMagentaColor,
+			BorderFg:            darkPurpleColor,
+			FocusedBorderFg:     neonPurpleColor,
+			TextFg:              whiteColor,
+			FocusedTextFg:       cyberGreenColor,
+			FocusedTextBg:       darkPurpleColor,
+			FocusedTextBorderFg: hiMagentaColor,
 		},
 		Editor: EditorTheme{
 			FocusedBorder: neonPurpleColor,
 			Border:        darkPurpleColor,
+		},
+		Help: HelpTheme{
+			FullKeyFg:       cyberGreenColor,
+			FullDescFg:      whiteColor,
+			FullSeparatorFg: mutedGreenColor,
 		},
 	}
 }
