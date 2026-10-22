@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"io"
 	"os"
 	"strings"
@@ -32,14 +33,14 @@ type tabStyles struct {
 // newTabStyles function retuns a pointer to the tabStyles.
 // It defines the highlighted background used for the active tab and the
 // border character shared with the result set window below the tab row.
-func newTabStyles() *tabStyles {
+func newTabStyles(focused, inactive color.Color) *tabStyles {
 	s := new(tabStyles)
 	s.inactiveTab = lipgloss.NewStyle().
 		Padding(0, 1)
 	s.activeTabFocused = s.inactiveTab.
-		Background(neonPurpleColor)
+		Background(focused)
 	s.activeTab = s.inactiveTab.
-		Background(darkPurpleColor)
+		Background(inactive)
 	s.border = lipgloss.RoundedBorder()
 	return s
 }
@@ -100,9 +101,10 @@ type ResultSet struct {
 	viewport       viewport.Model
 	tablesMetadata []MetadataPanel
 	dump           io.Writer
+	theme          ResultSetTheme
 }
 
-func NewResultSet(keyMap keys.ResultSetKeyMap) ResultSet {
+func NewResultSet(keyMap keys.ResultSetKeyMap, theme ResultSetTheme) ResultSet {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -116,9 +118,10 @@ func NewResultSet(keyMap keys.ResultSetKeyMap) ResultSet {
 		keyMap:   keyMap,
 		viewport: viewport.New(viewport.WithHeight(0), viewport.WithWidth(0)),
 		dump:     dump,
+		theme:    theme,
 	}
 
-	rs.tabStyles = newTabStyles()
+	rs.tabStyles = newTabStyles(theme.ActiveTableBorder, theme.TableBorder)
 	rs.setupTables()
 
 	return rs
@@ -146,7 +149,7 @@ func (r *ResultSet) SetSize(w, h int) {
 
 func (r *ResultSet) setupViews() {
 	viewDef := newTextPanel()
-	columns := newTablePanel(r.height, r.width)
+	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
 	r.tablesMetadata = []MetadataPanel{
 		viewDef,
 		columns,
@@ -154,10 +157,10 @@ func (r *ResultSet) setupViews() {
 }
 
 func (r *ResultSet) setupTables() {
-	columns := newTablePanel(r.height, r.width)
-	data := newTablePanel(r.height, r.width)
-	constraints := newTablePanel(r.height, r.width)
-	indexes := newTablePanel(r.height, r.width)
+	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
+	data := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
+	constraints := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
+	indexes := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
 	r.tablesMetadata = []MetadataPanel{
 		data,
 		columns,
@@ -287,7 +290,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				jsonPanel.SetContent(highlighted.String())
 				r.tablesMetadata[i] = jsonPanel
 			case client.NormalQuery:
-				panel := newTablePanel(r.height, r.width)
+				panel := newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
 				tableContentColumns, tableContentRows := populateTable(qr.Headers, qr.ResultSet)
 				panel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 				panel.table.SetColumns(tableContentColumns)
@@ -332,9 +335,9 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 }
 
 func (r ResultSet) View() tea.View {
-	tableBorder := darkPurpleColor
+	tableBorder := r.theme.TableBorder
 	if r.focused {
-		tableBorder = neonPurpleColor
+		tableBorder = r.theme.ActiveTableBorder
 	}
 
 	s := r.tabStyles
@@ -374,7 +377,7 @@ func (r ResultSet) View() tea.View {
 
 func (r *ResultSet) clearTables() {
 	for i := range r.tablesMetadata {
-		r.tablesMetadata[i] = newTablePanel(r.height, r.width)
+		r.tablesMetadata[i] = newTablePanel(r.height, r.width, r.theme.Header.BorderForeground, r.theme.Header.Foreground, r.theme.SelectedContent.Foreground, r.theme.SelectedContent.Background)
 	}
 }
 
@@ -442,7 +445,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 	}
 }
 
-func newTablePanel(height, width int) *TablePanel {
+func newTablePanel(height, width int, headerBorderForeground, headerForeground, selectedForeground, selectedBackground color.Color) *TablePanel {
 	t := table.New(
 		table.WithFocused(true),
 		table.WithWidth(max(width, 0)),
@@ -453,14 +456,14 @@ func newTablePanel(height, width int) *TablePanel {
 
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(hiMagentaColor).
+		BorderForeground(headerBorderForeground).
 		BorderBottom(true).
-		Foreground(cyberGreenColor).
+		Foreground(headerForeground).
 		Bold(true)
 
 	s.Selected = s.Selected.
-		Foreground(blackColor).
-		Background(cyberGreenColor).
+		Foreground(selectedForeground).
+		Background(selectedBackground).
 		Bold(true)
 
 	t.SetStyles(s)

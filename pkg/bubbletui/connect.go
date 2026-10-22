@@ -150,21 +150,24 @@ type ConnectModel struct {
 }
 
 func initConnectModel() *ConnectModel {
+	// The connect modal is the only model that has the theme fixed,
+	// since dblab does not read the config before loading this model.
+	theme := cyberPunkTheme().Modal
 	delegate := list.NewDefaultDelegate()
 	delegate.ShowDescription = false
 
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteColor)
+		Foreground(theme.NormalTitle)
 
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreenColor).
-		BorderLeftForeground(hiMagentaColor)
+		Foreground(theme.SelectedTitle).
+		BorderLeftForeground(theme.SelectedTitleBorderLeftForeground)
 
 	profileList := list.New([]list.Item{}, delegate, 0, 0)
 	profileList.Title = "Select your database"
 	profileList.Styles.Title = profileList.Styles.Title.
-		Background(darkPurpleColor).
-		Foreground(hiMagentaColor).
+		Background(theme.ListTitleBackground).
+		Foreground(theme.ListTitleForeground).
 		Bold(true)
 	profileList.SetShowStatusBar(false)
 	profileList.SetShowHelp(true)

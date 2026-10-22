@@ -45,25 +45,25 @@ type SchemaModel struct {
 	loadingAction string
 }
 
-func NewSchemaModel(c *client.Client) *SchemaModel {
+func NewSchemaModel(c *client.Client, theme ModalTheme) *SchemaModel {
 	delegate := list.NewDefaultDelegate()
 	delegate.ShowDescription = false
 
 	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteColor)
+		Foreground(theme.NormalTitle)
 
 	// Cyber green color for the selected items with a magent border foreground.
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreenColor).
-		BorderLeftForeground(hiMagentaColor)
+		Foreground(theme.SelectedTitle).
+		BorderLeftForeground(theme.SelectedTitleBorderLeftForeground)
 
 	schemaList := list.New([]list.Item{}, delegate, 0, 0)
 
 	schemaList.Title = "Select the current schema"
 	schemaList.Styles.Title = schemaList.Styles.Title.
-		Background(darkPurpleColor).
-		Foreground(hiMagentaColor).
+		Background(theme.ListTitleBackground).
+		Foreground(theme.ListTitleForeground).
 		Bold(true)
 	schemaList.SetShowStatusBar(false)
 	schemaList.SetShowHelp(true)

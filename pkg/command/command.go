@@ -39,6 +39,8 @@ type Options struct {
 	ConnectionTimeout      string `json:"connection_timeout"`
 	// Read Only mode.
 	ReadOnly bool `json:"read_only"`
+	// Application theme.
+	Theme string `json:"theme"`
 }
 
 // SetDefault returns a Options struct and fills the empty

@@ -40,27 +40,28 @@ type HistoryModel struct {
 	width         int
 	height        int
 	loadingAction string
+	theme         ModalTheme
 }
 
 // NewHistoryModel returns a pointer to the HistoryModel, with the models initialized.
-func NewHistoryModel() *HistoryModel {
+func NewHistoryModel(theme ModalTheme) *HistoryModel {
 	delegate := list.NewDefaultDelegate()
 
 	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteColor)
+		Foreground(theme.NormalTitle)
 
 	// Cyber green color for the selected items with a magent border foreground.
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreenColor).
-		BorderLeftForeground(hiMagentaColor)
+		Foreground(theme.SelectedTitle).
+		BorderLeftForeground(theme.SelectedTitleBorderLeftForeground)
 
 	// Set up the list model.
 	queryList := list.New([]list.Item{}, delegate, 0, 0)
 	queryList.Title = "Select a query from the history"
 	queryList.Styles.Title = queryList.Styles.Title.
-		Background(darkPurpleColor).
-		Foreground(hiMagentaColor).
+		Background(theme.ListTitleBackground).
+		Foreground(theme.ListTitleForeground).
 		Bold(true)
 	queryList.SetShowStatusBar(false)
 	queryList.SetShowHelp(true)

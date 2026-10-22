@@ -11,7 +11,7 @@ import (
 
 func TestResulset_UpdateBeforeResize(t *testing.T) {
 	var km = keys.DefaultKeyMap()
-	rs := NewResultSet(km.ResultSet)
+	rs := NewResultSet(km.ResultSet, ResultSetTheme{})
 	if tp, ok := rs.tablesMetadata[0].(*TablePanel); ok {
 		cols := []table.Column{{Title: "id", Width: 15}, {Title: "name", Width: 15}}
 		rows := []table.Row{

@@ -21,12 +21,14 @@ type executeQueryMsg struct {
 type Editor struct {
 	geditor goeditor.Model
 	keyMap  keys.EditorKeyMap
+	focused bool
+	theme   EditorTheme
 
 	dump          io.Writer
 	width, height int
 }
 
-func NewEditor(km keys.EditorKeyMap) (Editor, error) {
+func NewEditor(km keys.EditorKeyMap, theme EditorTheme) (Editor, error) {
 	var dump *os.File
 
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
@@ -54,7 +56,7 @@ func NewEditor(km keys.EditorKeyMap) (Editor, error) {
 		return Editor{}, err
 	}
 
-	return Editor{geditor: geditor, keyMap: km, dump: dump}, nil
+	return Editor{geditor: geditor, keyMap: km, dump: dump, theme: theme}, nil
 }
 
 // keyBinding pairs a configurable dblab key (bubbletea notation, e.g.
@@ -192,12 +194,14 @@ func (e *Editor) SetSize(w, h int) {
 	e.geditor.SetSize(w-4, h-2)
 }
 
-func (e *Editor) Blur() {
-	e.geditor.Blur()
+func (e *Editor) Focus() {
+	e.focused = true
+	e.geditor.Focus()
 }
 
-func (e *Editor) Focus() {
-	e.geditor.Focus()
+func (e *Editor) Blur() {
+	e.focused = false
+	e.geditor.Blur()
 }
 
 func (e Editor) Init() tea.Cmd {
@@ -263,7 +267,14 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 }
 
 func (e Editor) View() tea.View {
-	return tea.NewView(e.geditor.View())
+	textAreaBorder := e.theme.Border
+
+	if e.focused {
+		textAreaBorder = e.theme.FocusedBorder
+	}
+
+	styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(e.width).Height(e.height).Render(e.geditor.View())
+	return tea.NewView(styledEditor)
 }
 
 // queryAtCursor returns the text of the line the cursor is currently on.

@@ -24,6 +24,8 @@ type Config struct {
 	DBName   string
 	Driver   string
 	Limit    uint `fig:"limit" default:"100"`
+	// Application theme.
+	Theme string `fig:"theme"`
 }
 
 type KeyMapConfig struct {
@@ -216,6 +218,7 @@ func Init(configName string) (command.Options, error) {
 		SSHKeyFile:             db.SSHKeyFile,
 		SSHKeyPassphrase:       db.SSHKeyPassphrase,
 		ReadOnly:               db.ReadOnly,
+		Theme:                  cfg.Theme,
 	}
 
 	return opts, nil

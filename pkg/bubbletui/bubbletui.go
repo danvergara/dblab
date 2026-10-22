@@ -58,14 +58,6 @@ var (
 	editorStyle     = baseStyle
 	resultSetStyle  = baseStyle
 
-	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(greenColor).
-			Foreground(purpleColor).
-			AlignVertical(lipgloss.Center).
-			Align(lipgloss.Center)
-
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000")).
 			Bold(true).
@@ -147,12 +139,14 @@ type Model struct {
 
 	// Stores the kill switch.
 	cancelQuery context.CancelFunc
+
+	theme Theme
 }
 
 // NewModel returns a pointer to the main dblab bubbletea model.
 // It also buids the sub-models, along with styling and the app title.
 // If DBLAB_DEBUG is set, the constructor function will create a messages.log file to log bubbletui events.
-func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
+func NewModel(c *client.Client, km keys.KeyMap, theme Theme) (*Model, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -162,7 +156,7 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		}
 	}
 	ctx := context.Background()
-	svp, err := NewSidebarViewport(ctx, c, km.Sidebar)
+	svp, err := NewSidebarViewport(ctx, c, km.Sidebar, theme.Sidebar)
 	if err != nil {
 		return nil, err
 	}
@@ -175,10 +169,11 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteColor)
 	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreenColor)
 
-	editor, err := NewEditor(km.Editor)
+	editor, err := NewEditor(km.Editor, theme.Editor)
 	if err != nil {
 		return nil, err
 	}
+	editor.Focus()
 
 	m := &Model{
 		focus:           focusEditor,
@@ -186,15 +181,16 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		keyMap:          km,
 		editor:          editor,
 		sidebarViewport: svp,
-		resulstset:      NewResultSet(km.ResultSet),
+		resulstset:      NewResultSet(km.ResultSet, theme.ResultSet),
 		help:            h,
 		statusBar:       NewStatusBar(km, c.Driver(), c.Conn(), c.Schema()),
-		schemas:         NewSchemaModel(c),
+		schemas:         NewSchemaModel(c, theme.Modal),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
-		queryHistory:    NewHistoryModel(),
+		queryHistory:    NewHistoryModel(theme.Modal),
 		fullScreen:      false,
+		theme:           theme,
 	}
 
 	return m, nil
@@ -406,12 +402,6 @@ func (m Model) View() tea.View {
 			return v
 		}
 
-		textAreaBorder := darkPurpleColor
-
-		if m.focus == focusEditor {
-			textAreaBorder = neonPurpleColor
-		}
-
 		fullStatusBar := m.statusBar.View().Content
 		lipgloss.JoinVertical(
 			lipgloss.Left,
@@ -421,6 +411,14 @@ func (m Model) View() tea.View {
 		tightBlock := lipgloss.NewStyle().
 			Align(lipgloss.Left).
 			Render(m.renderedTitle)
+
+		titleStyle := lipgloss.NewStyle().
+			Bold(true).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(m.theme.Banner.Border).
+			Foreground(m.theme.Banner.Text).
+			AlignVertical(lipgloss.Center).
+			Align(lipgloss.Center)
 
 		centeredLogo := titleStyle.
 			Width(m.titleWidth).
@@ -437,8 +435,7 @@ func (m Model) View() tea.View {
 			MaxHeight(m.height - lipgloss.Height(m.statusBar.View().Content)).
 			Render(leftColumn)
 
-		styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
-		rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View().Content)
+		rightColumn := lipgloss.JoinVertical(lipgloss.Left, m.editor.View().Content, m.resulstset.View().Content)
 
 		contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
 		v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullStatusBar))
@@ -452,7 +449,7 @@ func (m Model) View() tea.View {
 func (m Model) fullScreenView() string {
 	switch m.focus {
 	case focusEditor:
-		return editorStyle.BorderForeground(neonPurpleColor).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
+		return m.editor.View().Content
 	case focusTable:
 		return m.resulstset.View().Content
 	default:

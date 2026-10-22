@@ -1,6 +1,8 @@
 package bubbletui
 
 import (
+	"image/color"
+
 	"charm.land/lipgloss/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/styles"
@@ -90,3 +92,108 @@ var _ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
 	chroma.Error:               red + " bold",
 	chroma.Background:          platinum, // default fg, no bg set
 }))
+
+type Theme struct {
+	Banner    BannerTheme
+	ResultSet ResultSetTheme
+	Modal     ModalTheme
+	Sidebar   SidebarTheme
+	Editor    EditorTheme
+}
+
+type ResultSetTheme struct {
+	TableBorder       color.Color
+	ActiveTableBorder color.Color
+	Header            HeaderTheme
+	SelectedContent   SelectedContentTheme
+}
+
+type HeaderTheme struct {
+	Foreground       color.Color
+	BorderForeground color.Color
+}
+
+type SelectedContentTheme struct {
+	Foreground color.Color
+	Background color.Color
+}
+
+// ModalTheme is them used for the ConnectModel, HistoryModel and the SchemaModel models.
+// Those model share the same styles and colors since they are modal used to show options.
+type ModalTheme struct {
+	BorderForeground                  color.Color
+	ListTitleBackground               color.Color
+	ListTitleForeground               color.Color
+	NormalTitle                       color.Color
+	SelectedTitle                     color.Color
+	SelectedTitleBorderLeftForeground color.Color
+}
+
+type SidebarTheme struct {
+	BorderForeground        color.Color
+	FocusedBorderForeground color.Color
+
+	TextForeground color.Color
+
+	FocusedTextForeground       color.Color
+	FocusedTextBackground       color.Color
+	FocusedTextBorderForeground color.Color
+}
+
+type EditorTheme struct {
+	Border        color.Color
+	FocusedBorder color.Color
+}
+
+type BannerTheme struct {
+	Text   color.Color
+	Border color.Color
+}
+
+func GetTheme(theme string) Theme {
+	switch theme {
+	default:
+		// dblab-cyberpunk is the default theme.
+		return cyberPunkTheme()
+	}
+}
+
+func cyberPunkTheme() Theme {
+	return Theme{
+		Banner: BannerTheme{
+			Text:   purpleColor,
+			Border: greenColor,
+		},
+		Modal: ModalTheme{
+			NormalTitle:                       whiteColor,
+			SelectedTitle:                     cyberGreenColor,
+			SelectedTitleBorderLeftForeground: hiMagentaColor,
+			ListTitleBackground:               darkPurpleColor,
+			ListTitleForeground:               hiMagentaColor,
+		},
+		ResultSet: ResultSetTheme{
+			TableBorder:       darkPurpleColor,
+			ActiveTableBorder: neonPurpleColor,
+			Header: HeaderTheme{
+				Foreground:       cyberGreenColor,
+				BorderForeground: hiMagentaColor,
+			},
+			SelectedContent: SelectedContentTheme{
+				Foreground: blackColor,
+				Background: cyberGreenColor,
+			},
+		},
+		Sidebar: SidebarTheme{
+			BorderForeground:            darkPurpleColor,
+			FocusedBorderForeground:     neonPurpleColor,
+			TextForeground:              whiteColor,
+			FocusedTextForeground:       cyberGreenColor,
+			FocusedTextBackground:       darkPurpleColor,
+			FocusedTextBorderForeground: hiMagentaColor,
+		},
+		Editor: EditorTheme{
+			FocusedBorder: neonPurpleColor,
+			Border:        darkPurpleColor,
+		},
+	}
+}
