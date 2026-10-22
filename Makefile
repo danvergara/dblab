@@ -50,7 +50,7 @@ run: run-sakila-postgres
 .PHONY: run-sakila-postgres
 ## run-sakila-postgres: Runs the application and connects to the PostgreSQL sakila database
 run-sakila-postgres: build
-	DBLAB_DEBUG="" ./dblab --host localhost --user sakila --db sakila --pass sakila --schema public --ssl disable --port 5432 --driver postgres --limit 50 --save-as sakila -k
+	DBLAB_DEBUG="" ./dblab --host localhost --user sakila --db sakila --pass sakila --ssl disable --port 5432 --driver postgres --limit 50 --save-as sakila --theme catppuccin -k
 
 .PHONY: run-sakila-mysql
 ## run-sakila-mysql: Runs the application and connects to the MySQL sakila database
@@ -140,7 +140,7 @@ run-mysql-url-ssh: build
 .PHONY: run-config
 ## run-config: Runs the client using the config file.
 run-config: build
-	./dblab --config --cfg-name "test"
+	./dblab --config --cfg-name "sakila"
 
 .PHONY: up
 ## up: Runs all the containers listed in the docker-compose.yml file
