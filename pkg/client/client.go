@@ -69,13 +69,18 @@ type DBNode struct {
 	Children   []*DBNode
 }
 
+// IDSanitizer quotes an identifier for use in a database-specific query.
+type IDSanitizer interface {
+	SanitizeIdentifier(name string) string
+}
+
 // databaseQuerier is an interface that indicates the methods
 // a given type has to implement to interact with a database,
 // to get specific data.
 // This allows us to decouple the client from the database implementation and
 // make adding new databases easier.
 type databaseQuerier interface {
-	SanitizeIdentifier(name string) string
+	IDSanitizer
 	TableStructure(table TableRef) (string, []any, error)
 	Constraints(table TableRef) (string, []any, error)
 	Indexes(table TableRef) (string, []any, error)

@@ -351,12 +351,13 @@ func (suite *ClientTestSuite) TestTableAndViewContentQuotesIdentifiers() {
 
 	c, err := New(suite.connOptions())
 	suite.Require().NoError(err)
-	tableRows, _, err := c.tableContent(tableRef)
+	tableMetadata, err := c.Metadata(tableRef)
 	suite.Require().NoError(err)
-	suite.Equal([][]string{{"1"}}, tableRows)
-	viewRows, _, err := c.viewContent(viewRef)
+	suite.Equal([][]string{{"1"}}, tableMetadata.TableContent.Rows)
+	viewMetadata, err := c.ViewMetadata(viewRef)
 	suite.Require().NoError(err)
-	suite.Equal([][]string{{"1"}}, viewRows)
+	suite.Equal([][]string{{"1"}}, viewMetadata.TableContent.Rows)
+	suite.NotEmpty(viewMetadata.ViewDef.Rows)
 }
 
 func (suite *ClientTestSuite) TestConstraints() {
