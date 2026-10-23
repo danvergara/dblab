@@ -50,7 +50,7 @@ run: run-sakila-postgres
 .PHONY: run-sakila-postgres
 ## run-sakila-postgres: Runs the application and connects to the PostgreSQL sakila database
 run-sakila-postgres: build
-	DBLAB_DEBUG="" ./dblab --host localhost --user sakila --db sakila --pass sakila --ssl disable --port 5432 --driver postgres --limit 50 --save-as sakila --theme catppuccin -k
+	DBLAB_DEBUG="" ./dblab --host localhost --user sakila --db sakila --pass sakila --ssl disable --port 5432 --driver postgres --limit 50 --save-as sakila --theme dracula -k
 
 .PHONY: run-sakila-mysql
 ## run-sakila-mysql: Runs the application and connects to the MySQL sakila database

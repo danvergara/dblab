@@ -37,6 +37,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
   * Schema switching: press `ctrl+s` to pick the active schema from a filterable list without restarting the app (PostgreSQL and Oracle, when no schema was pinned at startup); the active schema is always shown in the status bar.  
   * Built-in help modal: press `?` to display a help overlay showing all available key bindings; press `Esc` to dismiss it.  
   * Full-screen mode: press `alt+f` to expand the focused query editor or result set panel to fill the terminal; press `Esc` to exit.  
+  * Customizable themes: choose from `cyberpunk` (default), `catppuccin`, `tokyonight`, `gruvbox`, `nord`, `dracula`, `monokai`, and `onedark` using the `--theme` flag or configuration file.  
 
 ## Installation
 
