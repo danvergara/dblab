@@ -70,34 +70,6 @@ var (
 	KbEvenBg   = lipgloss.Color(darkGray)
 )
 
-// Register the dblab-cyberpunk-sql style the query editor highlights SQL with,
-// built from the same neon palette used across the rest of the app (see
-// cyberGreen, neonViolet, neonPurple and friends in bubbletui.go).
-var _ = styles.Register(chroma.MustNewStyle(dblabSQLStyle, chroma.StyleEntries{
-	chroma.Background:    platinum,             // default text
-	chroma.Keyword:       neonViolet + " bold", // SELECT/FROM/...
-	chroma.NameBuiltin:   neonPurple + " bold", // VARCHAR/INT/...
-	chroma.Name:          mutedGreen,           // identifiers
-	chroma.LiteralString: cyberGreen,           // 'strings'
-	chroma.LiteralNumber: neonOrange,           // numbers
-	chroma.Operator:      platinum,             // + - * / = ...
-	chroma.Punctuation:   platinum,             // ; , ( ) ...
-	chroma.Comment:       mediumGray + " italic",
-	chroma.Error:         red + " bold",
-}))
-
-// Register the dblab-cyberpunk style Highlight json inspects.
-var _ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
-	chroma.NameTag:             hiMagenta + " bold", // keys
-	chroma.LiteralStringDouble: cyberGreen,          // strings
-	chroma.LiteralString:       cyberGreen,
-	chroma.LiteralNumber:       neonPurple,           // numbers
-	chroma.KeywordConstant:     neonPurple + " bold", // true/false/null
-	chroma.Punctuation:         platinum,             // {} [] : ,
-	chroma.Error:               red + " bold",
-	chroma.Background:          platinum, // default fg, no bg set
-}))
-
 type Theme struct {
 	Banner    BannerTheme
 	ResultSet ResultSetTheme
@@ -105,6 +77,8 @@ type Theme struct {
 	Sidebar   SidebarTheme
 	Editor    EditorTheme
 	Help      HelpTheme
+	SQL       SQLTheme
+	JSON      JSONTheme
 }
 
 type ResultSetTheme struct {
@@ -158,6 +132,60 @@ type HelpTheme struct {
 	FullKeyFg       color.Color
 	FullDescFg      color.Color
 	FullSeparatorFg color.Color
+}
+
+type SQLTheme struct {
+	Background    string // default text
+	Comment       string
+	Error         string
+	Keyword       string // SELECT/FROM/...
+	LiteralNumber string // numbers
+	LiteralString string // 'strings'
+	Name          string // identifiers
+	NameBuiltin   string // VARCHAR/INT/...
+	Operator      string // + - * / = ...
+	Punctuation   string // ; , ( ) ...
+}
+
+type JSONTheme struct {
+	Background          string // default fg, no bg set
+	Punctuation         string // {} [] : ,
+	Error               string // true/false/null
+	KeywordConstant     string // numbers
+	LiteralNumber       string
+	LiteralString       string
+	LiteralStringDouble string // strings
+	NameTag             string // keys
+}
+
+// registerSQLSyntax registers the dblab-sql style the query editor highlights SQL.
+func registerSQLSyntax(sqlTheme SQLTheme) {
+	_ = styles.Register(chroma.MustNewStyle(dblabSQLStyle, chroma.StyleEntries{
+		chroma.Background:    sqlTheme.Background,
+		chroma.Comment:       sqlTheme.Comment,
+		chroma.Error:         sqlTheme.Error,
+		chroma.Keyword:       sqlTheme.Keyword,
+		chroma.LiteralNumber: sqlTheme.LiteralNumber,
+		chroma.LiteralString: sqlTheme.LiteralString,
+		chroma.Name:          sqlTheme.Name,
+		chroma.NameBuiltin:   sqlTheme.NameBuiltin,
+		chroma.Operator:      sqlTheme.Operator,
+		chroma.Punctuation:   sqlTheme.Punctuation,
+	}))
+}
+
+// registerJSONSyntax registers the dblab-cyberpunk style Highlight json inspects.
+func registerJSONSyntax(jsonTheme JSONTheme) {
+	_ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
+		chroma.Background:          jsonTheme.Background,
+		chroma.Punctuation:         jsonTheme.Punctuation,
+		chroma.Error:               jsonTheme.Error,
+		chroma.KeywordConstant:     jsonTheme.KeywordConstant,
+		chroma.LiteralNumber:       jsonTheme.LiteralNumber,
+		chroma.LiteralString:       jsonTheme.LiteralString,
+		chroma.LiteralStringDouble: jsonTheme.LiteralStringDouble,
+		chroma.NameTag:             jsonTheme.NameTag,
+	}))
 }
 
 func GetTheme(theme string) Theme {
@@ -623,6 +651,28 @@ func cyberPunkTheme() Theme {
 			FullKeyFg:       cyberGreenColor,
 			FullDescFg:      whiteColor,
 			FullSeparatorFg: mutedGreenColor,
+		},
+		SQL: SQLTheme{
+			Background:    platinum,
+			Comment:       mediumGray + " italic",
+			Error:         red + " bold",
+			Keyword:       neonViolet + " bold",
+			LiteralNumber: neonOrange,
+			LiteralString: cyberGreen,
+			Name:          mutedGreen,
+			NameBuiltin:   neonPurple + " bold",
+			Operator:      platinum,
+			Punctuation:   platinum,
+		},
+		JSON: JSONTheme{
+			NameTag:             hiMagenta + " bold",
+			LiteralStringDouble: cyberGreen,
+			LiteralString:       cyberGreen,
+			LiteralNumber:       neonPurple,
+			KeywordConstant:     neonPurple + " bold",
+			Punctuation:         platinum,
+			Error:               red + " bold",
+			Background:          platinum,
 		},
 	}
 }

@@ -156,6 +156,10 @@ func NewModel(c *client.Client, km keys.KeyMap, theme Theme) (*Model, error) {
 			os.Exit(1)
 		}
 	}
+
+	registerJSONSyntax(theme.JSON)
+	registerSQLSyntax(theme.SQL)
+
 	ctx := context.Background()
 	svp, err := NewSidebarViewport(ctx, c, km.Sidebar, theme.Sidebar)
 	if err != nil {
