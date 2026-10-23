@@ -139,6 +139,31 @@ func TestThemesHaveValidColors(t *testing.T) {
 			assert.NotNil(t, tt.theme.Help.FullKeyFg)
 			assert.NotNil(t, tt.theme.Help.FullDescFg)
 			assert.NotNil(t, tt.theme.Help.FullSeparatorFg)
+
+			assert.NotEmpty(t, tt.theme.SQL.Background)
+			assert.NotEmpty(t, tt.theme.SQL.Comment)
+			assert.NotEmpty(t, tt.theme.SQL.Error)
+			assert.NotEmpty(t, tt.theme.SQL.Keyword)
+			assert.NotEmpty(t, tt.theme.SQL.LiteralNumber)
+			assert.NotEmpty(t, tt.theme.SQL.LiteralString)
+			assert.NotEmpty(t, tt.theme.SQL.Name)
+			assert.NotEmpty(t, tt.theme.SQL.NameBuiltin)
+			assert.NotEmpty(t, tt.theme.SQL.Operator)
+			assert.NotEmpty(t, tt.theme.SQL.Punctuation)
+
+			assert.NotEmpty(t, tt.theme.JSON.Background)
+			assert.NotEmpty(t, tt.theme.JSON.Punctuation)
+			assert.NotEmpty(t, tt.theme.JSON.Error)
+			assert.NotEmpty(t, tt.theme.JSON.KeywordConstant)
+			assert.NotEmpty(t, tt.theme.JSON.LiteralNumber)
+			assert.NotEmpty(t, tt.theme.JSON.LiteralString)
+			assert.NotEmpty(t, tt.theme.JSON.LiteralStringDouble)
+			assert.NotEmpty(t, tt.theme.JSON.NameTag)
+
+			assert.NotPanics(t, func() {
+				registerSQLSyntax(tt.theme.SQL)
+				registerJSONSyntax(tt.theme.JSON)
+			})
 		})
 	}
 }

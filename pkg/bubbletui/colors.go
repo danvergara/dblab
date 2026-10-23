@@ -1,6 +1,7 @@
 package bubbletui
 
 import (
+	"fmt"
 	"image/color"
 	"strings"
 
@@ -174,7 +175,7 @@ func registerSQLSyntax(sqlTheme SQLTheme) {
 	}))
 }
 
-// registerJSONSyntax registers the dblab-cyberpunk style Highlight json inspects.
+// registerJSONSyntax registers the dblab-json style for JSON syntax highlighting.
 func registerJSONSyntax(jsonTheme JSONTheme) {
 	_ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
 		chroma.Background:          jsonTheme.Background,
@@ -186,6 +187,46 @@ func registerJSONSyntax(jsonTheme JSONTheme) {
 		chroma.LiteralStringDouble: jsonTheme.LiteralStringDouble,
 		chroma.NameTag:             jsonTheme.NameTag,
 	}))
+}
+
+// hex returns the #rrggbb representation of a color.Color.
+func hex(c color.Color) string {
+	if c == nil {
+		return ""
+	}
+	r, g, b, _ := c.RGBA()
+	return fmt.Sprintf("#%02x%02x%02x", r>>8, g>>8, b>>8)
+}
+
+// newSyntaxTheme generates a consistent SQLTheme and JSONTheme from core theme colors.
+func newSyntaxTheme(fg, keyword, str, num, comment color.Color) (SQLTheme, JSONTheme) {
+	cFg := hex(fg)
+	cKw := hex(keyword)
+	cStr := hex(str)
+	cNum := hex(num)
+	cComment := hex(comment)
+
+	return SQLTheme{
+			Background:    cFg,
+			Comment:       cComment + " italic",
+			Error:         red + " bold",
+			Keyword:       cKw + " bold",
+			LiteralNumber: cNum,
+			LiteralString: cStr,
+			Name:          cFg,
+			NameBuiltin:   cKw + " bold",
+			Operator:      cFg,
+			Punctuation:   cFg,
+		}, JSONTheme{
+			Background:          cFg,
+			Punctuation:         cFg,
+			Error:               red + " bold",
+			KeywordConstant:     cNum + " bold",
+			LiteralNumber:       cNum,
+			LiteralString:       cStr,
+			LiteralStringDouble: cStr,
+			NameTag:             cKw + " bold",
+		}
 }
 
 func GetTheme(theme string) Theme {
@@ -223,6 +264,8 @@ func catppuccinMochaTheme() Theme {
 	surface0 := lipgloss.Color("#313244")
 	mantle := lipgloss.Color("#181825")
 	crust := lipgloss.Color("#11111b")
+
+	sql, json := newSyntaxTheme(text, mauve, yellow, peach, subtext)
 
 	return Theme{
 		Banner: BannerTheme{
@@ -266,6 +309,8 @@ func catppuccinMochaTheme() Theme {
 			FullDescFg:      text,
 			FullSeparatorFg: subtext,
 		},
+		SQL:  sql,
+		JSON: json,
 	}
 }
 
@@ -280,6 +325,8 @@ func tokyoNightTheme() Theme {
 	borderLit := lipgloss.Color("#3b4261")
 	bgDark := lipgloss.Color("#16161e")
 	panelBg := lipgloss.Color("#1f2335")
+
+	sql, json := newSyntaxTheme(fg, magenta, cyan, orange, comment)
 
 	return Theme{
 		Banner: BannerTheme{
@@ -323,6 +370,8 @@ func tokyoNightTheme() Theme {
 			FullDescFg:      fg,
 			FullSeparatorFg: comment,
 		},
+		SQL:  sql,
+		JSON: json,
 	}
 }
 
@@ -336,6 +385,8 @@ func gruvboxDarkTheme() Theme {
 	bg0 := lipgloss.Color("#282828")
 	bg1 := lipgloss.Color("#3c3836")
 	bg2 := lipgloss.Color("#504945")
+
+	sql, json := newSyntaxTheme(fg, orange, green, yellow, gray)
 
 	return Theme{
 		Banner: BannerTheme{
@@ -379,6 +430,8 @@ func gruvboxDarkTheme() Theme {
 			FullDescFg:      fg,
 			FullSeparatorFg: gray,
 		},
+		SQL:  sql,
+		JSON: json,
 	}
 }
 
@@ -393,6 +446,8 @@ func nordTheme() Theme {
 	nord9 := lipgloss.Color("#81a1c1")
 	nord12 := lipgloss.Color("#d08770")
 	nord13 := lipgloss.Color("#ebcb8b")
+
+	sql, json := newSyntaxTheme(nord4, nord9, nord8, nord13, nord3)
 
 	return Theme{
 		Banner: BannerTheme{
@@ -436,6 +491,8 @@ func nordTheme() Theme {
 			FullDescFg:      nord4,
 			FullSeparatorFg: nord3,
 		},
+		SQL:  sql,
+		JSON: json,
 	}
 }
 
@@ -449,6 +506,8 @@ func draculaTheme() Theme {
 	pink := lipgloss.Color("#ff79c6")
 	purple := lipgloss.Color("#bd93f9")
 	yellow := lipgloss.Color("#f1fa8c")
+
+	sql, json := newSyntaxTheme(fg, pink, yellow, purple, comment)
 
 	return Theme{
 		Banner: BannerTheme{
@@ -492,6 +551,8 @@ func draculaTheme() Theme {
 			FullDescFg:      fg,
 			FullSeparatorFg: comment,
 		},
+		SQL:  sql,
+		JSON: json,
 	}
 }
 
@@ -506,6 +567,8 @@ func monokaiTheme() Theme {
 	orange := lipgloss.Color("#fd971f")
 	pink := lipgloss.Color("#f92672")
 	cyan := lipgloss.Color("#66d9ef")
+
+	sql, json := newSyntaxTheme(fg, pink, yellow, cyan, comment)
 
 	return Theme{
 		Banner: BannerTheme{
@@ -549,6 +612,8 @@ func monokaiTheme() Theme {
 			FullDescFg:      fg,
 			FullSeparatorFg: comment,
 		},
+		SQL:  sql,
+		JSON: json,
 	}
 }
 
@@ -563,6 +628,8 @@ func oneDarkTheme() Theme {
 	cyan := lipgloss.Color("#56b6c2")
 	purple := lipgloss.Color("#c678dd")
 	yellow := lipgloss.Color("#e5c07b")
+
+	sql, json := newSyntaxTheme(fg, purple, cyan, yellow, comment)
 
 	return Theme{
 		Banner: BannerTheme{
@@ -606,6 +673,8 @@ func oneDarkTheme() Theme {
 			FullDescFg:      fg,
 			FullSeparatorFg: comment,
 		},
+		SQL:  sql,
+		JSON: json,
 	}
 }
 
