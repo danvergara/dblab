@@ -67,6 +67,7 @@ Flags:
       --user string                       Database user
   -v, --version                           version for dblab
       --readonly                            Forces a read-only connection with the target database
+      --theme string                      Application theme. Default: cyberpunk
       --wallet string                     Path for auto-login oracle wallet
 
 Use "dblab [command] --help" for more information about a command.
@@ -367,6 +368,8 @@ database:
     ssh-key-pass: "hiuwiewnc092"
 # should be greater than 0, otherwise the app will error out
 limit: 50
+# application theme: cyberpunk, catppuccin, tokyonight, gruvbox, nord, dracula, monokai, onedark
+theme: "cyberpunk"
 keybindings:
   help: '?'
   quit: 'ctrl+c'
@@ -482,6 +485,49 @@ Profiles are stored in `$XDG_CONFIG_HOME/dblab/dblab.json`:
 ```
 
 Sensitive fields (database password, SSH password, and SSL password) are never written to the configuration file. They are stored exclusively in the OS keyring and retrieved automatically when you connect using a saved profile.
+
+### Themes
+
+dblab includes several built-in color themes to match your terminal aesthetic. You can set the theme using the `--theme` command-line flag or by specifying `theme` in your `.dblab.yaml` configuration file.
+
+```{ .sh .copy }
+dblab --theme tokyonight --db users --user postgres
+```
+
+Available themes:
+
+* `cyberpunk` (default)
+* `catppuccin`
+* `tokyonight`
+* `gruvbox`
+* `nord`
+* `dracula`
+* `monokai`
+* `onedark`
+
+#### Cyberpunk (Default)
+![Cyberpunk](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-cyberpunk.png){ width="700" : .center }
+
+#### Catppuccin
+![Catppuccin](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-catppuccin.png){ width="700" : .center }
+
+#### Tokyo Night
+![Tokyo Night](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-tokyonight.png){ width="700" : .center }
+
+#### Gruvbox
+![Gruvbox](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-gruvbox.png){ width="700" : .center }
+
+#### Nord
+![Nord](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-nord.png){ width="700" : .center }
+
+#### Dracula
+![Dracula](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-dracula.png){ width="700" : .center }
+
+#### Monokai
+![Monokai](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-monokai.png){ width="700" : .center }
+
+#### One Dark
+![One Dark](https://raw.githubusercontent.com/danvergara/dblab/main/screenshots/theme-onedark.png){ width="700" : .center }
 
 ## Navigation
 

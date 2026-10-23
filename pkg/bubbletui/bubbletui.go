@@ -3,6 +3,7 @@ package bubbletui
 import (
 	"cmp"
 	"context"
+	"image/color"
 	"io"
 	"os"
 	"slices"
@@ -25,19 +26,6 @@ import (
 const MaxQueries = 5
 
 type focusState int
-
-var (
-	// colors.
-	green      = lipgloss.Color("#1fb009") // Normal green
-	purple     = lipgloss.Color("#800080")
-	cyberGreen = lipgloss.Color("#39FF14") // High-visibility neon green
-	hiMagenta  = lipgloss.Color("#FF00FF") // High-visibility Magenta
-	mutedGreen = lipgloss.Color("#2ECC71") // Softer green for standard text
-	neonPurple = lipgloss.Color("#BF40BF") // Bright purple for highlights
-	darkPurple = lipgloss.Color("#4B0082") // Deep violet for backgrounds
-	whiteText  = lipgloss.Color("#E0E0E0") // Off-white for readability
-	black      = lipgloss.Color("#000000")
-)
 
 const (
 	// focus state management.
@@ -71,20 +59,12 @@ var (
 	editorStyle     = baseStyle
 	resultSetStyle  = baseStyle
 
-	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(green).
-			Foreground(purple).
-			AlignVertical(lipgloss.Center).
-			Align(lipgloss.Center)
-
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000")).
 			Bold(true).
 			Padding(1, 2)
 	successStyle = lipgloss.NewStyle().
-			Foreground(cyberGreen).
+			Foreground(cyberGreenColor).
 			Bold(true).
 			Padding(1, 2)
 )
@@ -160,12 +140,14 @@ type Model struct {
 
 	// Stores the kill switch.
 	cancelQuery context.CancelFunc
+
+	theme Theme
 }
 
 // NewModel returns a pointer to the main dblab bubbletea model.
 // It also buids the sub-models, along with styling and the app title.
 // If DBLAB_DEBUG is set, the constructor function will create a messages.log file to log bubbletui events.
-func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
+func NewModel(c *client.Client, km keys.KeyMap, theme Theme) (*Model, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -174,8 +156,12 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 			os.Exit(1)
 		}
 	}
+
+	registerJSONSyntax(theme.JSON)
+	registerSQLSyntax(theme.SQL)
+
 	ctx := context.Background()
-	svp, err := NewSidebarViewport(ctx, c, km.Sidebar)
+	svp, err := NewSidebarViewport(ctx, c, km.Sidebar, theme.Sidebar)
 	if err != nil {
 		return nil, err
 	}
@@ -184,14 +170,15 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 
 	h := help.New()
 	h.ShowAll = true
-	h.Styles.FullKey = lipgloss.NewStyle().Foreground(cyberGreen).Bold(true)
-	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(whiteText)
-	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(mutedGreen)
+	h.Styles.FullKey = lipgloss.NewStyle().Foreground(theme.Help.FullKeyFg).Bold(true)
+	h.Styles.FullDesc = lipgloss.NewStyle().Foreground(theme.Help.FullDescFg)
+	h.Styles.FullSeparator = lipgloss.NewStyle().Foreground(theme.Help.FullSeparatorFg)
 
-	editor, err := NewEditor(km.Editor)
+	editor, err := NewEditor(km.Editor, theme.Editor)
 	if err != nil {
 		return nil, err
 	}
+	editor.Focus()
 
 	m := &Model{
 		focus:           focusEditor,
@@ -199,15 +186,16 @@ func NewModel(c *client.Client, km keys.KeyMap) (*Model, error) {
 		keyMap:          km,
 		editor:          editor,
 		sidebarViewport: svp,
-		resulstset:      NewResultSet(km.ResultSet),
+		resulstset:      NewResultSet(km.ResultSet, theme.ResultSet),
 		help:            h,
 		statusBar:       NewStatusBar(km, c.Driver(), c.Conn(), c.Schema()),
-		schemas:         NewSchemaModel(c),
+		schemas:         NewSchemaModel(c, theme.Modal),
 		renderedTitle:   dblabTitle,
 		titleHeight:     lipgloss.Height(dblabTitle),
 		dump:            dump,
-		queryHistory:    NewHistoryModel(),
+		queryHistory:    NewHistoryModel(theme.Modal),
 		fullScreen:      false,
+		theme:           theme,
 	}
 
 	return m, nil
@@ -410,19 +398,13 @@ func (m Model) View() tea.View {
 	case focusHistory:
 		v.SetContent(m.queryHistory.View().Content)
 	case focusHelp:
-		v.SetContent(setModalContent(m.help.View(m.keyMap), m.width, m.height))
+		v.SetContent(setModalContent(m.help.View(m.keyMap), m.width, m.height, m.theme.Modal.BorderFg))
 	case focusSchemas:
 		v.SetContent(m.schemas.View().Content)
 	default:
 		if m.fullScreen {
 			v.SetContent(m.fullScreenView())
 			return v
-		}
-
-		textAreaBorder := darkPurple
-
-		if m.focus == focusEditor {
-			textAreaBorder = neonPurple
 		}
 
 		fullStatusBar := m.statusBar.View().Content
@@ -434,6 +416,14 @@ func (m Model) View() tea.View {
 		tightBlock := lipgloss.NewStyle().
 			Align(lipgloss.Left).
 			Render(m.renderedTitle)
+
+		titleStyle := lipgloss.NewStyle().
+			Bold(true).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(m.theme.Banner.Border).
+			Foreground(m.theme.Banner.Text).
+			AlignVertical(lipgloss.Center).
+			Align(lipgloss.Center)
 
 		centeredLogo := titleStyle.
 			Width(m.titleWidth).
@@ -450,8 +440,7 @@ func (m Model) View() tea.View {
 			MaxHeight(m.height - lipgloss.Height(m.statusBar.View().Content)).
 			Render(leftColumn)
 
-		styledEditor := editorStyle.BorderForeground(textAreaBorder).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
-		rightColumn := lipgloss.JoinVertical(lipgloss.Left, styledEditor, m.resulstset.View().Content)
+		rightColumn := lipgloss.JoinVertical(lipgloss.Left, m.editor.View().Content, m.resulstset.View().Content)
 
 		contentLayout := lipgloss.JoinHorizontal(lipgloss.Bottom, leftColumn, rightColumn)
 		v.SetContent(lipgloss.JoinVertical(lipgloss.Left, contentLayout, fullStatusBar))
@@ -465,7 +454,7 @@ func (m Model) View() tea.View {
 func (m Model) fullScreenView() string {
 	switch m.focus {
 	case focusEditor:
-		return editorStyle.BorderForeground(neonPurple).Width(m.editorWidth).Height(m.editorHeight).Render(m.editor.View().Content)
+		return m.editor.View().Content
 	case focusTable:
 		return m.resulstset.View().Content
 	default:
@@ -646,10 +635,10 @@ func prepareQueriesForExecution(rawText string) []string {
 
 // setModalContent places a text block vertically in a styled box.
 // Receives the content as string and the dimensions as integers.
-func setModalContent(content string, width, height int) string {
+func setModalContent(content string, width, height int, bfg color.Color) string {
 	formStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(neonPurple).
+		BorderForeground(bfg).
 		Padding(1, 2)
 	boxedForm := formStyle.Render(content)
 	return lipgloss.Place(

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"io"
 	"os"
 	"strings"
@@ -13,30 +14,12 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/quick"
-	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/danvergara/dblab/internal/history"
 	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/danvergara/dblab/pkg/client"
 	"github.com/davecgh/go-spew/spew"
 )
-
-const (
-	dblabJSONStyle = "dblab-cyberpunk"
-)
-
-// Register the dblab-cyberpunk style Highlight json inspects.
-var _ = styles.Register(chroma.MustNewStyle(dblabJSONStyle, chroma.StyleEntries{
-	chroma.NameTag:             "#FF00FF bold", // keys        → hiMagenta
-	chroma.LiteralStringDouble: "#39FF14",      // strings     → cyberGreen
-	chroma.LiteralString:       "#39FF14",
-	chroma.LiteralNumber:       "#BF40BF",      // numbers     → neonPurple
-	chroma.KeywordConstant:     "#BF40BF bold", // true/false/null
-	chroma.Punctuation:         "#E0E0E0",      // {} [] : ,   → whiteText
-	chroma.Error:               "#FF0000 bold",
-	chroma.Background:          "#E0E0E0", // default fg, no bg set
-}))
 
 // tabStyles is for tab styling.
 // The tabs are used to show table metadata.
@@ -50,14 +33,14 @@ type tabStyles struct {
 // newTabStyles function retuns a pointer to the tabStyles.
 // It defines the highlighted background used for the active tab and the
 // border character shared with the result set window below the tab row.
-func newTabStyles() *tabStyles {
+func newTabStyles(focused, inactive color.Color) *tabStyles {
 	s := new(tabStyles)
 	s.inactiveTab = lipgloss.NewStyle().
 		Padding(0, 1)
 	s.activeTabFocused = s.inactiveTab.
-		Background(neonPurple)
+		Background(focused)
 	s.activeTab = s.inactiveTab.
-		Background(darkPurple)
+		Background(inactive)
 	s.border = lipgloss.RoundedBorder()
 	return s
 }
@@ -118,9 +101,10 @@ type ResultSet struct {
 	viewport       viewport.Model
 	tablesMetadata []MetadataPanel
 	dump           io.Writer
+	theme          ResultSetTheme
 }
 
-func NewResultSet(keyMap keys.ResultSetKeyMap) ResultSet {
+func NewResultSet(keyMap keys.ResultSetKeyMap, theme ResultSetTheme) ResultSet {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -134,9 +118,10 @@ func NewResultSet(keyMap keys.ResultSetKeyMap) ResultSet {
 		keyMap:   keyMap,
 		viewport: viewport.New(viewport.WithHeight(0), viewport.WithWidth(0)),
 		dump:     dump,
+		theme:    theme,
 	}
 
-	rs.tabStyles = newTabStyles()
+	rs.tabStyles = newTabStyles(theme.ActiveTableBorder, theme.TableBorder)
 	rs.setupTables()
 
 	return rs
@@ -164,7 +149,7 @@ func (r *ResultSet) SetSize(w, h int) {
 
 func (r *ResultSet) setupViews() {
 	viewDef := newTextPanel()
-	columns := newTablePanel(r.height, r.width)
+	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 	r.tablesMetadata = []MetadataPanel{
 		viewDef,
 		columns,
@@ -172,10 +157,10 @@ func (r *ResultSet) setupViews() {
 }
 
 func (r *ResultSet) setupTables() {
-	columns := newTablePanel(r.height, r.width)
-	data := newTablePanel(r.height, r.width)
-	constraints := newTablePanel(r.height, r.width)
-	indexes := newTablePanel(r.height, r.width)
+	columns := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
+	data := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
+	constraints := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
+	indexes := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 	r.tablesMetadata = []MetadataPanel{
 		data,
 		columns,
@@ -305,7 +290,7 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 				jsonPanel.SetContent(highlighted.String())
 				r.tablesMetadata[i] = jsonPanel
 			case client.NormalQuery:
-				panel := newTablePanel(r.height, r.width)
+				panel := newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 				tableContentColumns, tableContentRows := populateTable(qr.Headers, qr.ResultSet)
 				panel.table.SetWidth(calculateTotalTableWidth(tableContentColumns))
 				panel.table.SetColumns(tableContentColumns)
@@ -350,9 +335,9 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 }
 
 func (r ResultSet) View() tea.View {
-	tableBorder := darkPurple
+	tableBorder := r.theme.TableBorder
 	if r.focused {
-		tableBorder = neonPurple
+		tableBorder = r.theme.ActiveTableBorder
 	}
 
 	s := r.tabStyles
@@ -392,7 +377,7 @@ func (r ResultSet) View() tea.View {
 
 func (r *ResultSet) clearTables() {
 	for i := range r.tablesMetadata {
-		r.tablesMetadata[i] = newTablePanel(r.height, r.width)
+		r.tablesMetadata[i] = newTablePanel(r.height, r.width, r.theme.Header.BorderFg, r.theme.Header.Fg, r.theme.SelectedContent.Fg, r.theme.SelectedContent.Bg)
 	}
 }
 
@@ -460,7 +445,7 @@ func (r *ResultSet) updateMetadataOnChange(metadata *client.Metadata, isTable bo
 	}
 }
 
-func newTablePanel(height, width int) *TablePanel {
+func newTablePanel(height, width int, headerBorderForeground, headerForeground, selectedForeground, selectedBackground color.Color) *TablePanel {
 	t := table.New(
 		table.WithFocused(true),
 		table.WithWidth(max(width, 0)),
@@ -471,14 +456,14 @@ func newTablePanel(height, width int) *TablePanel {
 
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(hiMagenta).
+		BorderForeground(headerBorderForeground).
 		BorderBottom(true).
-		Foreground(cyberGreen).
+		Foreground(headerForeground).
 		Bold(true)
 
 	s.Selected = s.Selected.
-		Foreground(black).
-		Background(cyberGreen).
+		Foreground(selectedForeground).
+		Background(selectedBackground).
 		Bold(true)
 
 	t.SetStyles(s)

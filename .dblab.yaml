@@ -8,15 +8,14 @@ database:
     schema: "public"
     driver: "postgres"
     readonly: true
-  - name: "pagila"
+  - name: "sakila"
     host: "localhost"
     port: 5432
-    db: "postgres"
-    password: "123456"
-    user: "postgres"
+    db: "sakila"
+    password: "sakila"
+    user: "sakila"
     schema: "public"
     driver: "postgres"
-    readonly: true
   - name: "prod"
     # example endpoint
     host: "mydb.123456789012.us-east-1.rds.amazonaws.com"
@@ -71,6 +70,7 @@ database:
     ssh-key-file: "/path/to/ssh/key.pem"
     ssh-key-pass: "hiuwiewnc092"
 limit: 50
+theme: 'nord'
 keybindings:
   help: '?'
   quit: 'ctrl+c'

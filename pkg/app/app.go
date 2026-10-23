@@ -41,7 +41,7 @@ func New(opts command.Options, km keys.KeyMap) (*App, error) {
 		return nil, err
 	}
 
-	m, err := bubbletui.NewModel(c, km)
+	m, err := bubbletui.NewModel(c, km, bubbletui.GetTheme(opts.Theme))
 	if err != nil {
 		return nil, err
 	}

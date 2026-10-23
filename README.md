@@ -31,6 +31,7 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
     - [Configuration](#configuration)
         - [Key bindings configuration](#key-bindings-configuration)
     - [Connection Profiles](#connection-profiles)
+    - [Themes](#themes)
 - [Navigation](#navigation)
     - [Panels and the sidebar tree](#panels-and-the-sidebar-tree)
     - [Result sets](#result-sets)
@@ -68,6 +69,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Built-in help modal: press <kbd>?</kbd> to display a help overlay showing all available key bindings; press <kbd>Esc</kbd> to dismiss it.
 - Full-screen mode: press <kbd>alt+f</kbd> to expand the focused query editor or result set panel to fill the terminal; press <kbd>Esc</kbd> to exit.
 - Per-panel key bindings: the query editor, the sidebar tree, the result set panel and the panel navigation each have their own section in `.dblab.yaml`, so every panel can be rebound independently.
+- Customizable themes: choose from `cyberpunk` (default), `catppuccin`, `tokyonight`, `gruvbox`, `nord`, `dracula`, `monokai`, and `onedark` using the `--theme` flag or the configuration file.
 
 ## Installation
 
@@ -146,6 +148,7 @@ Flags:
       --user string                       Database user
   -v, --version                           version for dblab
       --readonly                            Forces a read-only connection with the target database
+      --theme string                      Application theme. Default: cyberpunk
       --wallet string                     Path for auto-login oracle wallet
 
 Use "dblab [command] --help" for more information about a command.
@@ -420,6 +423,8 @@ database:
     ssh-key-pass: "hiuwiewnc092"
 # should be greater than 0, otherwise the app will error out
 limit: 50
+# application theme: cyberpunk, catppuccin, tokyonight, gruvbox, nord, dracula, monokai, onedark
+theme: "cyberpunk"
 keybindings:
   help: '?'
   quit: 'ctrl+c'
@@ -533,6 +538,49 @@ Profiles are stored in `$XDG_CONFIG_HOME/dblab/dblab.json`:
   }
 }
 ```
+
+### Themes
+
+dblab includes several built-in color themes to match your terminal aesthetic. You can select a theme using the `--theme` command-line flag or the `theme` field in your `.dblab.yaml` configuration file.
+
+```sh
+$ dblab --theme tokyonight --db users --user postgres
+```
+
+Available themes:
+
+- `cyberpunk` (default)
+- `catppuccin`
+- `tokyonight`
+- `gruvbox`
+- `nord`
+- `dracula`
+- `monokai`
+- `onedark`
+
+#### Cyberpunk (Default)
+<img src="screenshots/theme-cyberpunk.png" />
+
+#### Catppuccin
+<img src="screenshots/theme-catppuccin.png" />
+
+#### Tokyo Night
+<img src="screenshots/theme-tokyonight.png" />
+
+#### Gruvbox
+<img src="screenshots/theme-gruvbox.png" />
+
+#### Nord
+<img src="screenshots/theme-nord.png" />
+
+#### Dracula
+<img src="screenshots/theme-dracula.png" />
+
+#### Monokai
+<img src="screenshots/theme-monokai.png" />
+
+#### One Dark
+<img src="screenshots/theme-onedark.png" />
 
 ## Navigation
 

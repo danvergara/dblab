@@ -43,27 +43,28 @@ type SchemaModel struct {
 	width         int
 	height        int
 	loadingAction string
+	theme         ModalTheme
 }
 
-func NewSchemaModel(c *client.Client) *SchemaModel {
+func NewSchemaModel(c *client.Client, theme ModalTheme) *SchemaModel {
 	delegate := list.NewDefaultDelegate()
 	delegate.ShowDescription = false
 
 	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteText)
+		Foreground(theme.NormalTitle)
 
 	// Cyber green color for the selected items with a magent border foreground.
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreen).
-		BorderLeftForeground(hiMagenta)
+		Foreground(theme.SelectedTitle).
+		BorderLeftForeground(theme.SelectedTitleBorderLFg)
 
 	schemaList := list.New([]list.Item{}, delegate, 0, 0)
 
 	schemaList.Title = "Select the current schema"
 	schemaList.Styles.Title = schemaList.Styles.Title.
-		Background(darkPurple).
-		Foreground(hiMagenta).
+		Background(theme.ListTitleBg).
+		Foreground(theme.ListTitleFg).
 		Bold(true)
 	schemaList.SetShowStatusBar(false)
 	schemaList.SetShowHelp(true)
@@ -80,6 +81,7 @@ func NewSchemaModel(c *client.Client) *SchemaModel {
 		c:             c,
 		list:          schemaList,
 		loadingAction: "Fetch schemas from the database...",
+		theme:         theme,
 	}
 }
 
@@ -146,7 +148,7 @@ func (s *SchemaModel) View() tea.View {
 		spinnerView := fmt.Sprintf("\n %s %s\n", s.spinner.View(), s.loadingAction)
 		content = lipgloss.Place(s.width, s.height, lipgloss.Center, lipgloss.Center, spinnerView)
 	case stateForm:
-		content = setModalContent(s.list.View(), s.width, s.height)
+		content = setModalContent(s.list.View(), s.width, s.height, s.theme.BorderFg)
 	}
 
 	v.SetContent(content)

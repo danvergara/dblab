@@ -15,3 +15,4 @@ The key features are:
   * Built-in help modal: press `?` to display a help overlay showing all available key bindings; press `Esc` to dismiss it.
   * Full-screen mode: press `alt+f` to expand the focused query editor or result set panel to fill the terminal; press `Esc` to exit.
   * Per-panel key bindings: the query editor, the sidebar tree, the result set panel and the panel navigation each have their own section in `.dblab.yaml`, so every panel can be rebound independently.
+  * Customizable themes: choose from `cyberpunk` (default), `catppuccin`, `tokyonight`, `gruvbox`, `nord`, `dracula`, `monokai`, and `onedark` using the `--theme` flag or configuration file.
