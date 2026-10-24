@@ -2,7 +2,7 @@ PLATFORM=linux/amd64
 
 .PHONY: test
 ## test: Runs the tests
-test: test-postgres test-mysql
+test: test-postgres test-mysql test-mssql
 
 .PHONY: test-postgres
 ## test-postgres: Runs the tests with a connection to the postgres sakila database
@@ -20,6 +20,15 @@ test-mysql:
 	DB_PASSWORD=sakila \
 	DB_NAME=sakila \
 	DB_DRIVER=mysql \
+	go test -v -race ./...
+
+.PHONY: test-mssql
+## test-mssql: Runs the tests with a connection to the mssql sakila database
+test-mssql:
+	DB_USER=sa \
+	DB_PASSWORD=Sakila2026 \
+	DB_NAME=sakila \
+	DB_DRIVER=sqlserver \
 	go test -v -race ./...
 
 .PHONY: unit-test
