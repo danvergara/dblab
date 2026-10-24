@@ -66,6 +66,11 @@ run-sakila-postgres: build
 run-sakila-mysql: build
 	DBLAB_DEBUG="" ./dblab --host localhost --user sakila --db sakila --pass sakila --ssl disable --port 3306 --driver mysql --limit 50 -k
 
+.PHONY: run-sakila-mssql
+## run-sakila-mssql: Runs the application and connects to the SQL Server sakila database
+run-sakila-mssql: build
+	DBLAB_DEBUG="" ./dblab --host localhost --user sa --db sakila --pass Sakila2026 --ssl disable --port 1433 --driver sqlserver --limit 50 -k
+
 .PHONY: run-sakila-sqlite
 ## run-sakila-sqlite: Runs the application with a connection to the Sqlite Sakila database
 run-sakila-sqlite: build

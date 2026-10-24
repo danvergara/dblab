@@ -41,9 +41,9 @@ database:
     driver: "sqlserver"
     host: "localhost"
     port: 1433
-    db: "msdb"
-    password: "5@klkbN#ABC"
-    user: "SA"
+    db: "sakila"
+    password: "Sakila2026"
+    user: "sa"
   - name: "ssh-tunnel"
     host: "localhost"
     port: 5432
