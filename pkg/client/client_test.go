@@ -106,8 +106,6 @@ func (suite *ClientTestSuite) SetupSuite() {
 	case drivers.SQLServer:
 		mssqlContainer, err := mssqltest.Run(suite.ctx,
 			"danvergara/sakila:mssql-2019",
-			//mssqltest.WithDatabase(suite.dbName),
-			//mssqltest.WithUsername(suite.user),
 			mssqltest.WithPassword(suite.password),
 			mssqltest.WithAcceptEULA(),
 			testcontainers.WithWaitStrategy(
