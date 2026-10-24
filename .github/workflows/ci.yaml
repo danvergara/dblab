@@ -42,3 +42,12 @@ jobs:
           go test -v -count=1 ./...
         env:
           DB_DRIVER: mysql
+
+      # Runs go test ./... against ms sql server container
+      - name: Test SQL Server
+        run: |
+          go test -v -count=1 ./...
+        env:
+          DB_DRIVER: sqlserver
+          DB_USER: sa
+          DB_PASSWORD: Sakila2026
