@@ -2,6 +2,7 @@ package bubbletui
 
 import (
 	"context"
+	"image/color"
 	"io"
 	"os"
 
@@ -49,6 +50,7 @@ type SidebarViewport struct {
 	selected  bool
 	searching bool
 	dump      io.Writer
+	theme     SidebarTheme
 }
 
 type DBGraphTreeBuilderProvider struct{}
@@ -64,7 +66,7 @@ func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNod
 	return do.Children
 }
 
-func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKeyMap) (SidebarViewport, error) {
+func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKeyMap, theme SidebarTheme) (SidebarViewport, error) {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DBLAB_DEBUG"); ok {
 		var err error
@@ -78,6 +80,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKe
 		c:      c,
 		keyMap: km,
 		dump:   dump,
+		theme:  theme,
 	}
 
 	svp.sidebarViewport = viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
@@ -92,7 +95,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKe
 		ctx,
 		[]*client.DBNode{root},
 		&DBGraphTreeBuilderProvider{},
-		treeview.WithProvider(createCyberpunkProvider()),
+		treeview.WithProvider(createCyberpunkProvider(svp.theme.TextFg, svp.theme.FocusedTextFg, svp.theme.FocusedTextBg, svp.theme.FocusedTextBorderFg)),
 	)
 	if err != nil {
 		return svp, err
@@ -257,9 +260,9 @@ func (s SidebarViewport) View() string {
 	s.sidebarViewport.SetContent(s.dbTree.View().Content)
 	sideViewContent := s.sidebarViewport.View()
 
-	listBorder := darkPurple
+	listBorder := s.theme.BorderFg
 	if s.selected {
-		listBorder = neonPurple
+		listBorder = s.theme.FocusedBorderFg
 	}
 	sideViewContent = tablesListStyle.BorderForeground(listBorder).Height(s.height).Render(sideViewContent)
 
@@ -280,7 +283,7 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 			ctx,
 			[]*client.DBNode{root},
 			&DBGraphTreeBuilderProvider{},
-			treeview.WithProvider(createCyberpunkProvider()),
+			treeview.WithProvider(createCyberpunkProvider(s.theme.TextFg, s.theme.FocusedTextFg, s.theme.FocusedTextBg, s.theme.FocusedTextBorderFg)),
 		)
 		if err != nil {
 			return updateGraphErrMsg{err}
@@ -293,7 +296,7 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 	}
 }
 
-func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
+func createCyberpunkProvider(textForeground, focusedTitleForeground, focusedTitleBackground, focusedTextBorderForeground color.Color) *treeview.DefaultNodeProvider[*client.DBNode] {
 	// Icons for database objects.
 	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), "⛃")
 	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), "📁")
@@ -308,16 +311,16 @@ func createCyberpunkProvider() *treeview.DefaultNodeProvider[*client.DBNode] {
 		treeview.WithStyleRule(
 			func(n *treeview.Node[*client.DBNode]) bool { return true },
 			lipgloss.NewStyle().
-				Foreground(whiteText).
+				Foreground(textForeground).
 				PaddingLeft(2),
 
 			lipgloss.NewStyle().
-				Foreground(cyberGreen).
-				Background(darkPurple).
+				Foreground(focusedTitleForeground).
+				Background(focusedTitleBackground).
 				Bold(true).
 				BorderStyle(lipgloss.NormalBorder()).
 				BorderLeft(true).
-				BorderForeground(hiMagenta).
+				BorderForeground(focusedTextBorderForeground).
 				PaddingLeft(1),
 		),
 		treeview.WithFormatter(func(node *treeview.Node[*client.DBNode]) (string, bool) {

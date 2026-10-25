@@ -40,27 +40,28 @@ type HistoryModel struct {
 	width         int
 	height        int
 	loadingAction string
+	theme         ModalTheme
 }
 
 // NewHistoryModel returns a pointer to the HistoryModel, with the models initialized.
-func NewHistoryModel() *HistoryModel {
+func NewHistoryModel(theme ModalTheme) *HistoryModel {
 	delegate := list.NewDefaultDelegate()
 
 	// white text for the normal title.
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(whiteText)
+		Foreground(theme.NormalTitle)
 
 	// Cyber green color for the selected items with a magent border foreground.
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(cyberGreen).
-		BorderLeftForeground(hiMagenta)
+		Foreground(theme.SelectedTitle).
+		BorderLeftForeground(theme.SelectedTitleBorderLFg)
 
 	// Set up the list model.
 	queryList := list.New([]list.Item{}, delegate, 0, 0)
 	queryList.Title = "Select a query from the history"
 	queryList.Styles.Title = queryList.Styles.Title.
-		Background(darkPurple).
-		Foreground(hiMagenta).
+		Background(theme.ListTitleBg).
+		Foreground(theme.ListTitleFg).
 		Bold(true)
 	queryList.SetShowStatusBar(false)
 	queryList.SetShowHelp(true)
@@ -76,6 +77,7 @@ func NewHistoryModel() *HistoryModel {
 		spinner:       s,
 		list:          queryList,
 		loadingAction: "Fetch queries from the history file...",
+		theme:         theme,
 	}
 }
 
@@ -151,7 +153,7 @@ func (h *HistoryModel) View() tea.View {
 		spinnerView := fmt.Sprintf("\n %s %s\n", h.spinner.View(), h.loadingAction)
 		content = lipgloss.Place(h.width, h.height, lipgloss.Center, lipgloss.Center, spinnerView)
 	case stateForm:
-		content = setModalContent(h.list.View(), h.width, h.height)
+		content = setModalContent(h.list.View(), h.width, h.height, h.theme.BorderFg)
 	}
 
 	v.SetContent(content)

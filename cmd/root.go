@@ -34,6 +34,7 @@ var (
 	sslkey      string
 	sslpassword string
 	sslrootcert string
+	theme       string
 
 	// SSH Tunnel.
 	sshHost          string
@@ -109,6 +110,7 @@ func NewRootCmd() *cobra.Command {
 					SSHKeyFile:             sshKey,
 					SSHKeyPassphrase:       sshKeyPassphrase,
 					ReadOnly:               readOnly,
+					Theme:                  theme,
 				}
 
 				if form.IsEmpty(opts) {
@@ -251,4 +253,6 @@ func init() {
 	// read only mode flag.
 	rootCmd.PersistentFlags().
 		BoolVarP(&readOnly, "readonly", "", false, "forces a read only connection with the target database")
+
+	rootCmd.Flags().StringVarP(&theme, "theme", "", "cyberpunk", "Application theme. Default: cyberpunk")
 }

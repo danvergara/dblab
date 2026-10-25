@@ -25,6 +25,7 @@ database:
     # optional: set to true to force a read-only session
     readonly: true
 limit: 50
+theme: "cyberpunk"
 
 ```
 
@@ -77,6 +78,7 @@ database:
     driver: "postgres"
 # should be greater than 0, otherwise the app will error out
 limit: 50
+theme: "cyberpunk"
 
 ```
 And in order to launch a specific environment/configuration we have to use the `--cfg-name` flag, followed by the name of the database configuration.
@@ -86,6 +88,27 @@ And in order to launch a specific environment/configuration we have to use the `
 dblab --config --cfg-name "prod"
 
 ```
+
+### Theme
+
+You can customize the appearance of dblab by setting the `theme` field at the root level of your `.dblab.yaml` file:
+
+```{ .yaml .copy }
+theme: "tokyonight"
+```
+
+The supported themes are:
+
+* `cyberpunk` (default)
+* `catppuccin`
+* `tokyonight`
+* `gruvbox`
+* `nord`
+* `dracula`
+* `monokai`
+* `onedark`
+
+You can also override the configured theme when starting the application by passing the `--theme <name>` CLI flag.
 
 ### Key bindings
 
@@ -106,6 +129,7 @@ database:
     user: "postgres"
     driver: "postgres"
 limit: 50
+theme: "cyberpunk"
 keybindings:
   help: '?'
   quit: 'ctrl+c'
