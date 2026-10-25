@@ -69,12 +69,18 @@ type DBNode struct {
 	Children   []*DBNode
 }
 
+// IDSanitizer quotes an identifier for use in a database-specific query.
+type IDSanitizer interface {
+	SanitizeIdentifier(name string) string
+}
+
 // databaseQuerier is an interface that indicates the methods
 // a given type has to implement to interact with a database,
 // to get specific data.
 // This allows us to decouple the client from the database implementation and
 // make adding new databases easier.
 type databaseQuerier interface {
+	IDSanitizer
 	TableStructure(table TableRef) (string, []any, error)
 	Constraints(table TableRef) (string, []any, error)
 	Indexes(table TableRef) (string, []any, error)
@@ -580,82 +586,63 @@ func (c *Client) ViewMetadata(view ViewRef) (*Metadata, error) {
 
 // tableContent returns a portion of the data of a given table scoped by the offset and limit.
 func (c *Client) tableContent(table TableRef) ([][]string, []string, error) {
-	var query string
-
-	switch c.driver {
-	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
-		query = fmt.Sprintf(
-			"SELECT * FROM %s.%s LIMIT %d OFFSET %d;",
-			table.Schema,
-			table.Name,
-			c.paginationManager.Limit(),
-			c.paginationManager.Offset(),
-		)
-	case drivers.Oracle:
-		query = fmt.Sprintf(
-			"SELECT * FROM %s.%s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			strings.ToUpper(table.Schema),
-			strings.ToUpper(table.Name),
-			c.paginationManager.Offset(),
-			c.paginationManager.Limit(),
-		)
-	case drivers.SQLServer:
-		query = fmt.Sprintf(
-			"SELECT * FROM %s.%s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			table.Schema,
-			table.Name,
-			c.paginationManager.Offset(),
-			c.paginationManager.Limit(),
-		)
-	default:
-		query = fmt.Sprintf(
-			"SELECT * FROM %s LIMIT %d OFFSET %d;",
-			table.Name,
-			c.paginationManager.Limit(),
-			c.paginationManager.Offset(),
-		)
-	}
-
+	query := contentQuery(
+		c.driver,
+		c.databaseQuerier,
+		table.Schema,
+		table.Name,
+		c.paginationManager.Limit(),
+		c.paginationManager.Offset(),
+	)
 	return c.Query(query)
 }
 
 // viewContent returns a portion of the data of a given view scoped by the offset and limit.
 func (c *Client) viewContent(view ViewRef) ([][]string, []string, error) {
-	var query string
-	switch c.driver {
+	query := contentQuery(
+		c.driver,
+		c.databaseQuerier,
+		view.Schema,
+		view.Name,
+		c.paginationManager.Limit(),
+		c.paginationManager.Offset(),
+	)
+	return c.Query(query)
+}
+
+func contentQuery(driver string, queryer databaseQuerier, schema, name string, limit uint, offset int) string {
+	name = queryer.SanitizeIdentifier(name)
+
+	switch driver {
 	case drivers.Postgres, drivers.PostgreSQL, drivers.PostgresSSH:
-		query = fmt.Sprintf(
+		return fmt.Sprintf(
 			"SELECT * FROM %s.%s LIMIT %d OFFSET %d;",
-			view.Schema,
-			view.Name,
-			c.paginationManager.Limit(),
-			c.paginationManager.Offset(),
+			queryer.SanitizeIdentifier(schema),
+			name,
+			limit,
+			offset,
 		)
 	case drivers.Oracle:
-		query = fmt.Sprintf(
+		return fmt.Sprintf(
 			"SELECT * FROM %s.%s OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			strings.ToUpper(view.Schema),
-			strings.ToUpper(view.Name),
-			c.paginationManager.Offset(),
-			c.paginationManager.Limit(),
+			queryer.SanitizeIdentifier(schema),
+			name,
+			offset,
+			limit,
 		)
 	case drivers.SQLServer:
-		query = fmt.Sprintf(
+		return fmt.Sprintf(
 			"SELECT * FROM %s.%s ORDER BY (SELECT NULL) OFFSET %d ROWS FETCH NEXT %d ROWS ONLY",
-			view.Schema,
-			view.Name,
-			c.paginationManager.Offset(),
-			c.paginationManager.Limit(),
+			queryer.SanitizeIdentifier(schema),
+			name,
+			offset,
+			limit,
 		)
+	case drivers.SQLite:
+		return fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d;", name, limit, offset)
 	default:
-		query = fmt.Sprintf(
-			"SELECT * FROM %s LIMIT %d OFFSET %d;",
-			view.Name,
-			c.paginationManager.Limit(),
-			c.paginationManager.Offset(),
-		)
+		return fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d;", name, limit, offset)
 	}
-	return c.Query(query)
 }
 
 // tableStructure returns the structure of the table columns.

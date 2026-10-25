@@ -341,6 +341,52 @@ func (suite *ClientTestSuite) TestTableContent() {
 	suite.NoError(err)
 }
 
+func (suite *ClientTestSuite) TestTableAndViewContentQuotesIdentifiers() {
+	const tableName = "order details"
+	const viewName = "view details"
+
+	var tableRef TableRef
+	var viewRef ViewRef
+	var quotedTable string
+	var quotedView string
+	tableType := "INTEGER"
+
+	switch suite.driver {
+	case drivers.Postgres:
+		schema := "public"
+		quotedSchema := quoteDoubleQuotedIdentifier(schema)
+		quotedTable = quotedSchema + "." + quoteDoubleQuotedIdentifier(tableName)
+		quotedView = quotedSchema + "." + quoteDoubleQuotedIdentifier(viewName)
+		tableRef = TableRef{Schema: schema, Name: tableName}
+		viewRef = ViewRef{Schema: schema, Name: viewName}
+	case drivers.MySQL:
+		quotedTable = quoteMySQLIdentifier(tableName)
+		quotedView = quoteMySQLIdentifier(viewName)
+		tableRef = TableRef{Name: tableName}
+		viewRef = ViewRef{Name: viewName}
+		tableType = "INT"
+	default:
+		suite.T().Skipf("quoted identifier integration test unsupported for %q", suite.driver)
+	}
+
+	_, err := suite.db.Exec(fmt.Sprintf("CREATE TABLE %s (id %s)", quotedTable, tableType))
+	suite.Require().NoError(err)
+	_, err = suite.db.Exec(fmt.Sprintf("INSERT INTO %s (id) VALUES (1)", quotedTable))
+	suite.Require().NoError(err)
+	_, err = suite.db.Exec(fmt.Sprintf("CREATE VIEW %s AS SELECT id FROM %s", quotedView, quotedTable))
+	suite.Require().NoError(err)
+
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+	tableMetadata, err := c.Metadata(tableRef)
+	suite.Require().NoError(err)
+	suite.Equal([][]string{{"1"}}, tableMetadata.TableContent.Rows)
+	viewMetadata, err := c.ViewMetadata(viewRef)
+	suite.Require().NoError(err)
+	suite.Equal([][]string{{"1"}}, viewMetadata.TableContent.Rows)
+	suite.NotEmpty(viewMetadata.ViewDef.Rows)
+}
+
 func (suite *ClientTestSuite) TestConstraints() {
 	opts := command.Options{
 		Driver: suite.driver,
