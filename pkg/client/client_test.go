@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	mssqltest "github.com/testcontainers/testcontainers-go/modules/mssql"
 	mysqltest "github.com/testcontainers/testcontainers-go/modules/mysql"
 	postgrestest "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -69,13 +70,14 @@ func (suite *ClientTestSuite) SetupSuite() {
 
 		suite.host, err = pgContainer.Host(suite.ctx)
 		require.NoError(suite.T(), err)
-		suite.port, err = pgContainer.MappedPort(suite.ctx, "5432")
+		cs, err := pgContainer.ConnectionString(suite.ctx, "sslmode=disable")
 		require.NoError(suite.T(), err)
 
-		sqlxDSN := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-			suite.user, suite.password, suite.host, suite.port.Port(), suite.dbName)
+		mapped, err := pgContainer.MappedPort(suite.ctx, "5432")
+		require.NoError(suite.T(), err)
+		suite.port = nat.Port(mapped.Port())
 
-		suite.db, err = sqlx.Connect("postgres", sqlxDSN)
+		suite.db, err = sqlx.Connect("postgres", cs)
 		require.NoError(suite.T(), err)
 
 	case drivers.MySQL:
@@ -93,13 +95,35 @@ func (suite *ClientTestSuite) SetupSuite() {
 
 		suite.host, err = mysqlContainer.Host(suite.ctx)
 		require.NoError(suite.T(), err)
-		suite.port, err = mysqlContainer.MappedPort(suite.ctx, "3306")
+		cs, err := mysqlContainer.ConnectionString(suite.ctx)
 		require.NoError(suite.T(), err)
+		mapped, err := mysqlContainer.MappedPort(suite.ctx, "3306")
+		require.NoError(suite.T(), err)
+		suite.port = nat.Port(mapped.Port())
 
-		sqlxDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-			suite.user, suite.password, suite.host, suite.port.Port(), suite.dbName)
+		suite.db, err = sqlx.Connect("mysql", cs)
+		require.NoError(suite.T(), err)
+	case drivers.SQLServer:
+		mssqlContainer, err := mssqltest.Run(suite.ctx,
+			"danvergara/sakila:mssql-2019",
+			mssqltest.WithPassword(suite.password),
+			mssqltest.WithAcceptEULA(),
+			testcontainers.WithWaitStrategy(
+				wait.ForLog("SQL Server is now ready for client connections").
+					WithOccurrence(1).WithStartupTimeout(20*time.Second)),
+		)
+		require.NoError(suite.T(), err)
+		suite.container = mssqlContainer
 
-		suite.db, err = sqlx.Connect("mysql", sqlxDSN)
+		suite.host, err = mssqlContainer.Host(suite.ctx)
+		require.NoError(suite.T(), err)
+		cs, err := mssqlContainer.ConnectionString(suite.ctx, "tls=skip-verify") //, "Database=sakila")
+		require.NoError(suite.T(), err)
+		mapped, err := mssqlContainer.MappedPort(suite.ctx, "1433")
+		require.NoError(suite.T(), err)
+		suite.port = nat.Port(mapped.Port())
+		suite.T().Log(cs)
+		suite.db, err = sqlx.Connect("sqlserver", cs)
 		require.NoError(suite.T(), err)
 	}
 
@@ -263,7 +287,7 @@ func (suite *ClientTestSuite) TestQuery() {
 	c, _ := New(opts)
 
 	query := "SELECT * FROM public.actor;"
-	if suite.driver == "mysql" {
+	if suite.driver == "mysql" || suite.driver == "sqlserver" {
 		query = "SELECT * FROM actor;"
 	}
 
@@ -307,6 +331,9 @@ func (suite *ClientTestSuite) TestTableContent() {
 	c, _ := New(opts)
 
 	tableRef := TableRef{Name: "actor", Schema: "public"}
+	if suite.driver == "sqlserver" {
+		tableRef.Schema = "dbo"
+	}
 	r, co, err := c.tableContent(tableRef)
 
 	suite.Len(r, int(opts.Limit))
@@ -378,6 +405,9 @@ func (suite *ClientTestSuite) TestMetadata() {
 	c, _ := New(opts)
 
 	tableRef := TableRef{Name: "actor", Schema: "public"}
+	if suite.driver == "sqlserver" {
+		tableRef.Schema = "dbo"
+	}
 	m, err := c.Metadata(tableRef)
 	suite.NoError(err)
 	suite.NotNil(m)
@@ -423,7 +453,7 @@ func (suite *ClientTestSuite) TestAsyncQuerySingleQuery() {
 	suite.Require().NoError(err)
 
 	query := "SELECT * FROM public.actor;"
-	if suite.driver == "mysql" {
+	if suite.driver == "mysql" || suite.driver == "sqlserver" {
 		query = "SELECT * FROM actor;"
 	}
 
@@ -459,7 +489,7 @@ func (suite *ClientTestSuite) TestAsyncQueryMultipleQueries() {
 
 	productsQuery := "SELECT * FROM public.actor;"
 	customersQuery := "SELECT * FROM public.film;"
-	if suite.driver == "mysql" {
+	if suite.driver == "mysql" || suite.driver == "sqlserver" {
 		productsQuery = "SELECT * FROM actor;"
 		customersQuery = "SELECT * FROM film;"
 	}
@@ -502,7 +532,7 @@ func (suite *ClientTestSuite) TestAsyncQueryWithInvalidQuery() {
 	suite.Require().NoError(err)
 
 	validQuery := "SELECT * FROM public.actor;"
-	if suite.driver == "mysql" {
+	if suite.driver == "mysql" || suite.driver == "sqlserver" {
 		validQuery = "SELECT * FROM actor;"
 	}
 	invalidQuery := "SELECT * FROM nonexistent_table_xyz;"
@@ -541,7 +571,7 @@ func (suite *ClientTestSuite) TestAsyncQueryContextCancellation() {
 	suite.Require().NoError(err)
 
 	query := "SELECT * FROM public.actor;"
-	if suite.driver == "mysql" {
+	if suite.driver == "mysql" || suite.driver == "sqlserver" {
 		query = "SELECT * FROM actor;"
 	}
 
@@ -580,7 +610,7 @@ func (suite *ClientTestSuite) TestAsyncQueryConcurrencyLimit() {
 	suite.Require().NoError(err)
 
 	query := "SELECT * FROM public.actor;"
-	if suite.driver == "mysql" {
+	if suite.driver == "mysql" || suite.driver == "sqlserver" {
 		query = "SELECT * FROM actor;"
 	}
 
@@ -745,6 +775,6 @@ func (suite *ClientTestSuite) TestAsyncQueryJSONViewMixedBatch() {
 	suite.Len(actorResult.ResultSet, 200)
 }
 
-func TestClietnTestSuite(t *testing.T) {
+func TestClientTestSuite(t *testing.T) {
 	suite.Run(t, new(ClientTestSuite))
 }
