@@ -62,7 +62,7 @@ func (d DBGraphTreeBuilderProvider) ID(do *client.DBNode) string {
 func (d *DBGraphTreeBuilderProvider) Name(do *client.DBNode) string {
 	return do.Name
 }
-func (p *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNode {
+func (d *DBGraphTreeBuilderProvider) Children(do *client.DBNode) []*client.DBNode {
 	return do.Children
 }
 
@@ -91,7 +91,7 @@ func NewSidebarViewport(ctx context.Context, c *client.Client, km keys.SidebarKe
 		return SidebarViewport{}, err
 	}
 
-	tree, err := treeview.NewTreeFromNestedData[*client.DBNode](
+	tree, err := treeview.NewTreeFromNestedData(
 		ctx,
 		[]*client.DBNode{root},
 		&DBGraphTreeBuilderProvider{},
@@ -279,7 +279,7 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 			return updateGraphErrMsg{err}
 		}
 
-		tree, err := treeview.NewTreeFromNestedData[*client.DBNode](
+		tree, err := treeview.NewTreeFromNestedData(
 			ctx,
 			[]*client.DBNode{root},
 			&DBGraphTreeBuilderProvider{},
@@ -298,12 +298,12 @@ func (s *SidebarViewport) updateGraph() tea.Cmd {
 
 func createCyberpunkProvider(textForeground, focusedTitleForeground, focusedTitleBackground, focusedTextBorderForeground color.Color) *treeview.DefaultNodeProvider[*client.DBNode] {
 	// Icons for database objects.
-	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), "⛃")
-	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), "📁")
-	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), "📋")
-	viewIconRule := treeview.WithIconRule(dbObjectHasType("view"), "📑")
+	databaseIconRule := treeview.WithIconRule(dbObjectHasType("database"), getIcon("database"))
+	schemaIconRule := treeview.WithIconRule(dbObjectHasType("schema"), getIcon("schema"))
+	tableIconRule := treeview.WithIconRule(dbObjectHasType("table"), getIcon("table"))
+	viewIconRule := treeview.WithIconRule(dbObjectHasType("view"), getIcon("view"))
 
-	return treeview.NewDefaultNodeProvider[*client.DBNode](
+	return treeview.NewDefaultNodeProvider(
 		databaseIconRule,
 		schemaIconRule,
 		tableIconRule,

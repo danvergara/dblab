@@ -25,11 +25,16 @@ type Config struct {
 	Driver   string
 	Limit    uint `fig:"limit" default:"100"`
 	// Application theme.
-	Theme string `fig:"theme"`
+	Theme string            `fig:"theme"`
+	Icons map[string]string `fig:"icons"`
 }
 
 type KeyMapConfig struct {
 	KeyBindings KeyBindings
+}
+
+type iconsConfig struct {
+	Icons map[string]string `fig:"icons"`
 }
 
 type Profile struct {
@@ -222,6 +227,27 @@ func Init(configName string) (command.Options, error) {
 	}
 
 	return opts, nil
+}
+
+// GetIcons reads the icons field from the config file.
+func GetIcons() map[string]string {
+	var icons iconsConfig
+
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return icons.Icons
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return icons.Icons
+	}
+
+	if err := fig.Load(&icons, fig.File(".dblab.yaml"), fig.Dirs(".", home, configDir)); err != nil {
+		return icons.Icons
+	}
+
+	return icons.Icons
 }
 
 // GetKeyMap reads the keybindings field from the config file and populates

@@ -64,6 +64,11 @@ database:
     ssh-key-file: "/path/to/ssh/key.pem"
     ssh-key-pass: "hiuwiewnc092"
 limit: 50
+icons:
+  database: "D"
+  schema: "S"
+  table: "T"
+  view: "V"
 keybindings:
   help: '?'
   quit: 'ctrl+c'

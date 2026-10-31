@@ -70,7 +70,12 @@ database:
     ssh-key-file: "/path/to/ssh/key.pem"
     ssh-key-pass: "hiuwiewnc092"
 limit: 50
-theme: 'nord'
+theme: "nord"
+icons:
+  database: "\ueace"
+  schema: "\ued75"
+  table: "\uebb7"
+  view: "\uea70"
 keybindings:
   help: '?'
   quit: 'ctrl+c'
