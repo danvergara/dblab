@@ -177,6 +177,14 @@ func TestInit(t *testing.T) {
 	}
 }
 
+func TestIcons(t *testing.T) {
+	icons := config.GetIcons()
+	assert.Equal(t, icons["database"], "D")
+	assert.Equal(t, icons["schema"], "S")
+	assert.Equal(t, icons["table"], "T")
+	assert.Equal(t, icons["view"], "V")
+}
+
 func TestSetupKeybindings(t *testing.T) {
 	kb, err := config.GetKeyMap()
 	assert.NoError(t, err)
