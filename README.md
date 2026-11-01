@@ -40,6 +40,8 @@ __Interactive client for PostgreSQL, MySQL, SQLite3, Oracle and SQL Server.__
     - [Modes](#modes)
     - [Editing and motions](#editing-and-motions)
     - [Executing queries](#executing-queries)
+        - [Multiple statements](#multiple-statements)
+        - [Cell inspection (`| text` and `| json`)](#cell-inspection-text-and-json)
     - [Query history](#query-history)
 - [Help modal](#help-modal)
 - [Key bindings](#key-bindings)
@@ -62,6 +64,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
 - Vim-style query editor backed by a real modal-editing engine ([goeditor](https://github.com/ionut-t/goeditor)): normal/insert modes, word and line motions, undo/redo, visual mode selection, and in-buffer search, on top of the line-oriented editing commands.
 - Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results displayed in separate tabs.
 - Single-query execution: press <kbd>ctrl+r</kbd> to execute only the query on the current cursor line, without running other statements in the editor.
+- Cell inspection with text and JSON panels: append `| text` or `| json` to a single-column query to inspect large text values or formatted/highlighted JSON documents in a dedicated scrollable text panel instead of a table cell.
 - Connection profiles with secure credential storage in the OS keyring.
 - Query history: executed queries are persisted across sessions and can be browsed/re-used via a filterable list.
 - Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (supported for PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).
@@ -614,6 +617,8 @@ Selecting a table populates the result set panel, which has one tab per view of 
 
 Move around a result set with the arrow keys or <kbd>h</kbd>/<kbd>j</kbd>/<kbd>k</kbd>/<kbd>l</kbd>. The selected cell is highlighted so you can see where you are; press <kbd>Enter</kbd> on a cell to copy its content.
 
+Table columns have a bounded width to keep the grid compact and readable. To inspect large multiline text or JSON documents stored in a cell without truncation, run a single-column query ending with the `| text` or `| json` suffix to view it in a scrollable text panel (see [Cell inspection](#cell-inspection-text-and-json)).
+
 There are no pagination controls — they proved too slow to page through a table effectively. To work through a large table, write a `SELECT` with explicit `OFFSET` and `LIMIT` instead.
 
 ### Active schema
@@ -681,6 +686,41 @@ SELECT * FROM users; SELECT * FROM orders; SELECT count(*) FROM products;
 The statements run concurrently and each result is displayed in its own tab ("query #1", "query #2", and so on) — three tabs, for the example above. If a statement fails, its tab shows the error message while the successful ones still show their results. A maximum of 5 statements can be executed per batch.
 
 While a batch is running, press <kbd>Ctrl+c</kbd> to cancel it; press <kbd>Ctrl+c</kbd> again to quit dblab.
+
+#### Cell inspection (`| text` and `| json`)
+
+Table cell widths are capped to keep tabular views clean and readable. When working with long text fields (such as logs, error messages, descriptions, markdown, or HTML/XML) or JSON columns, viewing them directly within table cells can be cumbersome or truncated.
+
+dblab provides two query suffixes that direct single-column query results into a dedicated scrollable text panel instead of a table grid:
+
+- **`| text`**: Renders the raw text value directly in a scrollable text panel.
+- **`| json`**: Pretty-prints (indents) and syntax-highlights JSON data using Chroma in a scrollable text panel.
+
+##### Examples
+
+Inspect a text column:
+
+```sql
+SELECT description FROM products WHERE id = 42 | text;
+```
+
+Inspect and pretty-print a JSON column:
+
+```sql
+SELECT config FROM settings WHERE id = 1 | json;
+```
+
+##### Requirements & behavior
+
+- **Exactly 1 column**: The `SELECT` query must return exactly one column. If multiple columns are selected, an error is displayed informing you that the plain text or JSON view requires exactly 1 column.
+- **Valid JSON for `| json`**: For the `| json` suffix, the returned column must contain valid JSON.
+- **Suffix stripping**: The `| text` or `| json` suffix is automatically stripped before sending the query to the database, ensuring compatibility across all supported database engines (PostgreSQL, MySQL, SQLite, Oracle, and SQL Server). The full query with suffix is preserved in your query history so you can easily rerun it.
+- **Multi-query batches**: You can combine standard table queries and cell inspection queries within the same batch:
+  ```sql
+  SELECT * FROM users LIMIT 10; SELECT metadata FROM users WHERE id = 1 | json; SELECT bio FROM profiles WHERE id = 1 | text;
+  ```
+  Each statement runs concurrently and displays its result in its own tab according to its format (table or text panel).
+- **Navigation**: Inside the text panel, you can scroll vertically using the standard result set navigation keys (<kbd>k</kbd>/<kbd>j</kbd> or arrow keys) or sideways (<kbd>h</kbd>/<kbd>l</kbd>, <kbd>0</kbd>, <kbd>$</kbd>).
 
 ### Query history
 

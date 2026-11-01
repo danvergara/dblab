@@ -31,6 +31,7 @@ application to work with local or remote PostgreSQL/MySQL/SQLite3/Oracle/SQL Ser
   * Vim-style query editor backed by a real modal-editing engine ([goeditor](https://github.com/ionut-t/goeditor)): normal/insert modes, word and line motions, undo/redo, visual mode selection, and in-buffer search, on top of the line-oriented editing commands.  
   * Multi-query execution: write multiple SQL statements separated by `;` and run them concurrently with results in separate tabs.  
   * Single-query execution: execute only the query on the current cursor line with `ctrl+r`, without running other statements in the editor.  
+  * Cell inspection with text and JSON panels: append `| text` or `| json` to a single-column query to inspect large text values or formatted/highlighted JSON documents in a dedicated scrollable panel instead of a table cell.  
   * Connection profiles with secure credential storage in the OS keyring.  
   * Query history: executed queries are automatically saved and can be browsed or re-used from a searchable list.  
   * Read-only mode: use `--readonly` to prevent accidental writes by forcing the database session into read-only mode (PostgreSQL, MySQL, SQLite, Oracle, and SQL Server).  
