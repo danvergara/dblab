@@ -499,20 +499,12 @@ func populateTable(headers []string, data [][]string) ([]table.Column, []table.R
 	}
 
 	var columns []table.Column
-	for i, header := range headers {
-		finalWidth := colWidths[i]
-
-		headerWidth := len(header) + 5
-		if finalWidth < headerWidth {
-			finalWidth = headerWidth
-		}
-		if finalWidth < 15 {
-			finalWidth = 15
-		}
+	for _, h := range headers {
+		colWidth := max(len(h)+5, 20)
 
 		columns = append(columns, table.Column{
-			Title: header,
-			Width: finalWidth,
+			Title: h,
+			Width: colWidth,
 		})
 	}
 
