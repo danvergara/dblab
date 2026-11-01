@@ -26,12 +26,14 @@ type QueryType string
 
 const (
 	JSONSuffix = "| json"
+	TextSuffix = "| text"
 )
 
 const (
-	NormalQuery QueryType = "NORMAL"
-	DMLQuery    QueryType = "DML"
-	JSONQuery   QueryType = "JSON"
+	NormalQuery    QueryType = "NORMAL"
+	DMLQuery       QueryType = "DML"
+	JSONQuery      QueryType = "JSON"
+	TextPanelQuery QueryType = "TEXT"
 )
 
 type TableRef struct {
@@ -50,6 +52,7 @@ type QueryResult struct {
 	ResultSet  [][]string
 	QueryType  QueryType
 	JSONData   []byte
+	TextData   []byte
 	Headers    []string
 	Timestamp  time.Time
 	Duration   time.Duration
@@ -239,7 +242,10 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 		wg.Add(1)
 		go func(index int, query string) {
 			defer wg.Done()
-			var isJSONQuery bool
+			var (
+				isJSONQuery      bool
+				isTextPanelquery bool
+			)
 
 			result := QueryResult{
 				QueryType:  NormalQuery,
@@ -264,7 +270,14 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 			if isReadQuery(query) {
 				start := time.Now()
 
+				// both trims the suffix and set the correspondent one.
+				// If a query like "SELECT config FROM foo WHERE baz = 'foobar' | json" is passed,
+				// "| json" will be trimmed and trimTextSuffix will receive the plain query and
+				// isTextPanelquery will be false.
+				// In the other hand, if a query like "SELECT config FROM foo WHERE baz = 'foobar' | text" is given,
+				// "| text" will be trimmed and is isTextPanelquery will be true.
 				query, isJSONQuery = trimJSONSuffix(query)
+				query, isTextPanelquery = trimTextSuffix(query)
 
 				rows, err := c.db.QueryxContext(ctx, query, args...)
 				result.Duration = time.Since(start)
@@ -290,6 +303,40 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 				}
 
 				switch {
+				case isTextPanelquery:
+					result.QueryType = TextPanelQuery
+					if len(columns) != 1 {
+						result.Error = fmt.Errorf("plain text view requires exactly 1 column, but your query selected %d columns", len(columns))
+						resultChan <- result
+						return
+					}
+
+					var rawData []byte
+					var hasRows bool
+					// We guaranteed there is exactly 1 column, so we can scan directly into a single variable.
+					if rows.Next() {
+						hasRows = true
+						if err := rows.Scan(&rawData); err != nil {
+							result.Error = fmt.Errorf("failed to scan JSON data: %w", err)
+							resultChan <- result
+							return
+						}
+					}
+
+					if !hasRows {
+						result.Error = fmt.Errorf("no data returned")
+						resultChan <- result
+						return
+					}
+
+					if err := rows.Err(); err != nil {
+						result.Error = err
+						resultChan <- result
+						return
+					}
+
+					result.TextData = rawData
+					resultChan <- result
 				case isJSONQuery:
 					result.QueryType = JSONQuery
 					if len(columns) != 1 {
@@ -823,12 +870,22 @@ func isReadQuery(query string) bool {
 // trimJSONSuffix reports whether the query requests the JSON view,
 // returning the query with the suffix removed.
 func trimJSONSuffix(query string) (string, bool) {
+	return trimSuffix(query, JSONSuffix)
+}
+
+// trimTextSuffix reports whether the query requests the Text panel view,
+// returning the query with the suffix removed.
+func trimTextSuffix(query string) (string, bool) {
+	return trimSuffix(query, TextSuffix)
+}
+
+// trimSuffix reports whether the query ends with the suffix,
+// returning the query with the suffix removed.
+func trimSuffix(query, suffix string) (string, bool) {
 	trimmed := strings.TrimSpace(query)
-	if len(trimmed) < len(JSONSuffix) {
-		return query, false
+	if strings.HasSuffix(query, suffix) {
+		return strings.TrimSpace(trimmed[:len(trimmed)-len(suffix)]), true
 	}
-	if strings.EqualFold(trimmed[len(trimmed)-len(JSONSuffix):], JSONSuffix) {
-		return strings.TrimSpace(trimmed[:len(trimmed)-len(JSONSuffix)]), true
-	}
+
 	return query, false
 }
