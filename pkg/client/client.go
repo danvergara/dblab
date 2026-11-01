@@ -883,7 +883,7 @@ func trimTextSuffix(query string) (string, bool) {
 // returning the query with the suffix removed.
 func trimSuffix(query, suffix string) (string, bool) {
 	trimmed := strings.TrimSpace(query)
-	if strings.HasSuffix(query, suffix) {
+	if strings.HasSuffix(strings.ToLower(trimmed), suffix) {
 		return strings.TrimSpace(trimmed[:len(trimmed)-len(suffix)]), true
 	}
 
