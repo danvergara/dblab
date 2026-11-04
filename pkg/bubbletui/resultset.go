@@ -484,8 +484,7 @@ func newTextPanel() *TextPanel {
 }
 
 func populateTable(headers []string, data [][]string) ([]table.Column, []table.Row) {
-	colWidths := make([]int, len(headers))
-	var rows []table.Row
+	rows := make([]table.Row, 0, len(data))
 
 	for _, stringRow := range data {
 		row := make(table.Row, len(stringRow))
@@ -495,16 +494,7 @@ func populateTable(headers []string, data [][]string) ([]table.Column, []table.R
 		rows = append(rows, row)
 	}
 
-	for _, row := range rows {
-		for i, cell := range row {
-			cellWidth := lipgloss.Width(cell)
-			if cellWidth > colWidths[i] {
-				colWidths[i] = cellWidth
-			}
-		}
-	}
-
-	var columns []table.Column
+	columns := make([]table.Column, 0, len(headers))
 	for _, h := range headers {
 		colWidth := max(len(h)+5, 20)
 
@@ -548,10 +538,14 @@ func saveQueriesCmd(queriesResult []client.QueryResult) tea.Cmd {
 	}
 }
 
+// cellPaddingWidth is the horizontal padding (1 space left + 1 space right)
+// applied to each column cell by charm.land/bubbles/v2/table default styles.
+const cellPaddingWidth = 2
+
 func calculateTotalTableWidth(columns []table.Column) int {
 	var totalWidth int
 	for _, c := range columns {
-		totalWidth += c.Width
+		totalWidth += c.Width + cellPaddingWidth
 	}
 	return totalWidth
 }
