@@ -43,6 +43,10 @@ func newOracle(dbName, schema string, db *sqlx.DB) *oracle {
 	return &o
 }
 
+func (o *oracle) SanitizeIdentifier(name string) string {
+	return quoteDoubleQuotedIdentifier(name)
+}
+
 // TableStructure returns a query string to get all the relevant information of a given table.
 func (o *oracle) TableStructure(table TableRef) (string, []any, error) {
 	var query sq.SelectBuilder

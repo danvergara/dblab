@@ -37,6 +37,10 @@ func newPostgres(dbName, schema string, db *sqlx.DB) *postgres {
 	return &p
 }
 
+func (p *postgres) SanitizeIdentifier(name string) string {
+	return quoteDoubleQuotedIdentifier(name)
+}
+
 // TableStructure returns a query string to get all the relevant information of a given table,
 // under a schema.
 func (p *postgres) TableStructure(table TableRef) (string, []any, error) {
