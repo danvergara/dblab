@@ -5,6 +5,7 @@ import (
 
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,4 +27,95 @@ func TestResulset_UpdateBeforeResize(t *testing.T) {
 	assert.NotPanics(t, func() {
 		rs.Update(msg)
 	})
+}
+
+func TestCalculateTotalTableWidth(t *testing.T) {
+	tests := []struct {
+		name     string
+		columns  []table.Column
+		expected int
+	}{
+		{
+			name:     "empty columns",
+			columns:  nil,
+			expected: 0,
+		},
+		{
+			name: "single column",
+			columns: []table.Column{
+				{Title: "id", Width: 20},
+			},
+			expected: 22, // 20 + 2 padding
+		},
+		{
+			name: "multiple columns",
+			columns: []table.Column{
+				{Title: "id", Width: 10},
+				{Title: "name", Width: 20},
+				{Title: "email", Width: 30},
+			},
+			expected: 66, // (10+2) + (20+2) + (30+2)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculateTotalTableWidth(tt.columns)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestPopulateTable(t *testing.T) {
+	headers := []string{"id", "title", "a_very_long_header_title"}
+	data := [][]string{
+		{"1", "Hello", "Short"},
+		{"2", "A rather long title that exceeds twenty chars", "Some content here that is also pretty long"},
+	}
+
+	cols, rows := populateTable(headers, data)
+
+	assert.Len(t, cols, 3)
+	assert.Len(t, rows, 2)
+
+	// col 0: "id", max(2+5, 20) -> 20
+	assert.Equal(t, "id", cols[0].Title)
+	assert.Equal(t, 20, cols[0].Width)
+
+	// col 1: "title", max(5+5, 20) -> 20 (bounded to keep views compact despite long data)
+	assert.Equal(t, "title", cols[1].Title)
+	assert.Equal(t, 20, cols[1].Width)
+
+	// col 2: "a_very_long_header_title", max(24+5, 20) -> 29
+	assert.Equal(t, "a_very_long_header_title", cols[2].Title)
+	assert.Equal(t, len("a_very_long_header_title")+5, cols[2].Width)
+
+	// Check mismatched column count in row does not panic
+	mismatchedData := [][]string{
+		{"1", "Hello", "Content", "ExtraCol1", "ExtraCol2"},
+	}
+	assert.NotPanics(t, func() {
+		mCols, mRows := populateTable(headers, mismatchedData)
+		assert.Len(t, mCols, 3)
+		assert.Len(t, mRows, 1)
+	})
+}
+
+func TestTablePanel_LastColumnNotTruncated(t *testing.T) {
+	// Test with 10 columns. Without cell padding (+2 per col), 20 characters would be
+	// cut off from the right by table.Model's viewport, completely omitting column 10.
+	headers := []string{"c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"}
+	data := [][]string{
+		{"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "col10_val"},
+	}
+
+	cols, rows := populateTable(headers, data)
+	panel := newTablePanel(10, 300, lipgloss.Color("#ffffff"), lipgloss.Color("#ffffff"), lipgloss.Color("#ffffff"), lipgloss.Color("#000000"))
+
+	panel.table.SetWidth(calculateTotalTableWidth(cols))
+	panel.table.SetColumns(cols)
+	panel.table.SetRows(rows)
+
+	view := panel.table.View()
+	assert.Contains(t, view, "col10_val")
 }
