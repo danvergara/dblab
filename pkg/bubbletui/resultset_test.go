@@ -5,6 +5,7 @@ import (
 
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/danvergara/dblab/pkg/bubbletui/keys"
 	"github.com/stretchr/testify/assert"
 )
@@ -101,18 +102,20 @@ func TestPopulateTable(t *testing.T) {
 }
 
 func TestTablePanel_LastColumnNotTruncated(t *testing.T) {
-	headers := []string{"col1", "col2", "col3", "col4", "col5", "last_col"}
+	// Test with 10 columns. Without cell padding (+2 per col), 20 characters would be
+	// cut off from the right by table.Model's viewport, completely omitting column 10.
+	headers := []string{"c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"}
 	data := [][]string{
-		{"val1", "val2", "val3", "val4", "val5", "unique_last_val_12345"},
+		{"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "col10_val"},
 	}
 
 	cols, rows := populateTable(headers, data)
-	panel := newTablePanel(10, 200, lipgloss.Color("#ffffff"), lipgloss.Color("#ffffff"), lipgloss.Color("#ffffff"), lipgloss.Color("#000000"))
+	panel := newTablePanel(10, 300, lipgloss.Color("#ffffff"), lipgloss.Color("#ffffff"), lipgloss.Color("#ffffff"), lipgloss.Color("#000000"))
 
 	panel.table.SetWidth(calculateTotalTableWidth(cols))
 	panel.table.SetColumns(cols)
 	panel.table.SetRows(rows)
 
 	view := panel.table.View()
-	assert.Contains(t, view, "unique_last_val_12345")
+	assert.Contains(t, view, "col10_val")
 }
