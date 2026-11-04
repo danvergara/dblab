@@ -267,6 +267,12 @@ func (r ResultSet) Update(msg tea.Msg) (ResultSet, tea.Cmd) {
 			}
 
 			switch qr.QueryType {
+			case client.TextPanelQuery:
+				var buffer bytes.Buffer
+				textPanel := newTextPanel()
+				buffer.Write(qr.TextData)
+				textPanel.SetContent(buffer.String())
+				r.tablesMetadata[i] = textPanel
 			case client.JSONQuery:
 				jsonPanel := newTextPanel()
 				var prettyJSON bytes.Buffer
@@ -499,20 +505,12 @@ func populateTable(headers []string, data [][]string) ([]table.Column, []table.R
 	}
 
 	var columns []table.Column
-	for i, header := range headers {
-		finalWidth := colWidths[i]
-
-		headerWidth := len(header) + 5
-		if finalWidth < headerWidth {
-			finalWidth = headerWidth
-		}
-		if finalWidth < 15 {
-			finalWidth = 15
-		}
+	for _, h := range headers {
+		colWidth := max(len(h)+5, 20)
 
 		columns = append(columns, table.Column{
-			Title: header,
-			Width: finalWidth,
+			Title: h,
+			Width: colWidth,
 		})
 	}
 

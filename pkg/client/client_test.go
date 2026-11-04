@@ -681,6 +681,23 @@ func (suite *ClientTestSuite) TestAsyncQueryJSONViewSuffixVariants() {
 	}
 }
 
+func (suite *ClientTestSuite) TestAsyncQueryTextPanelViewSuffixVariants() {
+	c, err := New(suite.connOptions())
+	suite.Require().NoError(err)
+
+	for _, suffix := range []string{"| text", "| TEXT", "| Text", "| text   "} {
+		suite.Run(suffix, func() {
+			results := suite.runAsyncQueries(c, fmt.Sprintf("SELECT '%s' AS doc %s", "foo", suffix))
+			suite.Require().Len(results, 1)
+
+			r := results[0]
+			suite.Require().NoError(r.Error)
+			suite.Equal(TextPanelQuery, r.QueryType)
+			suite.NotEmpty(r.TextData)
+		})
+	}
+}
+
 func (suite *ClientTestSuite) TestAsyncQueryJSONViewMultipleColumns() {
 	c, err := New(suite.connOptions())
 	suite.Require().NoError(err)

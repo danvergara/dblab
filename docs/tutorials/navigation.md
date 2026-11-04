@@ -76,6 +76,26 @@ Each statement gets its own result tab — "query #1", "query #2" and so on, thr
 
 While a batch is running, press <kbd>Ctrl+c</kbd> to cancel it; press <kbd>Ctrl+c</kbd> again to quit dblab.
 
+### Inspecting cell values in text panels
+
+Table cell widths are capped to keep tables compact and readable. When a cell contains long multiline text (such as logs, descriptions, or HTML) or structured JSON data, viewing it in a table cell can truncate the content.
+
+You can inspect the full value in a dedicated scrollable text panel by appending `| text` or `| json` to a single-column query:
+
+```{ .sql .copy }
+SELECT description FROM products WHERE id = 42 | text;
+```
+
+Or for JSON documents:
+
+```{ .sql .copy }
+SELECT config FROM settings WHERE id = 1 | json;
+```
+
+When using `| json`, dblab automatically formats and syntax-highlights the JSON structure.
+
+The query must return exactly 1 column. Once executed, the result tab renders a full scrollable text panel rather than a table grid, allowing you to scroll vertically (<kbd>k</kbd>/<kbd>j</kbd>) and horizontally (<kbd>h</kbd>/<kbd>l</kbd>) through the complete content.
+
 ### Switching the active schema
 
 On PostgreSQL and Oracle, the right-hand side of the status bar tells you which schema the session is using — `active schema: public`, for instance. That's the schema unqualified table names in your queries resolve against, and you don't have to restart dblab to change it.
