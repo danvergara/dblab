@@ -282,7 +282,8 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 				query, isJSONQuery = trimJSONSuffix(query)
 				query, isTextPanelquery = trimTextSuffix(query)
 
-				underCurrentSchemaQuery := fmt.Sprintf("%s;%s", c.setCurrentSchemaQuery(), query)
+				// This assumes the setCurrentSchemaQuery method output ends with a ";".
+				underCurrentSchemaQuery := fmt.Sprintf("%s%s", c.setCurrentSchemaQuery(), query)
 
 				rows, err := c.db.QueryxContext(ctx, underCurrentSchemaQuery, args...)
 				result.Duration = time.Since(start)
@@ -441,7 +442,8 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 				}
 			} else {
 				start := time.Now()
-				underCurrentSchemaQuery := fmt.Sprintf("%s;%s", c.setCurrentSchemaQuery(), query)
+				// This assumes the setCurrentSchemaQuery method output ends with a ";".
+				underCurrentSchemaQuery := fmt.Sprintf("%s%s", c.setCurrentSchemaQuery(), query)
 				execResult, err := c.db.ExecContext(ctx, underCurrentSchemaQuery, args...)
 				result.Duration = time.Since(start)
 				if err != nil {

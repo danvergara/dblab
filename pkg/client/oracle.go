@@ -313,9 +313,9 @@ func (o *oracle) Schemas() (string, []any, error) {
 }
 
 func (o *oracle) SetCurrentSchemaQuery(schema string) string {
-	return fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s", schema)
+	return fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s;", schema)
 }
 
 func (o *oracle) GetCurrentSchemaQuery() string {
-	return "SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL"
+	return "SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL;"
 }

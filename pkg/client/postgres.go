@@ -323,9 +323,9 @@ func (p *postgres) Schemas() (string, []any, error) {
 }
 
 func (p *postgres) SetCurrentSchemaQuery(schema string) string {
-	return fmt.Sprintf("set search_path = '%s'", schema)
+	return fmt.Sprintf("set search_path = '%s';", schema)
 }
 
 func (p *postgres) GetCurrentSchemaQuery() string {
-	return "SELECT current_schema()"
+	return "SELECT current_schema();"
 }
