@@ -202,8 +202,7 @@ func (m *mysql) Schemas() (string, []any, error) {
 	return "", nil, errors.New("schemas not supported")
 }
 
-func (m *mysql) SetActiveSchema(schema string) (string, []any, error) {
-	return "", nil, errors.New("schemas not supported")
-}
+// MySQL does not support schemas.
+func (m *mysql) SetCurrentSchemaQuery(schema string) string { return "" }
 
-func (m *mysql) GetActiveSchemaQuery() string { return "" }
+func (m *mysql) GetCurrentSchemaQuery() string { return "" }

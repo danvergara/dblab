@@ -351,6 +351,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 	case schemaSelectedMsg:
 		m.backToNormal()
+		m.c.SetSchema(msg.Name)
 		m.statusBar.SetSchema(msg.Name)
 		m.editor, cmd = m.editor.Update(msg)
 		cmds = append(cmds, cmd)
