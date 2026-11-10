@@ -84,8 +84,9 @@ type databaseQuerier interface {
 	Catalog(context.Context) (*DBNode, error)
 	GetViewDefinition(view ViewRef) (string, []any, error)
 	Schemas() (string, []any, error)
-	SetActiveSchema(schema string) (string, []any, error)
-	GetActiveSchemaQuery() string
+
+	SetCurrentSchemaQuery(schema string) string
+	GetCurrentSchemaQuery() string
 }
 
 // Client is used to store the pool of db connection.
@@ -149,9 +150,6 @@ func New(opts command.Options) (*Client, error) {
 	}
 
 	if c.schema != "" {
-		if err := c.SetActiveSchema(ctx, c.schema); err != nil {
-			return nil, err
-		}
 		c.defaultSchemaSelected = true
 	} else {
 		defaultSchema, err := c.fetchActiveSchema(ctx)
@@ -197,6 +195,11 @@ func New(opts command.Options) (*Client, error) {
 // Schema returns the current active schema.
 func (c *Client) Schema() string {
 	return c.schema
+}
+
+// SetSchema set the current schema.
+func (c *Client) SetSchema(schema string) {
+	c.schema = schema
 }
 
 // DefaultSchemaSelected returns if the default schema was selected by  the schema flag.
@@ -279,7 +282,10 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 				query, isJSONQuery = trimJSONSuffix(query)
 				query, isTextPanelquery = trimTextSuffix(query)
 
-				rows, err := c.db.QueryxContext(ctx, query, args...)
+				// This assumes the setCurrentSchemaQuery method output ends with a ";".
+				underCurrentSchemaQuery := fmt.Sprintf("%s%s", c.setCurrentSchemaQuery(), query)
+
+				rows, err := c.db.QueryxContext(ctx, underCurrentSchemaQuery, args...)
 				result.Duration = time.Since(start)
 				if err != nil {
 					result.Error = err
@@ -436,7 +442,9 @@ func (c *Client) AsyncQuery(ctx context.Context, queries []string, maxConcurrenc
 				}
 			} else {
 				start := time.Now()
-				execResult, err := c.db.ExecContext(ctx, query, args...)
+				// This assumes the setCurrentSchemaQuery method output ends with a ";".
+				underCurrentSchemaQuery := fmt.Sprintf("%s%s", c.setCurrentSchemaQuery(), query)
+				execResult, err := c.db.ExecContext(ctx, underCurrentSchemaQuery, args...)
 				result.Duration = time.Since(start)
 				if err != nil {
 					result.Error = err
@@ -774,18 +782,8 @@ func (c *Client) Schemas(ctx context.Context) ([]string, error) {
 	return schemas, nil
 }
 
-func (c *Client) SetActiveSchema(ctx context.Context, schema string) error {
-	switch c.driver {
-	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
-		query, args, err := c.databaseQuerier.SetActiveSchema(schema)
-		if err != nil {
-			return err
-		}
-
-		_, err = c.db.ExecContext(ctx, query, args...)
-		return err
-	}
-	return nil
+func (c *Client) setCurrentSchemaQuery() string {
+	return c.databaseQuerier.SetCurrentSchemaQuery(c.schema)
 }
 
 func (c *Client) viewDefintion(view ViewRef) ([][]string, []string, error) {
@@ -822,7 +820,7 @@ func (c *Client) isValidJSONColumn(dbTypeName string) bool {
 func (c *Client) fetchActiveSchema(ctx context.Context) (string, error) {
 	switch c.driver {
 	case drivers.PostgreSQL, drivers.Postgres, drivers.PostgresSSH, drivers.Oracle:
-		query := c.databaseQuerier.GetActiveSchemaQuery()
+		query := c.databaseQuerier.GetCurrentSchemaQuery()
 		var schemaName sql.NullString
 		if err := c.db.GetContext(ctx, &schemaName, query); err != nil {
 			return "", err

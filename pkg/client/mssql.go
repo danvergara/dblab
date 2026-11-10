@@ -319,8 +319,7 @@ func (m *mssql) Schemas() (string, []any, error) {
 	return "", nil, errors.New("schemas not supported")
 }
 
-func (m *mssql) SetActiveSchema(schema string) (string, []any, error) {
-	return "", nil, errors.New("schemas not supported")
-}
+// SQL Server does not support schemas.
+func (m *mssql) SetCurrentSchemaQuery(schema string) string { return "" }
 
-func (m *mssql) GetActiveSchemaQuery() string { return "" }
+func (m *mssql) GetCurrentSchemaQuery() string { return "" }

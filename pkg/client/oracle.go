@@ -312,10 +312,10 @@ func (o *oracle) Schemas() (string, []any, error) {
 	return oracleSchemasQuery, nil, nil
 }
 
-func (o *oracle) SetActiveSchema(schema string) (string, []any, error) {
-	return fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s", schema), nil, nil
+func (o *oracle) SetCurrentSchemaQuery(schema string) string {
+	return fmt.Sprintf("ALTER SESSION SET CURRENT_SCHEMA = %s;", schema)
 }
 
-func (o *oracle) GetActiveSchemaQuery() string {
+func (o *oracle) GetCurrentSchemaQuery() string {
 	return "SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL;"
 }

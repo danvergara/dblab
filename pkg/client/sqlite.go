@@ -215,8 +215,7 @@ func (s *sqlite) Schemas() (string, []any, error) {
 	return "", nil, errors.New("schemas not supported")
 }
 
-func (s *sqlite) SetActiveSchema(schema string) (string, []any, error) {
-	return "", nil, errors.New("schemas not supported")
-}
+// Sqlite does not support schemas.
+func (s *sqlite) SetCurrentSchemaQuery(schema string) string { return "" }
 
-func (s *sqlite) GetActiveSchemaQuery() string { return "" }
+func (s *sqlite) GetCurrentSchemaQuery() string { return "" }

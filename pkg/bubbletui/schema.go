@@ -157,10 +157,6 @@ func (s *SchemaModel) View() tea.View {
 
 func (s *SchemaModel) setSchema(schema string) tea.Cmd {
 	return func() tea.Msg {
-		if err := s.c.SetActiveSchema(context.Background(), schema); err != nil {
-			return errSchemasMsg{err: err}
-		}
-
 		return schemaSelectedMsg{Name: schema}
 	}
 }

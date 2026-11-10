@@ -322,10 +322,10 @@ func (p *postgres) Schemas() (string, []any, error) {
 	return postgresSchemaQuery.ToSql()
 }
 
-func (p *postgres) SetActiveSchema(schema string) (string, []any, error) {
-	return fmt.Sprintf("set search_path = '%s'", schema), nil, nil
+func (p *postgres) SetCurrentSchemaQuery(schema string) string {
+	return fmt.Sprintf("set search_path = '%s';", schema)
 }
 
-func (p *postgres) GetActiveSchemaQuery() string {
+func (p *postgres) GetCurrentSchemaQuery() string {
 	return "SELECT current_schema();"
 }
